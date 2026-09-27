@@ -22,23 +22,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Node stays for the tools that need it (Playwright's runner, the seed script); bun installs and
+      # runs the scripts, matching release.yml.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'yarn'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Lint
-        run: yarn lint
+        run: bun run lint
 
       - name: Type check
-        run: npx tsc --noEmit
+        run: bunx tsc --noEmit
 
       - name: Unit tests
-        run: yarn test
+        run: bun run test
 
   e2e:
     name: E2E
@@ -62,14 +68,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Node stays for the tools that need it (Playwright's runner, the seed script); bun installs and
+      # runs the scripts, matching release.yml.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'yarn'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -80,7 +92,7 @@ jobs:
       - name: Start local Supabase
         run: supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor
 
-      # No seed step: Playwright's global setup runs `yarn seed pre-weekend --yes` itself, so CI
+      # No seed step: Playwright's global setup runs `bun run seed pre-weekend --yes` itself, so CI
       # and local runs start from the same world (see scripts/seed/README.md, "E2E fixtures").
 
       - name: Export local Supabase keys
@@ -97,12 +109,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .next/cache
-          key: ${{ runner.os }}-next-${{ hashFiles('yarn.lock') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          key: ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
           restore-keys: |
-            ${{ runner.os }}-next-${{ hashFiles('yarn.lock') }}-
+            ${{ runner.os }}-next-${{ hashFiles('bun.lock') }}-
 
       - name: Build
-        run: yarn build
+        run: bun run build
 
       - name: Read Playwright version
         id: playwright
@@ -119,7 +131,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E suite
-        run: yarn e2e
+        run: bun run e2e
 
       - name: Upload Playwright report
         if: failure()

@@ -7,63 +7,63 @@
 
 ## Relevant Files
 
-| File                                                                          | Why It Is Relevant                                                                                                                                 |
-| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Unit 1**                                                                    |                                                                                                                                                    |
-| `.github/workflows/ci.yml`                                                    | New. `pull_request` + `workflow_dispatch`; jobs `checks` and `build` (renamed `e2e` in Unit 2).                                                    |
-| `.github/workflows/release.yml`                                               | Read-only reference for the `supabase/setup-cli@v1` and `setup-node` patterns already in use; edited in Unit 5.                                    |
-| `lib/sentry.ts`                                                               | `enabled` gains the `NEXT_PUBLIC_SENTRY_ENABLED !== 'false'` guard (FR-1.4).                                                                       |
-| `.env.example`                                                                | Document `NEXT_PUBLIC_SENTRY_ENABLED`, `E2E_BASE_URL`, `E2E_SEED_PASSWORD`.                                                                        |
-| `docs/platform-roadmap-status.md`                                             | Epic 1 row updated in Units 1 and 5.                                                                                                               |
-| **Unit 2**                                                                    |                                                                                                                                                    |
-| `package.json`, `yarn.lock`                                                   | Add `@playwright/test` (exact pin), `dotenv`; scripts `e2e`, `e2e:ui`, `e2e:report`, `e2e:stripe` (Unit 6).                                        |
-| `playwright.config.ts`                                                        | New, from PR #35 (`1ace8f5`): serial, Chromium, `setup` project, `webServer` that reuses a running dev server locally and runs `yarn start` in CI. |
-| `e2e/global-setup.ts`                                                         | New. Runs the seed selectors, writes `e2e/.auth/personas.json`, signs each persona in through `/login`, saves storage state.                       |
-| `e2e/fixtures/supabase.ts`                                                    | New, from PR #35: `adminClient()`, `anonClient()`, `signInAs()`, `requireEnv()`.                                                                   |
-| `e2e/fixtures/seed.ts`                                                        | New. Seed Invariant selectors S1–S6; each throws `Seed invariant S<n> not met: …`.                                                                 |
-| `e2e/fixtures/personas.ts`                                                    | New. Types and read/write for `e2e/.auth/personas.json`.                                                                                           |
-| `e2e/fixtures/auth-users.ts`                                                  | New. `deleteAuthUser(email)` via the admin auth API; `e2eEmail(runId)`.                                                                            |
-| `e2e/auth.spec.ts`                                                            | New. Six auth scenarios (FR-2.6).                                                                                                                  |
-| `lib/auth/auth-errors.ts`, `lib/auth/auth-errors.test.ts`                     | New. `describeAuthError` and its unit test (FR-2.7, FR-2.9).                                                                                       |
-| `lib/auth/constants.ts`                                                       | New or shared with spec 19 task 7.1: `MIN_PASSWORD_LENGTH`.                                                                                        |
-| `components/auth/AuthForm.tsx`                                                | Render the mapped message and hint; log the raw error (FR-2.8). Also touched by spec 19 Unit 7; rebase whichever lands second.                     |
-| `eslint.config.mjs`                                                           | PR #35 override: `react-hooks/rules-of-hooks` off under `e2e/**/*.ts` (FR-2.11).                                                                   |
-| `.gitignore`                                                                  | Already has `/test-results/`, `/playwright-report/`, `/playwright/.cache/` (lines 58–62); add `/e2e/.auth/`.                                       |
-| `docs/e2e-testing.md`                                                         | New, from PR #35, rewritten for this suite (FR-2.12).                                                                                              |
-| `Taskfile.yml`                                                                | Read-only reference: `write-supabase-keys` (l.319) shows how the local keys are derived from `supabase status`; `ci.yml` mirrors it.               |
-| **Unit 3**                                                                    |                                                                                                                                                    |
-| `e2e/fixtures/team-forms.ts`                                                  | New. Snapshot and restore the `teamForms` persona's rows; clear completions before and after.                                                      |
-| `e2e/team-forms.spec.ts`                                                      | New. Five steps, gating, negative case (FR-3.2–FR-3.4).                                                                                            |
-| `components/team-forms/schemas.ts`, `components/team-forms/*.tsx`             | Read-only: field names and validation strings the spec fills and asserts.                                                                          |
-| `app/(member)/team-forms/layout.tsx`, `app/(member)/team-forms/page.tsx`      | Read-only: redirects and the `All forms completed!` state.                                                                                         |
-| **Unit 4**                                                                    |                                                                                                                                                    |
-| `lib/payments/checkout-metadata.ts`, `lib/payments/checkout-metadata.test.ts` | New. `buildCheckoutMetadata` and its key-set test (FR-4.1).                                                                                        |
-| `actions/checkout.ts`                                                         | `beginCheckout` calls `buildCheckoutMetadata` instead of building the object inline (l.78–84).                                                     |
-| `services/stripe/handlers/checkout-session-completed.ts`                      | Replay short-circuit on existing `payment_intent_id` before any write (FR-4.6).                                                                    |
-| `services/payment/payment-service.ts`, `services/payment/repository.ts`       | Add a `findByPaymentIntentId` read (admin client) if none exists.                                                                                  |
-| `e2e/fixtures/stripe-events.ts`                                               | New. `signedCheckoutCompleted(...)`, `postWebhook(...)`.                                                                                           |
-| `e2e/fixtures/payments.ts`                                                    | New. Cleanup of `pi_e2e_` rows, candidate status reset, `email_log` window cleanup.                                                                |
-| `e2e/payments-team-fee.spec.ts`, `e2e/payments-candidate-fee.spec.ts`         | New (FR-4.3–FR-4.5, FR-4.7).                                                                                                                       |
-| `lib/payments/checkout-price.ts`                                              | Read-only: `CHECKOUT_REFUSAL_MESSAGES`, `formatFee`/`toStripeAmount` imported by specs.                                                            |
-| **Unit 5**                                                                    |                                                                                                                                                    |
-| `.github/workflows/ci.yml`                                                    | Add `workflow_call` trigger.                                                                                                                       |
-| `.github/workflows/release.yml`                                               | New first job `ci` (uses `./.github/workflows/ci.yml`); `migrate` gains `needs: ci`.                                                               |
-| **Unit 6**                                                                    |                                                                                                                                                    |
-| `.github/workflows/e2e-stripe.yml`                                            | New. `schedule` + `workflow_dispatch`; Stripe CLI listen; real test keys.                                                                          |
-| `.github/actions/e2e-setup/action.yml`                                        | New composite action if the shared steps exceed a few lines (FR-6.1).                                                                              |
-| `e2e/stripe-live/team-fee.spec.ts`, `e2e/stripe-live/candidate-fee.spec.ts`   | New. Tagged `@stripe-live`; iframe checkout, success pages, metadata deep-equal (FR-6.3).                                                          |
+| File                                                                          | Why It Is Relevant                                                                                                                                    |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unit 1**                                                                    |                                                                                                                                                       |
+| `.github/workflows/ci.yml`                                                    | New. `pull_request` + `workflow_dispatch`; jobs `checks` and `build` (renamed `e2e` in Unit 2).                                                       |
+| `.github/workflows/release.yml`                                               | Read-only reference for the `supabase/setup-cli@v1` and `setup-node` patterns already in use; edited in Unit 5.                                       |
+| `lib/sentry.ts`                                                               | `enabled` gains the `NEXT_PUBLIC_SENTRY_ENABLED !== 'false'` guard (FR-1.4).                                                                          |
+| `.env.example`                                                                | Document `NEXT_PUBLIC_SENTRY_ENABLED`, `E2E_BASE_URL`, `E2E_SEED_PASSWORD`.                                                                           |
+| `docs/platform-roadmap-status.md`                                             | Epic 1 row updated in Units 1 and 5.                                                                                                                  |
+| **Unit 2**                                                                    |                                                                                                                                                       |
+| `package.json`, `yarn.lock`                                                   | Add `@playwright/test` (exact pin), `dotenv`; scripts `e2e`, `e2e:ui`, `e2e:report`, `e2e:stripe` (Unit 6).                                           |
+| `playwright.config.ts`                                                        | New, from PR #35 (`1ace8f5`): serial, Chromium, `setup` project, `webServer` that reuses a running dev server locally and runs `bun run start` in CI. |
+| `e2e/global-setup.ts`                                                         | New. Runs the seed selectors, writes `e2e/.auth/personas.json`, signs each persona in through `/login`, saves storage state.                          |
+| `e2e/fixtures/supabase.ts`                                                    | New, from PR #35: `adminClient()`, `anonClient()`, `signInAs()`, `requireEnv()`.                                                                      |
+| `e2e/fixtures/seed.ts`                                                        | New. Seed Invariant selectors S1–S6; each throws `Seed invariant S<n> not met: …`.                                                                    |
+| `e2e/fixtures/personas.ts`                                                    | New. Types and read/write for `e2e/.auth/personas.json`.                                                                                              |
+| `e2e/fixtures/auth-users.ts`                                                  | New. `deleteAuthUser(email)` via the admin auth API; `e2eEmail(runId)`.                                                                               |
+| `e2e/auth.spec.ts`                                                            | New. Six auth scenarios (FR-2.6).                                                                                                                     |
+| `lib/auth/auth-errors.ts`, `lib/auth/auth-errors.test.ts`                     | New. `describeAuthError` and its unit test (FR-2.7, FR-2.9).                                                                                          |
+| `lib/auth/constants.ts`                                                       | New or shared with spec 19 task 7.1: `MIN_PASSWORD_LENGTH`.                                                                                           |
+| `components/auth/AuthForm.tsx`                                                | Render the mapped message and hint; log the raw error (FR-2.8). Also touched by spec 19 Unit 7; rebase whichever lands second.                        |
+| `eslint.config.mjs`                                                           | PR #35 override: `react-hooks/rules-of-hooks` off under `e2e/**/*.ts` (FR-2.11).                                                                      |
+| `.gitignore`                                                                  | Already has `/test-results/`, `/playwright-report/`, `/playwright/.cache/` (lines 58–62); add `/e2e/.auth/`.                                          |
+| `docs/e2e-testing.md`                                                         | New, from PR #35, rewritten for this suite (FR-2.12).                                                                                                 |
+| `Taskfile.yml`                                                                | Read-only reference: `write-supabase-keys` (l.319) shows how the local keys are derived from `supabase status`; `ci.yml` mirrors it.                  |
+| **Unit 3**                                                                    |                                                                                                                                                       |
+| `e2e/fixtures/team-forms.ts`                                                  | New. Snapshot and restore the `teamForms` persona's rows; clear completions before and after.                                                         |
+| `e2e/team-forms.spec.ts`                                                      | New. Five steps, gating, negative case (FR-3.2–FR-3.4).                                                                                               |
+| `components/team-forms/schemas.ts`, `components/team-forms/*.tsx`             | Read-only: field names and validation strings the spec fills and asserts.                                                                             |
+| `app/(member)/team-forms/layout.tsx`, `app/(member)/team-forms/page.tsx`      | Read-only: redirects and the `All forms completed!` state.                                                                                            |
+| **Unit 4**                                                                    |                                                                                                                                                       |
+| `lib/payments/checkout-metadata.ts`, `lib/payments/checkout-metadata.test.ts` | New. `buildCheckoutMetadata` and its key-set test (FR-4.1).                                                                                           |
+| `actions/checkout.ts`                                                         | `beginCheckout` calls `buildCheckoutMetadata` instead of building the object inline (l.78–84).                                                        |
+| `services/stripe/handlers/checkout-session-completed.ts`                      | Replay short-circuit on existing `payment_intent_id` before any write (FR-4.6).                                                                       |
+| `services/payment/payment-service.ts`, `services/payment/repository.ts`       | Add a `findByPaymentIntentId` read (admin client) if none exists.                                                                                     |
+| `e2e/fixtures/stripe-events.ts`                                               | New. `signedCheckoutCompleted(...)`, `postWebhook(...)`.                                                                                              |
+| `e2e/fixtures/payments.ts`                                                    | New. Cleanup of `pi_e2e_` rows, candidate status reset, `email_log` window cleanup.                                                                   |
+| `e2e/payments-team-fee.spec.ts`, `e2e/payments-candidate-fee.spec.ts`         | New (FR-4.3–FR-4.5, FR-4.7).                                                                                                                          |
+| `lib/payments/checkout-price.ts`                                              | Read-only: `CHECKOUT_REFUSAL_MESSAGES`, `formatFee`/`toStripeAmount` imported by specs.                                                               |
+| **Unit 5**                                                                    |                                                                                                                                                       |
+| `.github/workflows/ci.yml`                                                    | Add `workflow_call` trigger.                                                                                                                          |
+| `.github/workflows/release.yml`                                               | New first job `ci` (uses `./.github/workflows/ci.yml`); `migrate` gains `needs: ci`.                                                                  |
+| **Unit 6**                                                                    |                                                                                                                                                       |
+| `.github/workflows/e2e-stripe.yml`                                            | New. `schedule` + `workflow_dispatch`; Stripe CLI listen; real test keys.                                                                             |
+| `.github/actions/e2e-setup/action.yml`                                        | New composite action if the shared steps exceed a few lines (FR-6.1).                                                                                 |
+| `e2e/stripe-live/team-fee.spec.ts`, `e2e/stripe-live/candidate-fee.spec.ts`   | New. Tagged `@stripe-live`; iframe checkout, success pages, metadata deep-equal (FR-6.3).                                                             |
 
 ### Notes
 
-- Tests that need no browser or database stay in Jest as co-located `.test.ts` (`yarn test`). Browser
-  tests are `e2e/**/*.spec.ts` and run with `yarn e2e`; Jest's `**/*.test.ts` glob never matches them.
-- Lint with `yarn lint` (never raw `npx eslint`); type-check with `npx tsc --noEmit`. `yarn build` is
+- Tests that need no browser or database stay in Jest as co-located `.test.ts` (`bun run test`). Browser
+  tests are `e2e/**/*.spec.ts` and run with `bun run e2e`; Jest's `**/*.test.ts` glob never matches them.
+- Lint with `bun run lint` (never raw `npx eslint`); type-check with `bunx tsc --noEmit`. `bun run build` is
   what CI runs; the Unit 1 job proves it passes with placeholder env.
-- **The owner runs the local database and dev server.** Never run `yarn db:reset`, `yarn db:start/stop`
-  or `yarn dev` yourself; `yarn e2e` reuses whatever is running on `localhost:3000` and `54321`.
+- **The owner runs the local database and dev server.** Never run `bun run db:reset`, `bun run db:start/stop`
+  or `bun run dev` yourself; `bun run e2e` reuses whatever is running on `localhost:3000` and `54321`.
 - **No seeded UUID or email appears in any spec or fixture.** `e2e/fixtures/seed.ts` is the only file
   that knows the seed's shape, through the six invariants. The seed is being reworked on another
-  branch into named scenarios (now merged: `scripts/seed/`, run with `yarn seed pre-weekend --yes`;
+  branch into named scenarios (now merged: `scripts/seed/`, run with `bun run seed pre-weekend --yes`;
   the README's `bun run seed` is the same script on Node). The suite uses **`pre-weekend`**. If a
   selector throws, report which invariant and stop. Locally the owner runs the seed; CI runs it right
   after `supabase start` (task 2.11).
@@ -93,7 +93,7 @@ teammate pushes a change that does not compile.
 - Screenshot or link: a PR with `checks` and `build` green, total under about four minutes (FR-1.1–FR-1.3)
 - Link: a run on the same PR after a deliberate type error, `checks` red; then green after revert (FR-1.2)
 - CLI: `grep -n NEXT_PUBLIC_SENTRY_ENABLED lib/sentry.ts .github/workflows/ci.yml .env.example` shows all three (FR-1.4)
-- CLI: the `build` job log shows `yarn build` succeeding with no Supabase step in the job (FR-1.5)
+- CLI: the `build` job log shows `bun run build` succeeding with no Supabase step in the job (FR-1.5)
 
 #### 1.0 Tasks
 
@@ -105,8 +105,8 @@ teammate pushes a change that does not compile.
       and `workflow_dispatch`; `concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }`;
       `permissions: contents: read`. Job `checks` (`ubuntu-latest`): `actions/checkout@v4`;
       `actions/setup-node@v4` with `node-version-file: .nvmrc` and `cache: yarn`;
-      `yarn install --frozen-lockfile`; `yarn lint`; `npx tsc --noEmit`; `yarn test` (FR-1.1, FR-1.2).
-- [ ] 1.3 **[S]** Add job `build` (parallel, no `needs`): same checkout/node/install; `yarn build` with a
+      `bun install --frozen-lockfile`; `bun run lint`; `bunx tsc --noEmit`; `bun run test` (FR-1.1, FR-1.2).
+- [ ] 1.3 **[S]** Add job `build` (parallel, no `needs`): same checkout/node/install; `bun run build` with a
       job-level `env:` block holding every placeholder from the Notes plus
       `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`,
       `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_e2e_dummy`,
@@ -131,8 +131,8 @@ a check named `e2e` on every pull request.
 
 #### 2.0 Proof Artifact(s)
 
-- CLI: `yarn e2e` against the owner's running stack, run twice back to back, both green: `setup` plus six auth scenarios (FR-2.3, FR-2.6)
-- CLI: `yarn test` green including `lib/auth/auth-errors.test.ts` (FR-2.9)
+- CLI: `bun run e2e` against the owner's running stack, run twice back to back, both green: `setup` plus six auth scenarios (FR-2.3, FR-2.6)
+- CLI: `bun run test` green including `lib/auth/auth-errors.test.ts` (FR-2.9)
 - Link: a PR with `checks` and `e2e` green; `e2e` under about seven minutes on a cold cache (FR-2.10)
 - Manual: wrong password on `/login`; duplicate email on `/join`; each shows the new message and hint (FR-2.7, FR-2.8)
 - CLI: `grep -rn "b0000\|ab0000\|@example.com" e2e/ | grep -v "e2e+\|e2e-unknown"` returns nothing outside comments in `e2e/fixtures/seed.ts`; the suite's own throwaway addresses (`e2e+…`, `e2e-unknown-…`) are the only `@example.com` strings (Seed Invariants)
@@ -146,7 +146,7 @@ a check named `e2e` on every pull request.
       and adapt: `baseURL` default `http://localhost:3000`; `projects`: `setup` matching
       `/personas\.setup\.ts/` and `chromium` (`devices['Desktop Chrome']`, `dependencies: ['setup']`,
       no project-level `storageState`); `grepInvert: /@stripe-live/` unless `E2E_STRIPE_LIVE=1`;
-      `webServer`: `command: process.env.CI === 'true' ? 'yarn start' : 'yarn dev'`,
+      `webServer`: `command: process.env.CI === 'true' ? 'bun run start' : 'bun run dev'`,
       `reuseExistingServer: process.env.CI !== 'true'`, `timeout: 120_000`; keep `workers: 1`,
       `fullyParallel: false`, `retries` 1 in CI, `github` reporter in CI, trace on first retry,
       screenshot on failure, `loadEnv({ path: '.env.local', quiet: true })`. Drop the `database`
@@ -207,7 +207,7 @@ email address, then sign in.`; invalid email → `Please enter a valid email add
       exists, a `Button variant="link"` under it whose `onClick` maps `forgot-password` → navigate to
       the existing Forgot link target, `switch-to-login` / `switch-to-register` → `setMode(...)`. Log
       the raw error with the existing pino `logger` at `warn`. Add `data-testid="auth-error"` on the
-      Alert (FR-2.8). `yarn lint`, `npx tsc --noEmit`.
+      Alert (FR-2.8). `bun run lint`, `bunx tsc --noEmit`.
 - [ ] 2.10 **[O]** Create `e2e/auth.spec.ts` (no `storageState`) with the six scenarios of FR-2.6.
       Import the message constants from `lib/auth/auth-errors.ts`. For the mismatched-password case,
       register a `page.on('request')` listener and assert no request URL contains `/auth/v1/`. For
@@ -217,23 +217,23 @@ email address, then sign in.`; invalid email → `Please enter a valid email add
       requests in a comment at the top of the file against the 30-per-5-minute budget.
 - [ ] 2.11 **[O]** Turn `ci.yml`'s `build` job into `e2e` (FR-2.10): after install, `supabase/setup-cli@v1`
       (`version: latest`), `supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor`,
-      then `yarn seed pre-weekend --yes` (it finds the `supabase_db_<project_id>` container itself);
+      then `bun run seed pre-weekend --yes` (it finds the `supabase_db_<project_id>` container itself);
       then a step that runs `supabase status -o env` and writes `NEXT_PUBLIC_SUPABASE_URL`,
       `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` to `$GITHUB_ENV`, mapping the
       output names exactly as `Taskfile.yml`'s `write-supabase-keys` task does (read it; the CLI has
       renamed these keys across versions); replace the two Supabase placeholders from 1.3 with these;
-      keep the other placeholders and add `E2E_BASE_URL=http://localhost:3000`, `CI=true`; `yarn build`;
+      keep the other placeholders and add `E2E_BASE_URL=http://localhost:3000`, `CI=true`; `bun run build`;
       `actions/cache@v4` on `~/.cache/ms-playwright` keyed on the Playwright version from
-      `package.json`; `npx playwright install --with-deps chromium`; `yarn e2e`;
+      `package.json`; `bunx playwright install --with-deps chromium`; `bun run e2e`;
       `actions/upload-artifact@v4` of `playwright-report/` and `test-results/` with `if: failure()`.
       Keep the `.next/cache` cache from 1.3.
 - [ ] 2.12 **[S]** Create `docs/e2e-testing.md` from PR #35's version: replace the payments-specific
       sections with: prerequisites (owner's running Supabase and dev server, `.env.local` keys,
-      `npx playwright install chromium` once); commands; the persona model and `personas.json`; the
+      `bunx playwright install chromium` once); commands; the persona model and `personas.json`; the
       Seed Invariants table copied from the spec with a sentence that the seed branch owns them;
       cleanup rules (`e2e+` emails, `pi_e2e_` payments, snapshot/restore) and the hand-cleanup SQL;
       how to add a spec; where the merge gate lives (filled in by Unit 5) (FR-2.12).
-- [ ] 2.13 Ask the owner to run `yarn e2e` twice against their stack and paste the summary lines. Open
+- [ ] 2.13 Ask the owner to run `bun run e2e` twice against their stack and paste the summary lines. Open
       the PR; confirm `checks` and `e2e` green and note the `e2e` wall time in the PR description.
 
 ### [ ] 3.0 Team forms: a roster member completes all five forms
@@ -245,7 +245,7 @@ record looks exactly as it did before.
 
 #### 3.0 Proof Artifact(s)
 
-- CLI: `yarn e2e --grep team-forms` green twice in a row locally (FR-3.2)
+- CLI: `bun run e2e --grep team-forms` green twice in a row locally (FR-3.2)
 - SQL: after the run, zero `team_form_completions` rows for the persona's group member; their `users` row equals the pre-run snapshot the fixture logged (FR-3.1)
 - CLI: the negative case passes with the `UserNotOnRoster` toast text asserted (FR-3.3)
 
@@ -273,7 +273,7 @@ completed!`; final DB assertions (five completions, one medical profile with the
       through `/login` inside the test (this is the one extra login), visits `/team-forms`, and asserts
       the final URL carries `error=UserNotOnRoster` and the toast text from `lib/error.ts` is visible.
       Add the direct-deep-link assertion of FR-3.4 documenting current behaviour, with a comment.
-- [ ] 3.5 Ask the owner to run `yarn e2e --grep team-forms` twice and confirm the persona's row is
+- [ ] 3.5 Ask the owner to run `bun run e2e --grep team-forms` twice and confirm the persona's row is
       unchanged (`select * from users where id = …` before and after, ids from `personas.json`). Open
       the PR; `checks` and `e2e` green.
 
@@ -286,9 +286,9 @@ confirmed; and by seeing that delivering the same message twice adds nothing.
 
 #### 4.0 Proof Artifact(s)
 
-- CLI: `yarn e2e --grep payments` green twice in a row locally with only the dummy Stripe values in `.env.local` overrides (FR-4.3–FR-4.5, FR-4.7)
-- CLI: `yarn test` green including `lib/payments/checkout-metadata.test.ts` (FR-4.1)
-- Manual: with real test-mode keys and `yarn stripe:listen`, pay a team fee with 4242, then `stripe events resend <evt_id>`; the second delivery logs 200 and `payment_transaction` still has one row for that intent (FR-4.6)
+- CLI: `bun run e2e --grep payments` green twice in a row locally with only the dummy Stripe values in `.env.local` overrides (FR-4.3–FR-4.5, FR-4.7)
+- CLI: `bun run test` green including `lib/payments/checkout-metadata.test.ts` (FR-4.1)
+- Manual: with real test-mode keys and `bun run stripe:listen`, pay a team fee with 4242, then `stripe events resend <evt_id>`; the second delivery logs 200 and `payment_transaction` still has one row for that intent (FR-4.6)
 - CLI: `grep -n "buildCheckoutMetadata" actions/checkout.ts e2e/fixtures/stripe-events.ts` shows both call sites (FR-4.1)
 
 #### 4.0 Tasks
@@ -340,8 +340,8 @@ JSON.stringify(event)`; `signature = new Stripe('sk_test_e2e_dummy').webhooks.ge
       computed remainder. `afterEach` resets the candidate statuses.
 - [ ] 4.8 **[S]** Add to the candidate spec the two signature cases of FR-4.7: no header → 400 with
       `code: MISSING_SIGNATURE`; signed with `whsec_wrong` → 400 with `code: INVALID_SIGNATURE`.
-- [ ] 4.9 Ask the owner to run `yarn e2e --grep payments` twice, and separately to do the FR-4.6 manual
-      check with their real test keys and `yarn stripe:listen` (pay, then `stripe events resend`).
+- [ ] 4.9 Ask the owner to run `bun run e2e --grep payments` twice, and separately to do the FR-4.6 manual
+      check with their real test keys and `bun run stripe:listen` (pay, then `stripe events resend`).
       Open the PR with the replay behaviour change called out in the description; `checks` and `e2e`
       green.
 
@@ -393,7 +393,7 @@ two small payments it made.
 setup with `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`and the product ids from
 secrets; installs the Stripe CLI at a pinned version from the official apt repository (or the
 GitHub release tarball); starts`stripe listen --api-key "$STRIPE_TEST_SECRET_KEY" --forward-to localhost:3000/api/webhooks/stripe --print-secret > stripe-listen.log 2>&1 &`,
-waits until the log contains `whsec_`, exports it as `STRIPE_WEBHOOK_SECRET`to`$GITHUB_ENV`    **before** the`yarn e2e`step starts the server; runs`E2E_STRIPE_LIVE=1 yarn e2e --grep @stripe-live`;
+waits until the log contains `whsec_`, exports it as `STRIPE_WEBHOOK_SECRET`to`$GITHUB_ENV`    **before** the`bun run e2e`step starts the server; runs`E2E_STRIPE_LIVE=1 bun run e2e --grep @stripe-live`;
 uploads `stripe-listen.log` and the Playwright report always (FR-6.2, FR-6.3).
 - [ ] 6.4 **[O]** Create `e2e/stripe-live/team-fee.spec.ts` (tagged `@stripe-live` in the title, persona
       `teamFee`): open `/payment/team-fee`; `const frame = page.frameLocator('iframe[name^="embedded-checkout"]')`;
@@ -408,7 +408,7 @@ uploads `stripe-listen.log` and the Playwright report always (FR-6.2, FR-6.3).
       `/payment/candidate-fee?candidate_id=…` and `/payment/candidate-fee/success`, plus
       `candidates.status = 'confirmed'` (FR-6.3). Add script `"e2e:stripe": "E2E_STRIPE_LIVE=1 playwright test --grep @stripe-live"`
       and a `docs/e2e-testing.md` section on running it locally with real test keys and
-      `yarn stripe:listen` (FR-6.4).
+      `bun run stripe:listen` (FR-6.4).
 - [ ] 6.6 Trigger `workflow_dispatch`, fix what the first real run reveals (iframe locators, timing),
       then on a throwaway branch rename one metadata key and confirm the deep-equal assertion fails.
       Leave the schedule on and check the next two mornings before closing the unit (FR-6.5).

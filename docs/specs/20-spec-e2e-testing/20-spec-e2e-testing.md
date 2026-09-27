@@ -58,30 +58,30 @@ What already exists and is reused:
   that already has an account, so that I know what to do next without emailing the owner.
 - **As the treasurer**, I want confidence that a Stripe payment always becomes exactly one recorded
   transaction, so that balances and the payment report stay right.
-- **As a contributor**, I want `yarn e2e` to run against my local stack and leave it as it found it, so
+- **As a contributor**, I want `bun run e2e` to run against my local stack and leave it as it found it, so
   that I can iterate without resetting the database.
 - **As the site owner**, I want to be told when Stripe's webhook payload no longer matches what the
   app expects, before a real payment is lost.
 
 ## Settled Decisions (2026-09-26)
 
-| Topic                 | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Browser tool          | Playwright, Chromium only. Runs against `next build && next start`, not the dev server, so the build is part of the gate and page timings match production                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Database in CI        | Local Supabase via `supabase start` on the runner, with unneeded containers excluded (`-x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor`). Playwright global setup then runs `yarn seed pre-weekend --yes` itself, so CI and local runs share one path. `supabase/seed.sql` now holds only roles; app data and auth users come from `scripts/seed/` (merged from `preview` on 2026-09-27), which applies its SQL through `docker exec` into the `supabase_db_<project_id>` container, so it runs on the runner unchanged |
-| Fixture data          | The seed, selected by **predicate at run time**, never by id or email. A `setup` step queries the local database for a record matching each scenario's invariant (an unpaid roster member with no forms, a candidate awaiting payment, and so on), fails with a message naming the invariant when none exists, and hands the same selection to every spec. Scenarios never share a person. No new seed file in this pass                                                                                                                                         |
-| Isolation and cleanup | Tests clean up what they touch through a service-role client (snapshot before, restore after). No `db reset` between tests or files. Serial execution (`workers: 1`) until the suite is large enough to need more                                                                                                                                                                                                                                                                                                                                                |
-| Logins                | Playwright global setup signs in once per persona through the real form and saves storage state. Specs reuse it. This keeps a full run near 10 auth requests against GoTrue's local limit of 30 sign-in/sign-up requests per IP per 5 minutes. **The rate limit in `config.toml` is not raised**: `supabase config push` applies `[auth]` to prod on every merge                                                                                                                                                                                                 |
-| Payments on PRs       | **Fully synthetic.** No Stripe secrets in CI; dummy keys satisfy the import-time checks. Tests build a `checkout.session.completed` event, sign it with the shared `STRIPE_WEBHOOK_SECRET` using stripe-node's `generateTestHeaderString`, POST it to `/api/webhooks/stripe`, and assert the database and UI outcome                                                                                                                                                                                                                                             |
-| Metadata drift        | The session metadata builder is extracted from `beginCheckout` into a pure function. Both `beginCheckout` and the E2E event builder call it, so a renamed key cannot pass the PR suite by accident. The nightly run proves Stripe echoes it                                                                                                                                                                                                                                                                                                                      |
-| Payments nightly      | A scheduled, on-demand workflow runs the real path with Stripe test-mode secrets: Stripe CLI forwarding the webhook, the 4242 card typed into the embedded checkout iframe, success pages, and a check that the session metadata Stripe returns equals the builder's output                                                                                                                                                                                                                                                                                      |
-| Webhook replays       | A replayed `checkout.session.completed` (same `payment_intent`) returns 200 and records nothing. Today both fee types return 400 on replay, which makes Stripe retry for up to three days (see Known Bugs). The fix lands with Unit 4 because the E2E test asserts it                                                                                                                                                                                                                                                                                            |
-| Auth error mapping    | **In scope.** A pure `describeAuthError` maps GoTrue error codes to the repository's own message plus a remediation hint. Wrong password and unknown email stay indistinguishable (GoTrue already returns one code for both). Unit tested; E2E asserts on these strings                                                                                                                                                                                                                                                                                          |
-| Merge gate            | The new workflow's jobs become **required status checks** on `main`. The same suite runs at the top of `release.yml`, before `migrate`, so a red `main` neither migrates prod nor deploys                                                                                                                                                                                                                                                                                                                                                                        |
-| Email in CI           | A dummy `RESEND_API_KEY`. The Resend client throws at import without a key (`services/notifications/email-client.ts:12`, `actions/password-reset.ts:13`); with a bad key, sends return an error that every in-scope path already swallows. No transport abstraction in this pass                                                                                                                                                                                                                                                                                 |
-| Sentry in CI          | Off. `lib/sentry.ts` enables Sentry for any production build, so a CI `next start` would report to the real project. A `NEXT_PUBLIC_SENTRY_ENABLED=false` flag disables it for both server and browser bundles                                                                                                                                                                                                                                                                                                                                                   |
-| Local runs            | `yarn e2e` reuses the owner's running Supabase and dev server (`reuseExistingServer`). Global setup reseeds the local database to `pre-weekend` on every run (decided 2026-09-27: the suite only passes against that world, and the seed takes under a second) and refuses to run against a non-local Supabase URL. Dev-mode autofill buttons are not used by any test                                                                                                                                                                                           |
-| Out of this pass      | Forgot-password (Resend plus a two-per-hour local email limit), Stripe success pages on PRs (they call `checkout.sessions.retrieve`), candidate approval through the UI (aborts when the payment-request email fails to send), every other page                                                                                                                                                                                                                                                                                                                  |
+| Topic                 | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser tool          | Playwright, Chromium only. Runs against `next build && next start`, not the dev server, so the build is part of the gate and page timings match production                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Database in CI        | Local Supabase via `supabase start` on the runner, with unneeded containers excluded (`-x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor`). Playwright global setup then runs `bun run seed pre-weekend --yes` itself, so CI and local runs share one path. `supabase/seed.sql` now holds only roles; app data and auth users come from `scripts/seed/` (merged from `preview` on 2026-09-27), which applies its SQL through `docker exec` into the `supabase_db_<project_id>` container, so it runs on the runner unchanged |
+| Fixture data          | The seed, selected by **predicate at run time**, never by id or email. A `setup` step queries the local database for a record matching each scenario's invariant (an unpaid roster member with no forms, a candidate awaiting payment, and so on), fails with a message naming the invariant when none exists, and hands the same selection to every spec. Scenarios never share a person. No new seed file in this pass                                                                                                                                            |
+| Isolation and cleanup | Tests clean up what they touch through a service-role client (snapshot before, restore after). No `db reset` between tests or files. Serial execution (`workers: 1`) until the suite is large enough to need more                                                                                                                                                                                                                                                                                                                                                   |
+| Logins                | Playwright global setup signs in once per persona through the real form and saves storage state. Specs reuse it. This keeps a full run near 10 auth requests against GoTrue's local limit of 30 sign-in/sign-up requests per IP per 5 minutes. **The rate limit in `config.toml` is not raised**: `supabase config push` applies `[auth]` to prod on every merge                                                                                                                                                                                                    |
+| Payments on PRs       | **Fully synthetic.** No Stripe secrets in CI; dummy keys satisfy the import-time checks. Tests build a `checkout.session.completed` event, sign it with the shared `STRIPE_WEBHOOK_SECRET` using stripe-node's `generateTestHeaderString`, POST it to `/api/webhooks/stripe`, and assert the database and UI outcome                                                                                                                                                                                                                                                |
+| Metadata drift        | The session metadata builder is extracted from `beginCheckout` into a pure function. Both `beginCheckout` and the E2E event builder call it, so a renamed key cannot pass the PR suite by accident. The nightly run proves Stripe echoes it                                                                                                                                                                                                                                                                                                                         |
+| Payments nightly      | A scheduled, on-demand workflow runs the real path with Stripe test-mode secrets: Stripe CLI forwarding the webhook, the 4242 card typed into the embedded checkout iframe, success pages, and a check that the session metadata Stripe returns equals the builder's output                                                                                                                                                                                                                                                                                         |
+| Webhook replays       | A replayed `checkout.session.completed` (same `payment_intent`) returns 200 and records nothing. Today both fee types return 400 on replay, which makes Stripe retry for up to three days (see Known Bugs). The fix lands with Unit 4 because the E2E test asserts it                                                                                                                                                                                                                                                                                               |
+| Auth error mapping    | **In scope.** A pure `describeAuthError` maps GoTrue error codes to the repository's own message plus a remediation hint. Wrong password and unknown email stay indistinguishable (GoTrue already returns one code for both). Unit tested; E2E asserts on these strings                                                                                                                                                                                                                                                                                             |
+| Merge gate            | The new workflow's jobs become **required status checks** on `main`. The same suite runs at the top of `release.yml`, before `migrate`, so a red `main` neither migrates prod nor deploys                                                                                                                                                                                                                                                                                                                                                                           |
+| Email in CI           | A dummy `RESEND_API_KEY`. The Resend client throws at import without a key (`services/notifications/email-client.ts:12`, `actions/password-reset.ts:13`); with a bad key, sends return an error that every in-scope path already swallows. No transport abstraction in this pass                                                                                                                                                                                                                                                                                    |
+| Sentry in CI          | Off. `lib/sentry.ts` enables Sentry for any production build, so a CI `next start` would report to the real project. A `NEXT_PUBLIC_SENTRY_ENABLED=false` flag disables it for both server and browser bundles                                                                                                                                                                                                                                                                                                                                                      |
+| Local runs            | `bun run e2e` reuses the owner's running Supabase and dev server (`reuseExistingServer`). Global setup reseeds the local database to `pre-weekend` on every run (decided 2026-09-27: the suite only passes against that world, and the seed takes under a second) and refuses to run against a non-local Supabase URL. Dev-mode autofill buttons are not used by any test                                                                                                                                                                                           |
+| Out of this pass      | Forgot-password (Resend plus a two-per-hour local email limit), Stripe success pages on PRs (they call `checkout.sessions.retrieve`), candidate approval through the UI (aborts when the payment-request email fails to send), every other page                                                                                                                                                                                                                                                                                                                     |
 
 ## Seed Invariants
 
@@ -123,8 +123,8 @@ request. No test code; one workflow file and one small Sentry change.
 - FR-1.1 A new workflow `.github/workflows/ci.yml` shall run on `pull_request` (all target branches)
   and `workflow_dispatch`, with `concurrency` keyed on the ref and `cancel-in-progress: true`
 - FR-1.2 Job `checks` shall: check out; `actions/setup-node@v4` with `node-version-file: .nvmrc` and
-  `cache: yarn`; `yarn install --frozen-lockfile`; `yarn lint`; `npx tsc --noEmit`; `yarn test`
-- FR-1.3 Job `build` shall run in parallel with `checks` and run `yarn build` with placeholder
+  `cache: yarn`; `bun install --frozen-lockfile`; `bun run lint`; `bunx tsc --noEmit`; `bun run test`
+- FR-1.3 Job `build` shall run in parallel with `checks` and run `bun run build` with placeholder
   environment values for every variable in `.env.example` (Supabase URL `http://127.0.0.1:54321`,
   `sk_test_e2e_dummy`, `pk_test_e2e_dummy`, `whsec_e2e_dummy`, `re_e2e_dummy`, `prod_e2e_dummy`,
   `SITE_URL=http://localhost:3000`) and `NEXT_PUBLIC_SENTRY_ENABLED=false`. `SENTRY_AUTH_TOKEN` is
@@ -157,8 +157,8 @@ error text with owned messages.
   `workers: 1`; `retries: 1` in CI, `0` locally; reporter `github` in CI, `list` locally; `trace:
 on-first-retry`; `screenshot: only-on-failure`; `baseURL` from `E2E_BASE_URL` defaulting to
   `http://localhost:3000` (matches `SITE_URL` in `.env.example`); `loadEnv({ path: '.env.local' })` so
-  fixtures see the Supabase keys locally. `webServer`: in CI `yarn start` with
-  `reuseExistingServer: false`; locally `yarn dev` with `reuseExistingServer: true`, so the owner's
+  fixtures see the Supabase keys locally. `webServer`: in CI `bun run start` with
+  `reuseExistingServer: false`; locally `bun run dev` with `reuseExistingServer: true`, so the owner's
   running dev server is used and never restarted. Chromium only (`devices['Desktop Chrome']`)
 - FR-2.3 Single `chromium` project. `e2e/global-setup.ts` runs the seed selectors (Seed Invariants)
   and writes `e2e/.auth/personas.json`, then signs in through the real `/login` form as each chosen
@@ -210,8 +210,8 @@ unknown, mode: 'login' | 'register'): { message: string; hint?: { text: string; 
 - FR-2.10 `ci.yml` job `build` becomes `e2e`: after install, `supabase/setup-cli@v1`, `supabase start`
   with the exclusion list, then derive `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
   and `SUPABASE_SECRET_KEY` the same way `Taskfile.yml`'s `write-supabase-keys` task does (from
-  `supabase status -o env`), export them to `GITHUB_ENV`, `yarn build`, `npx playwright install
---with-deps chromium`, `yarn e2e`. Cache `.next/cache` (key: lockfile hash + source hash, restore on
+  `supabase status -o env`), export them to `GITHUB_ENV`, `bun run build`, `bunx playwright install
+--with-deps chromium`, `bun run e2e`. Cache `.next/cache` (key: lockfile hash + source hash, restore on
   lockfile hash) and `~/.cache/ms-playwright` (key: Playwright version). Upload `playwright-report/`
   as an artifact on failure. `STRIPE_WEBHOOK_SECRET=whsec_e2e_dummy` is shared between the app env
   and the test env because Unit 4 signs with it
@@ -222,9 +222,9 @@ unknown, mode: 'login' | 'register'): { message: string; hint?: { text: string; 
 
 **Proof Artifacts:**
 
-- `yarn e2e` locally against the owner's running stack: setup plus six auth specs green, and running
+- `bun run e2e` locally against the owner's running stack: setup plus six auth specs green, and running
   it twice in a row is green both times (cleanup works)
-- `yarn test` green with `lib/auth/auth-errors.test.ts`
+- `bun run test` green with `lib/auth/auth-errors.test.ts`
 - A PR with `checks` and `e2e` green; `e2e` under about seven minutes on a cold cache
 - Manual: type a wrong password on `/login` and read the new message and hint
 
@@ -262,7 +262,7 @@ proceed.`; all boxes plus signature lands on `/team-forms/release-of-claim`
 
 **Proof Artifacts:**
 
-- `yarn e2e --grep team-forms` green twice in a row locally
+- `bun run e2e --grep team-forms` green twice in a row locally
 - After the run, `team_form_completions` has zero rows for the persona's group member id and their
   `users` row matches the seed
 
@@ -343,10 +343,10 @@ surcharge`:
 
 **Proof Artifacts:**
 
-- `yarn e2e --grep payments` green twice in a row locally, with no Stripe environment beyond the
+- `bun run e2e --grep payments` green twice in a row locally, with no Stripe environment beyond the
   dummy values
-- `yarn test` green with `lib/payments/checkout-metadata.test.ts`
-- Manual, with real test-mode keys locally and `yarn stripe:listen`: pay the team fee with 4242 in
+- `bun run test` green with `lib/payments/checkout-metadata.test.ts`
+- Manual, with real test-mode keys locally and `bun run stripe:listen`: pay the team fee with 4242 in
   the browser, then use the Stripe CLI to resend the same event (`stripe events resend <evt_id>`) and
   see a 200 and no second row
 
@@ -396,7 +396,7 @@ the real browser checkout still completes.
   - Candidate fee for the S4 candidate: same through `/payment/candidate-fee?candidate_id=…` and
     `/payment/candidate-fee/success`, plus `candidates.status = 'confirmed'`
 - FR-6.4 The seed is fresh on every runner, so no cleanup is needed in CI. Locally the same specs run
-  with `yarn e2e:stripe` against the owner's real test keys and `yarn stripe:listen`, and reuse the
+  with `bun run e2e:stripe` against the owner's real test keys and `bun run stripe:listen`, and reuse the
   Unit 4 cleanup (Stripe test-mode payment intents are not deleted; test mode is disposable)
 - FR-6.5 On failure GitHub's default workflow-failure notification reaches the owner. No extra alert
   channel in this pass
@@ -475,11 +475,11 @@ sdavisde@gmail.com`) for every error, including the pricing refusals that have f
 ## Repository Standards
 
 - Tests that need no browser or database stay in Jest as co-located `.test.ts`; browser tests live in
-  `e2e/*.spec.ts` and never run under `yarn test`
-- `yarn lint`, `npx tsc --noEmit`, `yarn test`, `yarn e2e`; `yarn build` is what CI runs, not the
+  `e2e/*.spec.ts` and never run under `bun run test`
+- `bun run lint`, `bunx tsc --noEmit`, `bun run test`, `bun run e2e`; `bun run build` is what CI runs, not the
   local type-check shortcut
-- The owner runs the local database and dev server. `yarn e2e` reuses them and never resets. Ask
-  before `yarn db:reset`
+- The owner runs the local database and dev server. `bun run e2e` reuses them and never resets. Ask
+  before `bun run db:reset`
 - `supabase config push` applies `[auth]` to prod on every merge to `main`: `config.toml` is not
   edited by this spec
 - Server actions return `Result`; use `Results.*` helpers and `isNil()`; user-facing failures go
@@ -495,7 +495,7 @@ sdavisde@gmail.com`) for every error, including the pricing refusals that have f
 - **Why a production build.** `next dev` compiles routes on first visit, so every first navigation in
   a spec pays seconds of compile time and timings are unrepresentative. `next build` also catches
   `server-only` graph violations and build-time errors, which is a regression class of its own.
-  Locally the suite still runs against `yarn dev` for convenience
+  Locally the suite still runs against `bun run dev` for convenience
 - **CI wall time budget.** Install with cache about 30 s; `supabase start` with exclusions 60–120 s
   (image pulls dominate; not cacheable without extra tooling); `next build` 90–180 s cold, less with
   `.next/cache` restored; Playwright browser install 20 s cached; tests under 60 s. Running `checks`
@@ -544,7 +544,7 @@ sdavisde@gmail.com`) for every error, including the pricing refusals that have f
 - The three flows have a browser spec each; breaking any one of them fails a PR
 - A replayed webhook records nothing and answers 200
 - The nightly Stripe run has been green on consecutive nights before Unit 6 is called done
-- `yarn e2e` run twice locally without a reset is green both times
+- `bun run e2e` run twice locally without a reset is green both times
 
 ## Open Questions
 
@@ -570,7 +570,7 @@ Each unit is its own PR to `main` (or to `preview` first, matching the current h
    mapping in one PR so the specs assert on the new strings from the start
 3. **Unit 3** (team forms). Fixture plus one spec file
 4. **Unit 4** (payments synthetic + replay fix + metadata extraction). Test the replay fix by hand
-   with `yarn stripe:listen` before merging
+   with `bun run stripe:listen` before merging
 5. **Unit 5** (release ordering + branch protection). One workflow edit and a settings change by the
    owner
 6. **Unit 6** (nightly Stripe). Needs the owner to add four test-mode secrets first

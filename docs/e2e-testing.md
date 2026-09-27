@@ -3,34 +3,34 @@
 A Playwright suite covering the three flows the owner most needs protected: accounts (login,
 register, error messages), team forms, and fee payments. It runs against a production build
 (`next build && next start`) in CI and against your own running dev server locally; it is not part
-of `yarn test` and never runs under Jest.
+of `bun run test` and never runs under Jest.
 
 ## Running locally
 
 Prerequisites. The suite reseeds the local database itself on every run (see below) but never
 starts or stops anything:
 
-- A local Supabase running (`yarn db:start`). **Every run wipes local app data and auth users and
+- A local Supabase running (`bun run db:start`). **Every run wipes local app data and auth users and
   rebuilds the `pre-weekend` world** (under a second) before the first test, so anything you created
-  by hand locally is gone after `yarn e2e`. A bare `yarn e2e` in a terminal asks `Continue? [y/N]`
-  first; answering no aborts with nothing changed. `E2E_RESEED=yes yarn e2e` skips the prompt, and
-  `yarn e2e:ui` needs it because UI mode has no terminal to answer in. CI sets `CI=true`, which also
+  by hand locally is gone after `bun run e2e`. A bare `bun run e2e` in a terminal asks `Continue? [y/N]`
+  first; answering no aborts with nothing changed. `E2E_RESEED=yes bun run e2e` skips the prompt, and
+  `bun run e2e:ui` needs it because UI mode has no terminal to answer in. CI sets `CI=true`, which also
   skips it. Global setup refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at `127.0.0.1` or
   `localhost`.
-- The dev server running on the suite's base URL (`yarn dev`, default `http://localhost:3000`).
+- The dev server running on the suite's base URL (`bun run dev`, default `http://localhost:3000`).
 - `.env.local` with the three local Supabase values (`NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) plus `STRIPE_WEBHOOK_SECRET`, which
   the payment fixtures share with the app to sign synthetic webhook events. Dummy Stripe and Resend
   values (`sk_test_e2e_dummy`, `pk_test_e2e_dummy`, `re_e2e_dummy`, and so on) are fine for local
   runs too — nothing in the suite talks to the real services.
-- `npx playwright install chromium`, once.
+- `bunx playwright install chromium`, once.
 
-| Command       | What it does                                                                 |
-| ------------- | ---------------------------------------------------------------------------- |
-| `yarn e2e`    | Runs global setup, then every spec, headless.                                |
-| `yarn e2e:ui` | Opens Playwright's UI mode against the same config (also runs global setup). |
+| Command          | What it does                                                                 |
+| ---------------- | ---------------------------------------------------------------------------- |
+| `bun run e2e`    | Runs global setup, then every spec, headless.                                |
+| `bun run e2e:ui` | Opens Playwright's UI mode against the same config (also runs global setup). |
 
-`yarn e2e --grep <text>` narrows a run to specs whose title matches `<text>`, and `npx playwright
+`bun run e2e --grep <text>` narrows a run to specs whose title matches `<text>`, and `bunx playwright
 show-report` opens the HTML report from the last run.
 
 Two environment variables tune a run: `E2E_BASE_URL` (default `http://localhost:3000`) is the base
@@ -64,12 +64,12 @@ The personas:
 A spec opts into a signed-in persona with `test.use({ storageState: storageStatePath('teamForms') })`
 (from `e2e/fixtures/personas.ts`); auth specs use no storage state at all, since they exercise
 login and registration themselves. Every spec reads the chosen cast in `test.beforeAll` with
-`await loadPersonas()`, which throws a clear error if `personas.json` is missing (run `yarn e2e`,
+`await loadPersonas()`, which throws a clear error if `personas.json` is missing (run `bun run e2e`,
 which always runs global setup first). `loadPersonas()` also re-checks every persona id and email
 against the database before handing back the cast, so if the database was reseeded after global
 setup ran, specs fail fast with a "personas.json is stale" message instead of misbehaving (e.g.
 treating a stale "existing user" email as available and registering it as a new account). The fix
-after a reseed is to rerun `yarn e2e` (or restart the UI mode) so global setup runs again.
+after a reseed is to rerun `bun run e2e` (or restart the UI mode) so global setup runs again.
 
 `adminClient()` (`e2e/fixtures/supabase.ts`) is a service-role Supabase client for fixtures to
 arrange data, assert on it and clean it up. It bypasses Row Level Security, so it is never used to
@@ -113,16 +113,16 @@ form, not to raise the limit.
 
 `.github/workflows/ci.yml` runs on every pull request and on `workflow_dispatch`, with two jobs:
 
-- **`checks`** — checkout, Node via `.nvmrc` with the Yarn cache, `yarn install --frozen-lockfile`,
-  `yarn lint`, `npx tsc --noEmit`, `yarn test`.
+- **`checks`** — checkout, Node via `.nvmrc` with the Yarn cache, `bun install --frozen-lockfile`,
+  `bun run lint`, `bunx tsc --noEmit`, `bun run test`.
 - **`e2e`** — checkout and install, then `supabase/setup-cli@v1` and `supabase start` with the
   unneeded containers excluded (Studio, Postgres Meta, imgproxy, Mailpit, Logflare, Vector, Edge
   Runtime, Realtime, Supavisor — the app needs only auth, REST, storage and the gateway). Next,
-  `yarn seed pre-weekend --yes` builds the same world described above inside the runner's
+  `bun run seed pre-weekend --yes` builds the same world described above inside the runner's
   `supabase_db_<project_id>` container. A step then reads `supabase status -o env` and exports the
   real local Supabase URL and keys to `$GITHUB_ENV`, replacing the placeholder values used earlier.
-  `yarn build` runs next (with `.next/cache` restored from a lockfile-and-source-hash key), followed
-  by a cached `npx playwright install --with-deps chromium` and finally `yarn e2e`. On failure,
+  `bun run build` runs next (with `.next/cache` restored from a lockfile-and-source-hash key), followed
+  by a cached `bunx playwright install --with-deps chromium` and finally `bun run e2e`. On failure,
   `playwright-report/` and `test-results/` are uploaded as a build artifact.
 
 The `e2e` job's placeholder environment variables (`STRIPE_SECRET_KEY=sk_test_e2e_dummy`,
@@ -145,7 +145,7 @@ under about seven minutes end to end on a cold cache.
 
 Every fixture that writes data restores or removes it in its own teardown: the team-forms fixture
 snapshots and restores the `teamForms` persona's rows, and the payments fixtures delete only the
-rows they created. No spec or fixture ever calls `yarn db:reset` or otherwise touches the database
+rows they created. No spec or fixture ever calls `bun run db:reset` or otherwise touches the database
 outside its own arrange/assert/cleanup.
 
 Rows a crashed run can still leave behind are deliberately identifiable, so they are easy to find
@@ -161,7 +161,7 @@ and safe to remove by hand:
   delete from payment_transaction where payment_intent_id like 'pi_e2e_%';
   ```
 
-When in doubt, `yarn seed pre-weekend --yes` (destructive, owner's call) rebuilds a clean world from
+When in doubt, `bun run seed pre-weekend --yes` (destructive, owner's call) rebuilds a clean world from
 scratch rather than hunting for leftovers.
 
 ## Adding a spec

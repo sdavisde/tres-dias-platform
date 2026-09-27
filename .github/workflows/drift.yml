@@ -1,0 +1,64 @@
+name: Schema Drift
+
+# Fails when the production database no longer matches supabase/migrations — a
+# dashboard edit without a migration, or a migration that never reached prod.
+# Read-only against prod; kept off PRs so prod credentials stay out of PR jobs.
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Check Schema Drift
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pinned: CLI defaults drift between releases (see release.yml's config push).
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.118.0
+
+      - name: Link Supabase Project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Check migration history
+        run: |
+          supabase migration list --linked --output-format json > migrations.json
+          # A migration with an empty local or remote side exists on only one of them.
+          unmatched=$(jq -r '.migrations[] | select((.local // "") == "" or (.remote // "") == "")
+            | "local=\(.local // "-") remote=\(.remote // "-")"' migrations.json)
+          if [ -n "$unmatched" ]; then
+            {
+              echo "### Migration history mismatch"
+              echo '```'
+              echo "$unmatched"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Diff schema against migrations
+        run: |
+          supabase db diff --linked --schema public,storage --output-format json > diff.json
+          # The SQL that would turn a database built from migrations into prod.
+          diff=$(jq -r '.diff' diff.json)
+          if [ -n "$(echo "$diff" | tr -d '[:space:]')" ]; then
+            {
+              echo "### Prod schema differs from migrations"
+              echo "Applying this SQL to a database built from migrations would make it match prod:"
+              echo '```sql'
+              echo "$diff"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "No drift." >> "$GITHUB_STEP_SUMMARY"

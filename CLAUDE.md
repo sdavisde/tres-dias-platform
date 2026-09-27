@@ -4,16 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-- **Start development server**: `yarn dev` (with Turbopack)
-- **Build for production**: `yarn build`
-- **Start production server**: `yarn start`
-- **Lint code**: `yarn lint`
-- **Generate Supabase types**: `yarn db:generate` (regenerates `database.types.ts`)
-- **Stripe webhooks (local)**: `yarn stripe:listen` forwards test-mode events to `/api/webhooks/stripe`
+- **Start development server**: `bun run dev` (with Turbopack)
+- **Build for production**: `bun run build`
+- **Start production server**: `bun run start`
+- **Lint code**: `bun run lint`
+- **Generate Supabase types**: `bun run db:generate` (regenerates `database.types.ts`)
+- **Stripe webhooks (local)**: `bun run stripe:listen` forwards test-mode events to `/api/webhooks/stripe`
   (requires `stripe login` with a test-mode account; its `whsec_` secret must match `STRIPE_WEBHOOK_SECRET`)
 - **Database Operations**:
-  - yarn db:start - starts all supabase containers, if they aren't already running
-  - yarn db:stop - stops all supabase containers
+  - bun run db:start - starts all supabase containers, if they aren't already running
+  - bun run db:stop - stops all supabase containers
   - bun run db:reset - resets the database to its initial state (runs migrations, roles and `bun run seed` after wiping the DB. DANGEROUS, ONLY USE WHEN TOLD)
   - bun run seed [pre-weekend|weekend|post-weekend] - wipes local app data + auth users and regenerates a
     date-relative world at that point in the weekend cycle (see `scripts/seed/README.md`). DESTRUCTIVE to
@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Dev Mode
 
-- `isDevMode()` from `@/lib/dev-mode` returns `true` when `NODE_ENV === 'development'` (i.e., during `yarn dev`)
+- `isDevMode()` from `@/lib/dev-mode` returns `true` when `NODE_ENV === 'development'` (i.e., during `bun run dev`)
 - Use it to conditionally render dev-only UI like "Fill with test data" buttons on forms
 - Currently used in: `SponsorForm.tsx`, `candidate-forms.tsx`
 - When adding new forms, include a dev-mode autofill button following the same pattern
@@ -213,4 +213,4 @@ the user, do it.
 - Client components marked with 'use client'
 - Shared types in `lib/` subdirectories by domain
 - Email templates using React Email in `components/email/`
-- use `yarn build` to confirm compilation
+- use `bun run build` to confirm compilation

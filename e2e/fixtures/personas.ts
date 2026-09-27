@@ -86,8 +86,8 @@ export function readPersonas(): Personas {
   if (!fs.existsSync(PERSONAS_PATH)) {
     throw new Error(
       `${PERSONAS_PATH} not found. It is written by the Playwright "setup" project; ` +
-        'run the suite with `yarn e2e` (the chromium project depends on setup) ' +
-        'or run `yarn e2e` first.'
+        'run the suite with `bun run e2e` (the chromium project depends on setup) ' +
+        'or run `bun run e2e` first.'
     )
   }
   return JSON.parse(fs.readFileSync(PERSONAS_PATH, 'utf8')) as Personas
@@ -188,7 +188,7 @@ export async function loadPersonas(): Promise<Personas> {
   if (missing.length > 0) {
     throw new Error(
       `${PERSONAS_PATH} is stale: ${missing.join('; ')}. The database changed since setup ran; ` +
-        'rerun `yarn e2e` (global setup runs first and picks a fresh cast).'
+        'rerun `bun run e2e` (global setup runs first and picks a fresh cast).'
     )
   }
 

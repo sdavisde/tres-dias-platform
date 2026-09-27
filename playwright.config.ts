@@ -9,7 +9,7 @@ loadEnv({ path: '.env.local', quiet: true })
 /**
  * End-to-end tests against a real local Supabase and the seed from
  * `scripts/seed/` (`pre-weekend` phase). Specs pick their people through the
- * selectors in e2e/fixtures/seed.ts. Not part of `yarn test`; see
+ * selectors in e2e/fixtures/seed.ts. Not part of `bun run test`; see
  * docs/e2e-testing.md for how to run them.
  */
 
@@ -52,7 +52,7 @@ export default defineConfig({
   // CI runs against a production build; locally the owner's running dev
   // server is reused and never restarted.
   webServer: {
-    command: CI ? 'yarn start' : 'yarn dev',
+    command: CI ? 'bun run start' : 'bun run dev',
     url: BASE_URL,
     reuseExistingServer: !CI,
     timeout: 120_000,

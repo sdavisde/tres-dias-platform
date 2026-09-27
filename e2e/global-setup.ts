@@ -136,7 +136,7 @@ function reseed(): void {
   if (result.status !== 0) {
     throw new Error(
       autoConfirm
-        ? `global-setup: \`yarn seed ${SEED_PHASE} --yes\` failed (exit ${result.status}). Is the local stack running?`
+        ? `global-setup: \`bun run seed ${SEED_PHASE} --yes\` failed (exit ${result.status}). Is the local stack running?`
         : 'global-setup: the reseed was declined or there was no terminal to confirm in. ' +
             'Answer y at the prompt, or run with E2E_RESEED=yes to skip it (UI mode needs this). ' +
             'Nothing was changed.'

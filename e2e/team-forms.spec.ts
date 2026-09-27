@@ -102,7 +102,7 @@ test.describe('team forms flow', () => {
     page,
     teamFormsMember,
   }) => {
-    // Six pages and six server actions in one test; under `yarn dev` each
+    // Six pages and six server actions in one test; under `bun run dev` each
     // page compiles on first visit, which alone can pass the 30s default.
     test.slow()
 
