@@ -14,7 +14,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Database Operations**:
   - yarn db:start - starts all supabase containers, if they aren't already running
   - yarn db:stop - stops all supabase containers
-  - yarn db:reset - resets the database to its initial state (runs migrations and seed after wiping the DB. DANGEROUS, ONLY USE WHEN TOLD)
+  - bun run db:reset - resets the database to its initial state (runs migrations, roles and `bun run seed` after wiping the DB. DANGEROUS, ONLY USE WHEN TOLD)
+  - bun run seed [pre-weekend|weekend|post-weekend] - wipes local app data + auth users and regenerates a
+    date-relative world at that point in the weekend cycle (see `scripts/seed/README.md`). DESTRUCTIVE to
+    local data, ONLY USE WHEN TOLD; `bun run seed --dry-run` is safe (rolls back)
 
 ## Dev Mode
 
