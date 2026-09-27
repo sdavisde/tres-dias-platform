@@ -10,13 +10,23 @@
  *
  * @param url - The URL to validate
  * @param defaultPath - The fallback path if validation fails (default: '/home')
+ * @param options - `allowAuthPages` lists auth pages this caller may target
  * @returns A safe redirect URL
  */
 import { isNil } from 'lodash'
 
+export type RedirectOptions = {
+  /**
+   * Auth pages that this caller may legitimately redirect to. The auth routes
+   * use it for `/reset-password`, which is otherwise blocked to avoid loops.
+   */
+  allowAuthPages?: string[]
+}
+
 export function validateRedirectUrl(
   url: string | null | undefined,
-  defaultPath: string = '/home'
+  defaultPath: string = '/home',
+  options: RedirectOptions = {}
 ): string {
   if (isNil(url) || url === '') {
     return defaultPath
@@ -53,7 +63,13 @@ export function validateRedirectUrl(
     const fullPath = normalized + queryString
 
     // Block redirects to auth pages to prevent loops
-    const authPages = ['/login', '/join', '/forgot-password', '/reset-password']
+    const allowed = options.allowAuthPages ?? []
+    const authPages = [
+      '/login',
+      '/join',
+      '/forgot-password',
+      '/reset-password',
+    ].filter((page) => !allowed.includes(page))
     if (
       authPages.some(
         (page) => normalized === page || normalized.startsWith(page + '/')

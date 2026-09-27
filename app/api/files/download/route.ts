@@ -2,16 +2,35 @@ import { createClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { logger } from '@/lib/logger'
+import { isErr } from '@/lib/results'
+import { getLoggedInUser } from '@/services/identity/user/session'
+import { normalizeStoragePath } from '@/lib/storage-path'
 import { isNil } from 'lodash'
 
+/** Buckets the app serves through this route. Anything else is a 400. */
+const ALLOWED_BUCKETS = ['files', 'avatars'] as const
+
+/**
+ * Streams a storage object to a signed-in member. `/api/*` is skipped by the
+ * proxy, so this route gates itself: no session → 401. The session client is
+ * kept so storage RLS still decides what the member may read.
+ */
 export async function GET(request: NextRequest) {
   try {
+    const user = await getLoggedInUser()
+    if (isErr(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const bucket = searchParams.get('bucket') ?? 'files'
-    const path = searchParams.get('path')
+    if (!(ALLOWED_BUCKETS as readonly string[]).includes(bucket)) {
+      return NextResponse.json({ error: 'Unknown bucket' }, { status: 400 })
+    }
 
+    const path = normalizeStoragePath(searchParams.get('path'))
     if (isNil(path)) {
-      return new NextResponse('Missing file path', { status: 400 })
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
     }
 
     const supabase = await createClient()

@@ -20,6 +20,10 @@ import { getInitials } from '@/lib/avatar/initials'
 import { isErr } from '@/lib/results'
 import { toastError } from '@/lib/toast-error'
 import { isNil } from 'lodash'
+import {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_TOO_SHORT_MESSAGE,
+} from '@/lib/auth/constants'
 
 interface AuthFormProps {
   onSuccess?: () => void
@@ -64,6 +68,12 @@ export default function AuthForm({
     setError(null)
     setMessage(null)
     setLoading(true)
+
+    if (mode === 'register' && password.length < MIN_PASSWORD_LENGTH) {
+      setError(PASSWORD_TOO_SHORT_MESSAGE)
+      setLoading(false)
+      return
+    }
 
     if (mode === 'register' && password !== confirmPassword) {
       setError('Passwords do not match')
@@ -254,11 +264,7 @@ export default function AuthForm({
         value={password}
         onChange={setPassword}
         required
-        helpText={
-          mode === 'register'
-            ? 'Password must be at least 6 characters'
-            : undefined
-        }
+        helpText={mode === 'register' ? PASSWORD_TOO_SHORT_MESSAGE : undefined}
       />
 
       {mode === 'register' && (
