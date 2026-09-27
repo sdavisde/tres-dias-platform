@@ -173,6 +173,14 @@ scratch rather than hunting for leftovers.
 
 ## Where the merge gate lives
 
-_To be filled in when Unit 5 (Merge Gate and Release Ordering) lands: branch protection on `main`
-requiring the `checks` and `e2e` status checks, and how `release.yml` sequences its own `ci` job
-before `migrate`._
+The owner pushes to `main` directly, so there is no branch protection gating merges — that's a
+deliberate decision, not an oversight. The real gate is `release.yml`: its `ci` job calls the
+reusable `ci.yml` workflow (`uses: ./.github/workflows/ci.yml`) as the first thing that runs on
+every push to `main`, and `migrate`, `release`, and `deploy` all wait on it (`migrate: needs: ci`,
+chained through to `deploy`). If either the `checks` or `e2e` job inside that call fails, nothing
+downstream runs — no migration, no release, no deploy — so a red suite on `main` never touches
+production.
+
+`ci.yml`'s `pull_request` trigger also runs the same suite on any PR opened against `main`, which
+gives early signal before a push, but that run is informational only: it is not required by branch
+protection, and merging is not blocked on it.

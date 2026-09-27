@@ -9,15 +9,29 @@ on:
   # does not require an empty commit.
   workflow_dispatch:
 
+concurrency:
+  group: release-${{ github.ref }}
+  # Never cancel a running prod deploy.
+  cancel-in-progress: false
+
 permissions:
   contents: write
   issues: write
   pull-requests: write
 
 jobs:
+  # A red suite on main stops here: `ci` must pass before migrations run, so a
+  # failing `checks` or `e2e` job blocks the migration and the deploy below.
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    # No secrets are needed by ci.yml today; inherit keeps this future-proof.
+    secrets: inherit
+
   migrate:
     name: Run Migrations
     runs-on: ubuntu-latest
+    needs: ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4

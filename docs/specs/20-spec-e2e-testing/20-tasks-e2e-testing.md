@@ -362,10 +362,7 @@ checks before it touches the production database or deploys.
 - [ ] 5.1 **[S]** In `ci.yml` add `workflow_call:` under `on:`. In `release.yml` add a first job
       `ci: uses: ./.github/workflows/ci.yml` with `secrets: inherit` (none are needed, but harmless)
       and change `migrate` to `needs: ci`. Keep `release` and `deploy` chained as they are (FR-5.1).
-- [ ] 5.2 Ask the owner to set branch protection on `main`: require status checks `checks` and `e2e`
-      (they appear in the list once the workflow has run on a PR), require branches to be up to date,
-      and confirm whether admins are exempt (default: not exempt). Record the setting in
-      `docs/e2e-testing.md` under "Where the gate lives" (FR-5.2).
+- [ ] 5.2 Dropped 2026-09-27: owner pushes to main directly; the release.yml ordering is the gate.
 - [ ] 5.3 **[S]** Update the Epic 1 row in `docs/platform-roadmap-status.md`: PR CI gate and E2E harness
       shipped with dates; remaining Epic 1 items unchanged (FR-5.3). Merge and watch one `release.yml`
       run to confirm ordering.
