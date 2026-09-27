@@ -5,10 +5,16 @@
  * project. Vercel exposes its environment ('production' | 'preview') to the
  * browser as NEXT_PUBLIC_VERCEL_ENV, which keeps preview and production
  * events separate.
+ *
+ * CI sets NEXT_PUBLIC_SENTRY_ENABLED=false so a production build made under
+ * test does not report. The NEXT_PUBLIC_ prefix means it is inlined into the
+ * browser bundle too, not just read on the server. Vercel never sets it.
  */
 export const sentryOptions = {
   dsn: 'https://5675e62079634277450530edbdb25073@o4512153973424128.ingest.us.sentry.io/4512153984892928',
-  enabled: process.env.NODE_ENV === 'production',
+  enabled:
+    process.env.NODE_ENV === 'production' &&
+    process.env.NEXT_PUBLIC_SENTRY_ENABLED !== 'false',
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? 'local',
   tracesSampleRate: 0.4,
   dataCollection: {
