@@ -10,6 +10,7 @@ import {
   toStripeAmount,
   type CheckoutTarget,
 } from '@/lib/payments/checkout-price'
+import { buildCheckoutMetadata } from '@/lib/payments/checkout-metadata'
 import { getLoggedInUser } from '@/services/identity/user'
 import {
   getCheckoutQuote,
@@ -49,7 +50,7 @@ export async function beginCheckout(
   const price = quote.price.data
 
   // A team fee is paid by the team member themselves, signed in.
-  let userMetadata: Record<string, string> = {}
+  let userEmail: string | null = null
   if (target.kind === 'team') {
     const userResult = await getLoggedInUser()
     if (isErr(userResult) || isNil(userResult.data)) {
@@ -63,7 +64,7 @@ export async function beginCheckout(
       )
       return err(GENERIC_ERROR)
     }
-    userMetadata = { user_id: user.id, user_email: user.email ?? '' }
+    userEmail = user.email ?? null
   }
 
   const productResult = resolveFeeProductId(feeType)
@@ -75,15 +76,8 @@ export async function beginCheckout(
     return err(GENERIC_ERROR)
   }
 
-  const metadata: Record<string, string> = {
-    fee_type: feeType,
-    weekend_group_id: quote.groupId ?? '',
-    payment_owner: quote.payerName,
-    ...(target.kind === 'candidate'
-      ? { candidateId: target.candidateId }
-      : { group_member_id: target.groupMemberId }),
-    ...userMetadata,
-  }
+  // The webhook reads these keys back; see lib/payments/checkout-metadata.ts.
+  const metadata = buildCheckoutMetadata(target, quote, { userEmail })
 
   let session
   try {

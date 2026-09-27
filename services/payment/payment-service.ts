@@ -560,6 +560,21 @@ export async function syncGroupMemberPaymentsToRoster(
 }
 
 /**
+ * Finds the payment recorded for a Stripe payment intent, if any. The unique
+ * partial index on `payment_intent_id` means there is at most one.
+ *
+ * @param paymentIntentId - The Stripe payment intent ID
+ * @param options - Service options including RLS bypass flag
+ * @returns Result containing the payment, or null when none is recorded
+ */
+export async function findPaymentByIntentId(
+  paymentIntentId: string,
+  options?: ServiceOptions
+): Promise<Result<string, PaymentTransactionRow | null>> {
+  return PaymentRepository.getPaymentByPaymentIntentId(paymentIntentId, options)
+}
+
+/**
  * Checks if any payment exists for a specific target.
  *
  * @param targetType - The type of target ('candidate' or 'weekend_roster')
