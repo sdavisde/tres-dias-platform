@@ -187,7 +187,7 @@ A non-technical user can confirm this is done by having a member with no roles o
 
 ### [x] 5.0 Public flows on the admin client, anonymous revocation part B
 
-A non-technical user can confirm this is done by opening a candidate's forms link while logged out, filling it in and seeing the success page (and the Pre-Weekend Couple actually receiving the email), then opening a candidate fee link and completing a Stripe test checkout, while the owner sees in the dashboard that `anon` now holds nothing but schema usage.
+A non-technical user can confirm this is done by opening a candidate's forms link while logged out, filling it in and seeing the success page (and the Pre-Weekend Couple actually receiving the email), then opening a candidate fee link and completing a Stripe test checkout, while the owner sees in the dashboard that `anon` now holds no table grants or policies (schema `USAGE` only; function EXECUTE revoked from PUBLIC in the fix-up migration).
 
 #### 5.0 Proof Artifact(s)
 

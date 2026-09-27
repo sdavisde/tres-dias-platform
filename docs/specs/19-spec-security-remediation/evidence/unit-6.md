@@ -47,6 +47,14 @@ touched.
 
 ## psql proofs (a–e)
 
+> **Caveat added after the independent audit (2026-09-27).** The local database had never been
+> reseeded, so its role rows had drifted from `supabase/seed.sql` and from production: locally the
+> Treasurer and Pre Weekend Couple roles lacked `WRITE_PAYMENTS` at proof time. Proofs (d) and (e)
+> depend on DB-role permissions (Leaders Committee and inheritance) and were run against the drifted
+> data; the roles they used do hold the permissions in both seed and prod
+> (`prod-verification-2026-09-26.md`). Proofs (a), (b) and (c) depend only on CHA placement or on
+> having no role and are unaffected.
+
 Run inside one transaction that ends in `ROLLBACK`; fixtures verified gone afterwards (0 leftover
 rows). Each block uses `SET LOCAL ROLE authenticated` plus `set_config('request.jwt.claim.sub', …)`
 so `auth.uid()` returns the test user, exactly as PostgREST does. Users are seed users from the

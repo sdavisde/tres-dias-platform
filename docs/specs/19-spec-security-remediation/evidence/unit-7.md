@@ -67,7 +67,10 @@ then the login error page because the code exchange fails).
 - `bucket` must be `files` or `avatars` → otherwise `400 {"error":"Unknown bucket"}`.
 - `path` goes through `normalizeStoragePath` (`lib/storage-path.ts`): empty, absolute, `..`/`.`
   segments, doubled slashes and backslashes → `400 {"error":"Invalid file path"}`.
-- The session client is kept, so storage RLS still applies to what a member may read.
+- The session client is kept, so storage RLS applies to what a member may read through this route.
+  Note (independent audit H2): the `files` bucket is `public = true`, so its objects are also
+  reachable at `/storage/v1/object/public/files/<path>` without this route. Making the bucket
+  private is an owner decision recorded in `audit-fixups.md`.
 - Only caller in the tree is `components/file-context-menu.tsx`, which itself has no importers, so no
   UI depends on the response shape; success still streams the object as before.
 
