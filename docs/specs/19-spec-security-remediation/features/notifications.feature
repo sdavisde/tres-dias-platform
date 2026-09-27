@@ -12,9 +12,8 @@ Feature: Notifications
   Scenario: Sponsorship notification is sent when a member sponsors a candidate
     Given I am signed in as a member with no roles
     When I submit the sponsor form for a new candidate
-    Then an email "New candidate sponsored" is sent to the Pre-Weekend Couple
+    Then an email "New Sponsorship Request - <candidate name>" is sent to the Pre-Weekend Couple   # confirmed: email-actions.ts
     And the send is recorded in the email log without its body
-    # assumption: subject wording
 
   @E0-NOTIF-002 @pwc @unit-4
   Scenario: Candidate forms email goes to the candidate
@@ -28,7 +27,7 @@ Feature: Notifications
   Scenario: Forms-completed email reaches the Pre-Weekend Couple
     Given a candidate in status "awaiting_forms"
     When the candidate submits their forms while logged out
-    Then an email "Candidate forms completed" is sent to the Pre-Weekend Couple               # FR-5.4, previously failed on contact_information
+    Then an email "Candidate Forms Completed - <candidate name>" is sent to the Pre-Weekend Couple   # FR-5.4, previously failed on contact_information
     And the email links to the candidate's review page for the right weekend
 
   @E0-NOTIF-004 @pwc @unit-4
@@ -43,14 +42,14 @@ Feature: Notifications
   Scenario: Payment-received email after an online candidate payment
     Given a candidate in status "awaiting_payment"
     When the candidate fee is paid through Stripe and the webhook is processed
-    Then an email "Payment received" is sent to the Pre-Weekend Couple                       # notifyCandidatePaymentReceivedAdmin, now server-only
+    Then an email "Candidate Payment Received - <candidate name>" is sent to the Pre-Weekend Couple   # notifyCandidatePaymentReceivedAdmin, now server-only
 
   @E0-NOTIF-006 @pwc @unit-4
   Scenario: Payment-received email after a manual candidate payment
     Given I am signed in as a Pre-Weekend Couple member
     And a candidate in status "awaiting_payment"
     When I record a check payment for the candidate
-    Then an email "Payment received" is sent to the Pre-Weekend Couple
+    Then an email "Candidate Payment Received - <candidate name>" is sent to the Pre-Weekend Couple
 
   @E0-NOTIF-007 @team-member @unit-5 @fixed-bug
   Scenario: Assistant Head is emailed when a team member pays online

@@ -17,9 +17,8 @@ Feature: Authentication
   Scenario: Registering with a 7-character password is rejected before submit
     Given I am an anonymous visitor on "/join"
     When I enter the password "abcd123"
-    Then I see the message that passwords must be at least 8 characters               # FR-7.2
+    Then I see the message "Password must be at least 8 characters"                 # FR-7.2, lib/auth/constants.ts
     And the form is not submitted
-    # assumption: exact wording comes from lib/auth/constants.ts
 
   @E0-AUTH-003 @anonymous @unit-7
   Scenario: Registering with a 7-character password is rejected by the server too
@@ -64,7 +63,7 @@ Feature: Authentication
   Scenario: Reset password form enforces the 8-character minimum
     Given I opened a valid password reset link and landed on "/reset-password"
     When I enter the new password "short7!"
-    Then I see the message that passwords must be at least 8 characters               # FR-7.2
+    Then I see the message "Password must be at least 8 characters"                 # FR-7.2, lib/auth/constants.ts
     When I enter the new password "longenough8"
     And I submit
     Then my password is changed and I can sign in with "longenough8"
@@ -97,20 +96,40 @@ Feature: Authentication
     Given a valid auth code
     When I open "/auth/callback?code=<code>&next=<next>"
     Then I stay on this site
-    And I land on "/"                                                                  # FR-7.3 via validateRedirectUrl
-    # assumption: validateRedirectUrl falls back to "/"
+    And I land on "/home"                                                              # FR-7.3 validateRedirectUrl(next, '/home')
 
     Examples:
       | next                         |
       | https://evil.example         |
       | //evil.example               |
       | https://evil.example/%2Fhome |
+      | javascript:alert(1)          |
+      | /                            |
+      | /login                       |
+
+  @E0-AUTH-024 @anonymous @unit-7
+  Scenario: Auth callback still allows the password-reset destination
+    Given a valid auth code from a password reset email
+    When I open "/auth/callback?code=<code>&next=%2Freset-password"
+    Then I land on "/reset-password"                                                   # FR-7.3 allowAuthPages: ['/reset-password']
+
+  @E0-AUTH-025 @anonymous @unit-7 @security
+  Scenario: Auth callback with a failed code exchange goes to login, never to next
+    Given an invalid auth code
+    When I open "/auth/callback?code=<code>&next=https://evil.example"
+    Then I land on "/login" with the message "Authentication failed. Please try again."
 
   @E0-AUTH-022 @anonymous @unit-7 @security
   Scenario: Confirm route with an invalid token never redirects off-site
     When I open "/auth/confirm?type=email_change&token_hash=bad&next=https://evil.example"
     Then I stay on this site
-    And I see the app's auth error page                                                # FR-7.3 error branch
+    And I am redirected to "/profile?emailChange=error"                                # FR-7.3 error branch: next falls back to /profile
+    And, having no session, the proxy then sends me to "/login"
+
+  @E0-AUTH-026 @anonymous @unit-7 @security
+  Scenario: Confirm route with an invalid non-email-change token goes to login
+    When I open "/auth/confirm?type=recovery&token_hash=bad&next=https://evil.example"
+    Then I land on "/login" with the message "Confirmation link is invalid or has expired. Please try again."
 
   @E0-AUTH-023 @anonymous @unit-7
   Scenario: Confirm route with a valid token honours a relative next

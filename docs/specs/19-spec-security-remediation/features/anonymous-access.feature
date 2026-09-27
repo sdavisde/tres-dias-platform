@@ -50,22 +50,22 @@ Feature: Anonymous access
   Scenario: Reopening a submitted forms link shows the already-submitted state
     Given a candidate in status "pending_approval" whose candidate info was submitted
     When I open the candidate forms page for that candidate
-    Then I see an "already submitted" message instead of the form                  # FR-5.2
-    # assumption: exact copy of the message
+    Then I see the heading "Forms already submitted" instead of the form           # FR-5.2
+    And I see "Your candidate forms have already been received. If anything needs to change, please reach out to your sponsor."
+    # confirmed: app/(public)/candidate/[candidateId]/forms/page.tsx
 
   @E0-ANON-013 @unit-5 @security
   Scenario: Resubmitting does not create a duplicate or flip the status back
     Given a candidate in status "pending_approval" whose candidate info was submitted
     When the forms submission is replayed for that candidate
-    Then the submission is rejected
+    Then the submission is rejected with "These forms have already been submitted."   # unique index → 23505
     And exactly one candidate info row exists for that candidate
     And the candidate's status is still "pending_approval"
 
   @E0-ANON-014 @unit-5 @security
   Scenario Outline: Invalid or unknown candidate ids do not reveal anything
     When I open the candidate forms page for "<id>"
-    Then I see a not-found page
-    # assumption: not-found rather than a generic error
+    Then I see the not-found page                                                    # confirmed: page.tsx calls notFound()
 
     Examples:
       | id                                   |
@@ -77,6 +77,17 @@ Feature: Anonymous access
     Given a candidate in status "confirmed"
     When I open the candidate forms page for that candidate
     Then I do not see the form
+    And I see "This registration link is no longer accepting forms. Please reach out to your sponsor if you have questions."
+
+  @E0-ANON-016 @unit-5 @security @api
+  Scenario: A submission that arrives after the candidate left the forms-open state leaves no trace
+    Given a candidate in status "awaiting_forms" with no submitted candidate info
+    And I loaded the candidate forms page for that candidate
+    And the candidate's status was then changed to "confirmed" by the Pre-Weekend Couple
+    When I submit the completed form
+    Then the submission is rejected with "This candidate is no longer accepting forms."
+    And no candidate info row exists for that candidate                              # insert is undone when the status update touches 0 rows
+    And the candidate's status is still "confirmed"
 
   # --- Candidate fee checkout (the second public flow) -------------------------------------------
 
@@ -133,7 +144,7 @@ Feature: Anonymous access
   @E0-ANON-040 @unit-1 @api @security
   Scenario Outline: The publishable key cannot read protected tables
     When I request "GET /rest/v1/<table>?select=*&limit=1" with only the publishable key
-    Then the response is a permission error or an empty list                        # FR-1.6
+    Then the response is a permission error (PostgREST 42501)                       # FR-1.6; anon holds no table grants
 
     Examples:
       | table                       |
@@ -151,7 +162,7 @@ Feature: Anonymous access
   @E0-ANON-041 @unit-5 @api @security
   Scenario Outline: After Unit 5 the publishable key cannot read candidate tables either
     When I request "GET /rest/v1/<table>?select=*&limit=1" with only the publishable key
-    Then the response is a permission error or an empty list                        # FR-5.7
+    Then the response is a permission error (PostgREST 42501)                       # FR-5.7; anon holds no table grants
 
     Examples:
       | table                       |
@@ -179,7 +190,7 @@ Feature: Anonymous access
   @E0-ANON-043 @unit-1 @api @security
   Scenario: The publishable key cannot list or read stored files
     When I request the storage objects listing for bucket "files" with only the publishable key
-    Then the response is a permission error or an empty list                        # FR-1.7
+    Then the response is a permission error or an empty list                        # FR-1.7; storage SELECT is authenticated-only
     But a public avatar URL still loads                                             # avatars stay public-read
 
   @E0-ANON-044 @unit-7 @api @security

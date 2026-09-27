@@ -30,14 +30,15 @@ Feature: Admin portal
   Scenario Outline: Admin pages redirect when the permission is missing
     Given I am signed in as an Admin
     When I open "<path>"
-    Then I am redirected away from the page
+    Then I am redirected to "<lands on>"
 
     Examples:
-      | path               | missing permission |
-      | /admin/payments    | READ_PAYMENTS      |
-      | /admin/events      | READ_EVENTS        |
-      | /admin/security    | READ_USER_ROLES    |
-    # assumption: exact guard per page from lib/admin/page-guard
+      | path               | missing permission | lands on         |
+      | /admin/payments    | READ_PAYMENTS      | /admin           |
+      | /admin/events      | READ_EVENTS        | /?error=<reason> |
+      | /admin/security    | READ_USER_ROLES    | /?error=<reason> |
+    # confirmed: app/admin/payments/page.tsx redirects to /admin; events uses permissionLock,
+    # security uses guardAdminPage; both redirect to /?error=…
 
   @E0-ADMIN-004 @member @security
   Scenario: A member without READ_ADMIN_PORTAL cannot enter the admin portal

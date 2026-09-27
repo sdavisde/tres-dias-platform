@@ -41,9 +41,8 @@ Feature: Sponsorship and candidate review
     Given I am signed in as a Pre-Weekend Couple member
     And a candidate in status "sponsored"
     When I open that candidate in the review page and choose "Send candidate forms"
-    Then the candidate's status is "awaiting_forms"
+    Then the candidate's status is "awaiting_forms"                                       # confirmed: review-workspace.tsx
     And a candidate forms email is recorded for the candidate's email                    # FR-4.1
-    # assumption: status transition name
 
   @E0-CAND-012 @pwc @unit-4
   Scenario: PWC approves a candidate and requests payment
@@ -92,14 +91,14 @@ Feature: Sponsorship and candidate review
     When I mark the candidate as "confirmed" from the review page
     Then the candidate's status is "confirmed"                                            # FR-6.5 hp('WRITE_CANDIDATES')
 
-  @E0-CAND-018 @pwc
-  Scenario: PWC deletes a candidate from the review page
+  @E0-CAND-018 @pwc @unit-3 @security
+  Scenario: No candidate delete path exists in the app
     Given I am signed in as a Pre-Weekend Couple member
     And a candidate in status "sponsored"
-    When I delete the candidate from the review UI, if the UI offers it
-    Then the candidate and its info rows are gone                                          # FR-6.5 DELETE_CANDIDATES
-    # assumption: PWC holds DELETE_CANDIDATES; verify the UI exposes delete at all (the old unguarded
-    # deleteCandidate export had no callers and is removed by FR-3.4)
+    When I open that candidate in the review page
+    Then no action offers to delete the candidate                                         # confirmed: no UI ever called deleteCandidate
+    And the former server action "deleteCandidate" is not callable                        # FR-3.4 removed the unguarded export
+    # DELETE_CANDIDATES remains a permission and the RLS DELETE policy (FR-6.5) is ready for a future UI.
 
   # --- Hub candidates tab ----------------------------------------------------------------------------------
 
@@ -164,7 +163,13 @@ Feature: Sponsorship and candidate review
   @E0-CAND-040 @rector
   Scenario: Rector sees candidate medical info on the review page
     Given I am signed in as the Rector of the active weekend
-    And I also hold a DB role with READ_CANDIDATES
+    And I also hold a DB role with READ_CANDIDATES                                     # confirmed: CHA_ROLE_PERMISSIONS[RECTOR] has no READ_CANDIDATES
     When I open the review candidates page for the active Men's weekend
     Then I see medical notes because the Rector CHA role grants READ_CANDIDATE_MEDICAL_INFO
-    # assumption: Rector reaches the page only with READ_CANDIDATES from a DB role
+
+  @E0-CAND-041 @rector @security
+  Scenario: Rector without a candidate role cannot open the review page
+    Given I am signed in as the Rector of the active weekend
+    And I hold no database roles
+    When I open the review candidates page for the active Men's weekend
+    Then I am redirected away from the page                                              # review-candidates/page.tsx requires READ_CANDIDATES

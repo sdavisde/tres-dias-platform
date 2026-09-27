@@ -10,18 +10,20 @@ Plain-Gherkin scenarios that describe what users can and cannot do after the sec
 
 ## Files
 
-| File                                 | Area                                                                      |
-| ------------------------------------ | ------------------------------------------------------------------------- |
-| `anonymous-access.feature`           | Logged-out pages, candidate forms, candidate fee checkout, REST + actions |
-| `authentication.feature`             | Sign-up, login, password rules, reset, redirect validation                |
-| `member-self-service.feature`        | Profile, experience, team forms, secuela confirm, own fees, files         |
-| `sponsorship-and-candidates.feature` | Sponsor form, review queue, PWC actions, candidate payments               |
-| `roster-and-leadership.feature`      | Roster builder, CHA-derived permissions, team cash payments               |
-| `admin-portal.feature`               | Admin pages by permission, events, weekends, settings, roles, files       |
-| `impersonation.feature`              | Full Access impersonation and the signed cookie                           |
-| `notifications.feature`              | Every email the flows send, including the two fixed by Unit 5             |
-| `data-integrity.feature`             | REST-level RLS matrix (table × command × persona)                         |
-| `personas.md`                        | Who each `Given I am signed in as …` step means                           |
+| File                                 | Area                                                                      | Scenarios |
+| ------------------------------------ | ------------------------------------------------------------------------- | --------- |
+| `anonymous-access.feature`           | Logged-out pages, candidate forms, candidate fee checkout, REST + actions | 21        |
+| `authentication.feature`             | Sign-up, login, password rules, reset, redirect validation                | 20        |
+| `member-self-service.feature`        | Profile, experience, team forms, secuela confirm, own fees, files         | 43        |
+| `sponsorship-and-candidates.feature` | Sponsor form, review queue, PWC actions, candidate payments               | 21        |
+| `roster-and-leadership.feature`      | Roster builder, CHA-derived permissions, team cash payments               | 21        |
+| `admin-portal.feature`               | Admin pages by permission, events, weekends, settings, roles, files       | 34        |
+| `impersonation.feature`              | Full Access impersonation and the signed cookie                           | 14        |
+| `notifications.feature`              | Every email the flows send, including the two fixed by Unit 5             | 14        |
+| `data-integrity.feature`             | REST-level RLS matrix (table × command × persona)                         | 14        |
+| `personas.md`                        | Who each `Given I am signed in as …` step means                           |           |
+
+202 scenarios (outlines counted once); each carries one unique id.
 
 ## Tags
 
@@ -42,9 +44,11 @@ requirement behind a step. When a spec FR changes, search these files for its nu
 
 ## Assumptions
 
-Scenarios marked `# assumption:` describe behaviour the author could not confirm from code alone
-(usually copy text or an exact redirect target). Verify those during the first manual pass and edit
-the step rather than the implementation.
+The suite was first drafted from the spec while the units were being built, with `# assumption:`
+markers on copy text and redirect targets. On 2026-09-27 every marker was resolved against the final
+code on `feat/security-remediation`; where a step quotes exact text or a redirect target it now
+matches the implementation, and a sparse `# confirmed: <file>` comment names the source. When the
+copy or a redirect changes, edit the step, not the implementation.
 
 ## Fixtures the E2E harness will need
 

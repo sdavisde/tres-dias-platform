@@ -193,8 +193,7 @@ Feature: Member self-service
   @E0-MEMBER-037 @member
   Scenario: Member not on a team is redirected away from team forms
     When I open "/team-forms"
-    Then I am redirected away or shown that I am not on a team
-    # assumption: layout redirects when teamMemberInfo is null
+    Then I am redirected to "/"                                                        # confirmed: app/(member)/team-forms/layout.tsx
 
   # --- Secuela ---------------------------------------------------------------------------------------
 
@@ -332,10 +331,16 @@ Feature: Member self-service
     Then the response status is <status>                                                # FR-7.4
 
     Examples:
-      | bucket   | path              | status |
-      | secrets  | any.pdf           | 400    |
-      | files    | ../../etc/passwd  | 400    |
-      | files    | minutes/2026.pdf  | 200    |
+      | bucket   | path                 | status |
+      | secrets  | any.pdf              | 400    |
+      | files    | ../../etc/passwd     | 400    |
+      | files    | minutes/../other.pdf | 400    |
+      | files    | /minutes/2026.pdf    | 400    |
+      | files    | minutes\\2026.pdf    | 400    |
+      | files    |                      | 400    |
+      | files    | minutes/2026.pdf     | 200    |
+      | avatars  | <my user id>.webp    | 200    |
+    # confirmed: lib/storage-path.ts normalizeStoragePath; ALLOWED_BUCKETS = files, avatars
 
   # --- Events and encouragement ---------------------------------------------------------------------------
 

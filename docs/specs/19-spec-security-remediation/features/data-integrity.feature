@@ -3,6 +3,8 @@ Feature: Row-level security matrix
   What each persona can do against each table through the REST API, independent of the app. This is
   the database half of the remediation: Units 1, 5 and 6 (FR-1.x, FR-5.7, FR-6.x).
   "allowed" means the request succeeds; "denied" means a permission error or zero affected rows.
+  For the anonymous key "denied" is always a PostgREST 42501 permission error, because anon holds no
+  table grants after Units 1 and 5 (it keeps only USAGE on the schema).
 
   @E0-RLS-001 @unit-1 @unit-5 @security
   Scenario Outline: Anonymous key

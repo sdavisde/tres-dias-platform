@@ -181,6 +181,9 @@ Feature: Roster building and weekend leadership
     Given I am signed in as the Rector of the active weekend
     And I hold no database roles
     When I invoke the server action "recordManualCandidatePayment" for a candidate
-    Then a payment is recorded only if READ_WRITE_TEAM_PAYMENTS is accepted for candidate fees
-    # assumption: the gate is the same either-permission check for both actions (FR-4.4); the Rector
-    # cannot reach the candidate review page anyway without READ_CANDIDATES
+    Then the action accepts my READ_WRITE_TEAM_PAYMENTS                                            # FR-4.4 either-permission gate
+    But the database rejects the insert with a permission error                                    # FR-6.4: candidate targets need WRITE_PAYMENTS
+    And no payment is recorded
+    # confirmed: services/candidates/actions.ts + payment_transaction_insert_payments_or_team_cash.
+    # Leadership-by-CHA may record team cash/check only; the Rector cannot reach the review page anyway
+    # without READ_CANDIDATES (see E0-CAND-041).
