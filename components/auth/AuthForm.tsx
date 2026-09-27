@@ -20,6 +20,13 @@ import { getInitials } from '@/lib/avatar/initials'
 import { isErr } from '@/lib/results'
 import { toastError } from '@/lib/toast-error'
 import { isNil } from 'lodash'
+import { logger } from '@/lib/logger'
+import {
+  describeAuthError,
+  type AuthErrorDescription,
+} from '@/lib/auth/auth-errors'
+
+const FORGOT_PASSWORD_PATH = '/forgot-password'
 
 interface AuthFormProps {
   onSuccess?: () => void
@@ -39,7 +46,7 @@ export default function AuthForm({
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [gender, setGender] = useState<'male' | 'female' | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<AuthErrorDescription | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [cropperOpen, setCropperOpen] = useState(false)
@@ -66,7 +73,7 @@ export default function AuthForm({
     setLoading(true)
 
     if (mode === 'register' && password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError({ message: 'Passwords do not match' })
       setLoading(false)
       return
     }
@@ -83,7 +90,10 @@ export default function AuthForm({
         onSuccess?.()
         router.refresh()
       } else {
-        if (isNil(gender)) throw new Error('Please select your gender')
+        if (isNil(gender)) {
+          setError({ message: 'Please select your gender' })
+          return
+        }
 
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -131,7 +141,8 @@ export default function AuthForm({
         router.refresh()
       }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      logger.warn({ error, mode }, 'Email auth failed')
+      setError(describeAuthError(error, mode))
     } finally {
       setLoading(false)
     }
@@ -148,7 +159,24 @@ export default function AuthForm({
       })
       if (!isNil(error)) throw error
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      logger.warn({ error, mode }, 'Google auth failed')
+      setError(describeAuthError(error, mode))
+    }
+  }
+
+  const handleHint = (hint: AuthErrorDescription['hint']) => {
+    switch (hint?.action) {
+      case 'forgot-password':
+        router.push(FORGOT_PASSWORD_PATH)
+        break
+      case 'switch-to-login':
+        setMode('login')
+        setError(null)
+        break
+      case 'switch-to-register':
+        setMode('register')
+        setError(null)
+        break
     }
   }
 
@@ -160,8 +188,21 @@ export default function AuthForm({
       <AuthModeToggle mode={mode} onModeChange={setMode} />
 
       {!isNil(error) && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+        <Alert variant="destructive" data-testid="auth-error">
+          <AlertDescription>
+            <p>{error.message}</p>
+            {!isNil(error.hint) && (
+              <Button
+                type="button"
+                variant="link"
+                className="h-auto p-0 text-sm"
+                data-testid="auth-error-hint"
+                onClick={() => handleHint(error.hint)}
+              >
+                {error.hint.text}
+              </Button>
+            )}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -275,7 +316,7 @@ export default function AuthForm({
         <div className="text-right">
           <Button
             type="button"
-            href="/forgot-password"
+            href={FORGOT_PASSWORD_PATH}
             variant="link"
             className="p-0 h-auto text-sm text-blue-600"
           >
