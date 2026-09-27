@@ -107,6 +107,9 @@ async function confirmedAuthUsers(): Promise<Map<string, User>> {
 
 const TARGET_CHUNK = 100
 
+/** What the candidate fee page accepts as `payment_owner`. */
+const VALID_PAYMENT_OWNERS = new Set(['candidate', 'sponsor'])
+
 /**
  * Live (non-voided) money on record per target id, in dollars. Mirrors
  * `sumLivePaymentsForTargets` in services/payment/repository.ts, which can't
@@ -334,7 +337,9 @@ export async function pickAwaitingCandidate({
   const rows = unwrap(
     await adminClient()
       .from('candidates')
-      .select('*, candidate_sponsorship_info(candidate_name, candidate_email)')
+      .select(
+        '*, candidate_sponsorship_info(candidate_name, candidate_email, payment_owner)'
+      )
       .eq('status', 'awaiting_payment')
       .in(
         'weekend_id',
@@ -352,6 +357,9 @@ export async function pickAwaitingCandidate({
     const matches = partial ? paid > 0 && paid < fees.candidateFee : paid === 0
     if (!matches) continue
     const [info] = sponsorship
+    // The public fee page accepts only these two payers; older seeds stored the
+    // sponsor's email here, which the page rejects with INVALID_PAYMENT_OWNER.
+    if (!VALID_PAYMENT_OWNERS.has(info?.payment_owner ?? '')) continue
     return {
       candidate: { ...candidate, weekend_id: candidate.weekend_id },
       name: info?.candidate_name ?? null,
@@ -364,8 +372,8 @@ export async function pickAwaitingCandidate({
   throw invariant(
     4,
     partial
-      ? `an awaiting_payment candidate on an ACTIVE weekend with live payments above $0 and below the $${fees.candidateFee} fee`
-      : 'an awaiting_payment candidate on an ACTIVE weekend with no live payment_transaction rows'
+      ? `an awaiting_payment candidate on an ACTIVE weekend whose sponsorship payment_owner is 'candidate' or 'sponsor', with live payments above $0 and below the $${fees.candidateFee} fee`
+      : "an awaiting_payment candidate on an ACTIVE weekend whose sponsorship payment_owner is 'candidate' or 'sponsor', with no live payment_transaction rows"
   )
 }
 
