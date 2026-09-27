@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getAllCandidatesWithDetails } from '@/actions/candidates'
+import { getAllCandidatesWithDetails } from '@/services/candidates/hydrated-candidates'
 import { MemberBreadcrumbs } from '@/components/member/breadcrumbs'
 import { PageContent } from '@/components/member/page-content'
 import { SegmentedControl } from '@/components/ui/segmented-control'

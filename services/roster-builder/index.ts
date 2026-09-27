@@ -5,13 +5,11 @@
  * draft roster management, and finalization.
  */
 
-// Actions
+// Actions (client-callable). `getRosterBuilderCommunityData` is server-only
+// and lives in `./roster-builder-service`; the board's page imports it there.
 export {
-  // Community data
-  getRosterBuilderCommunityData,
   // Draft roster
   addDraftRosterMember,
-  getDraftRoster,
   removeDraftRosterMember,
   finalizeDraftRosterMember,
   // Finalized roster

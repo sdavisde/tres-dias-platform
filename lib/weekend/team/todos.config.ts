@@ -1,6 +1,6 @@
 import { getMyTeamFeeStatus } from '@/services/payment'
 import { isTeamFeeSettled } from '@/lib/payments/checkout-price'
-import { hasCompletedAllTeamForms } from '@/actions/team-forms'
+import { hasCompletedAllTeamForms } from '@/services/weekend-group-member/weekend-group-member-service'
 import { isOk } from '@/lib/results'
 import type { TodoItemConfig } from './todos.types'
 

@@ -68,7 +68,7 @@ export function Dashboard({ user, prayerWheelUrl }: DashboardProps) {
 
           {isUserOnActiveTeam(user) && (
             <Suspense fallback={<TeamMemberTodoLoading />}>
-              <TeamMemberTodo user={user} />
+              <TeamMemberTodo />
             </Suspense>
           )}
         </div>

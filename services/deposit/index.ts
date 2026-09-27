@@ -1,6 +1,3 @@
-// Re-export actions (public API)
-export * from './actions'
-
 // Database types
 export type {
   ServiceOptions,

@@ -2,6 +2,9 @@ import 'server-only'
 
 import { isNil } from 'lodash'
 import { endOfMonth, startOfMonth } from 'date-fns'
+import type { CreateEmailResponseSuccess } from 'resend'
+import { createClient } from '@/lib/supabase/server'
+import { formatWeekendLabelFor } from '@/lib/weekend'
 import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import { logger } from '@/lib/logger'
@@ -17,6 +20,9 @@ import * as CandidateRepository from '@/services/candidates/repository'
 import type { ContactInfo, NotificationRecipient } from './types'
 import type { HydratedCandidate } from '@/lib/candidates/types'
 import CandidatePaymentCompletedEmail from '@/components/email/CandidatePaymentCompletedEmail'
+import CandidateFormsCompletedEmail from '@/components/email/CandidateFormsCompletedEmail'
+import TeamPaymentNotificationEmail from '@/components/email/TeamPaymentNotificationEmail'
+import { getHydratedCandidate } from '@/services/candidates/hydrated-candidates'
 import { getCandidateReviewUrl } from './review-links'
 
 /**
@@ -186,8 +192,7 @@ async function sendCandidatePaymentEmail(
       : (sponsorshipInfo?.candidate_name ?? 'Candidate')
 
   const paymentOwner = (sponsorshipInfo?.payment_owner ?? 'candidate') as
-    | 'candidate'
-    | 'sponsor'
+    'candidate' | 'sponsor'
 
   // Build hydrated candidate shape for email template
   const candidate = {
@@ -263,4 +268,186 @@ export async function updateContactInformation(
     label: data.label ?? contactId,
     emailAddress: data.email_address ?? '',
   })
+}
+
+/**
+ * Sends an email to the assistant head CHA informing them that team fees have been paid.
+ */
+export async function notifyAssistantHeadForTeamPayment(
+  teamUserId: string | null,
+  weekendId: string | null,
+  paymentAmount: number
+): Promise<Result<string, true>> {
+  if (isNil(teamUserId) || isNil(weekendId)) {
+    return err('Team user ID or weekend ID is null')
+  }
+
+  try {
+    if (!(await isNotificationEnabled(NOTIFY_PAYMENT_RECEIPTS_KEY))) {
+      logger.info(
+        `Skipped team payment notification for weekend ${weekendId}: payment receipts & reminders are switched off in site settings`
+      )
+      return ok(true)
+    }
+
+    const supabase = await createClient()
+
+    // Get all weekend roster data and weekend details in parallel
+    const [teamMemberResult, weekendResult, assistantHeadResult] =
+      await Promise.all([
+        // Get team member details
+        supabase
+          .from('weekend_roster')
+          .select(
+            `
+          *,
+          users!inner(email, first_name, last_name)
+        `
+          )
+          .eq('user_id', teamUserId)
+          .eq('weekend_id', weekendId)
+          .single(),
+
+        // Get weekend details
+        supabase
+          .from('weekends')
+          .select('*, weekend_groups(number)')
+          .eq('id', weekendId)
+          .single(),
+
+        // Find Assistant Head for this weekend
+        supabase
+          .from('weekend_roster')
+          .select(
+            `
+          *,
+          users!inner(email, first_name, last_name)
+        `
+          )
+          .eq('weekend_id', weekendId)
+          .eq('cha_role', 'Assistant Head')
+          .limit(1)
+          .single(),
+      ])
+
+    const { data: teamMember, error: teamMemberError } = teamMemberResult
+    const { data: weekend, error: weekendError } = weekendResult
+    const { data: assistantHead, error: assistantHeadError } =
+      assistantHeadResult
+
+    if (!isNil(teamMemberError) || isNil(teamMember)) {
+      return err(
+        `Failed to fetch team member details: ${teamMemberError?.message ?? 'Team member not found'}`
+      )
+    }
+
+    if (!isNil(weekendError) || isNil(weekend)) {
+      return err(
+        `Failed to fetch weekend details: ${weekendError?.message ?? 'Weekend not found'}`
+      )
+    }
+
+    if (!isNil(assistantHeadError) || isNil(assistantHead)) {
+      return err(
+        `Failed to fetch assistant head for weekend ${weekendId}: ${assistantHeadError?.message ?? 'Assistant Head not found'}`
+      )
+    }
+
+    if (isNil(assistantHead.users.email)) {
+      return err(`Assistant head email not found for weekend ${weekendId}`)
+    }
+
+    // Send email to assistant head
+    const sendResult = await sendEmail('team-payment-notification', {
+      from: await getSystemEmailFrom(),
+      to: [assistantHead.users.email],
+      subject: `Team Fee Received - ${teamMember.users.first_name} ${teamMember.users.last_name}`,
+      react: TeamPaymentNotificationEmail({
+        teamMemberName: `${teamMember.users.first_name} ${teamMember.users.last_name}`,
+        teamMemberEmail: teamMember.users.email,
+        weekendName: formatWeekendLabelFor({
+          number: weekend.weekend_groups?.number,
+          gender: weekend.type,
+        }),
+        paymentAmount,
+      }),
+    })
+
+    if (isErr(sendResult)) {
+      logger.error(
+        `Failed to send team payment notification email to assistant head for ${teamMember.users.first_name} ${teamMember.users.last_name}: ${sendResult.error}`
+      )
+      return err(`Failed to send email: ${sendResult.error}`)
+    }
+
+    logger.info(
+      `Team payment notification email sent successfully to assistant head for ${teamMember.users.first_name} ${teamMember.users.last_name}`
+    )
+    return ok(true)
+  } catch (error) {
+    return err(
+      `Error while sending team payment notification email: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
+}
+
+/**
+ * Notify pre-weekend couple when a candidate completes their forms
+ */
+export async function sendCandidateFormsCompletedEmail(
+  candidateId: string
+): Promise<Result<string, { data: CreateEmailResponseSuccess | null }>> {
+  try {
+    // Fetch candidate data
+    const candidateResult = await getHydratedCandidate(candidateId)
+
+    if (isErr(candidateResult)) {
+      return err(`Failed to fetch candidate: ${candidateResult.error}`)
+    }
+
+    const candidate = candidateResult.data
+
+    if (isNil(candidate)) {
+      return err('Candidate not found')
+    }
+
+    // Get pre-weekend couple email
+    const preWeekendEmailResult = await getPreWeekendCoupleEmail()
+    if (isErr(preWeekendEmailResult)) {
+      return err(preWeekendEmailResult.error)
+    }
+
+    const candidateName =
+      !isNil(candidate.candidate_info?.first_name) &&
+      !isNil(candidate.candidate_info?.last_name)
+        ? `${candidate.candidate_info.first_name} ${candidate.candidate_info.last_name}`
+        : (candidate.candidate_sponsorship_info?.candidate_name ?? 'Candidate')
+
+    // Send email using Resend
+    const sendResult = await sendEmail('candidate-forms-completed', {
+      from: await getSystemEmailFrom(),
+      to: [preWeekendEmailResult.data],
+      subject: `Candidate Forms Completed - ${candidateName}`,
+      react: CandidateFormsCompletedEmail({
+        ...candidate,
+        reviewUrl: await getCandidateReviewUrl(candidate),
+      }),
+    })
+
+    if (isErr(sendResult)) {
+      logger.error(
+        `Failed to send candidate forms completed email for ${candidateName}: ${sendResult.error}`
+      )
+      return err(`Failed to send email: ${sendResult.error}`)
+    }
+
+    logger.info(
+      `Candidate forms completed email sent successfully for ${candidateName}`
+    )
+    return ok({ data: sendResult.data })
+  } catch (error) {
+    return err(
+      `Error while sending candidate forms completed email: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
+  }
 }

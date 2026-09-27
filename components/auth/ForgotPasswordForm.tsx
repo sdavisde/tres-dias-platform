@@ -6,10 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ArrowLeft, Mail } from 'lucide-react'
-import {
-  sendCustomPasswordResetEmail,
-  sendPasswordResetEmail,
-} from '@/actions/password-reset'
+import { sendCustomPasswordResetEmail } from '@/actions/password-reset'
 import { isErr } from '@/lib/results'
 import Link from 'next/link'
 import { isNil } from 'lodash'

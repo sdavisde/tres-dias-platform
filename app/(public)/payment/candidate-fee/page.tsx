@@ -5,7 +5,7 @@ import * as Results from '@/lib/results'
 import { getUrl } from '@/lib/url'
 import { Errors } from '@/lib/error'
 import { isEmpty, isNil } from 'lodash'
-import { getCandidateById } from '@/services/candidates'
+import { getCandidateById } from '@/services/candidates/candidate-service'
 import { getCheckoutQuote } from '@/services/payment/payment-service'
 import type { CheckoutTarget } from '@/lib/payments/checkout-price'
 

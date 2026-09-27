@@ -17,22 +17,6 @@ function invalidatingSettings(
 }
 import type { NotificationToggleKey } from './site-settings'
 
-/**
- * Get the prayer wheel URLs for men's and women's weekends.
- * Public read - no auth required (used on admin settings page).
- */
-export async function getPrayerWheelUrls() {
-  return await SettingsService.getPrayerWheelUrls()
-}
-
-/**
- * Get the prayer wheel URL for a user based on their gender.
- * Men get the women's prayer wheel and vice versa.
- */
-export async function getPrayerWheelUrlForGender(gender: string | null) {
-  return await SettingsService.getPrayerWheelUrlForGender(gender)
-}
-
 type UpdateSettingRequest = {
   key: string
   value: string
@@ -42,9 +26,9 @@ type UpdateSettingRequest = {
  * Update a site setting. Requires WRITE_SETTINGS permission.
  */
 export const updateSetting = authorizedAction<
-  UpdateSettingRequest,
+  [UpdateSettingRequest],
   SiteSetting
->(Permission.WRITE_SETTINGS, async ({ key, value }) => {
+>(Permission.WRITE_SETTINGS, async (_user, { key, value }) => {
   return invalidatingSettings(await SettingsService.updateSetting(key, value))
 })
 
@@ -52,9 +36,9 @@ export const updateSetting = authorizedAction<
  * Update the address every transactional email is sent from.
  * Requires WRITE_SETTINGS permission.
  */
-export const updateSystemEmailAddress = authorizedAction<string, SiteSetting>(
+export const updateSystemEmailAddress = authorizedAction<[string], SiteSetting>(
   Permission.WRITE_SETTINGS,
-  async (address) => {
+  async (_user, address) => {
     return invalidatingSettings(
       await SettingsService.updateSystemEmailAddress(address)
     )
@@ -71,9 +55,9 @@ type SetNotificationToggleRequest = {
  * Requires WRITE_SETTINGS permission.
  */
 export const setNotificationToggle = authorizedAction<
-  SetNotificationToggleRequest,
+  [SetNotificationToggleRequest],
   SiteSetting
->(Permission.WRITE_SETTINGS, async ({ key, enabled }) => {
+>(Permission.WRITE_SETTINGS, async (_user, { key, enabled }) => {
   return invalidatingSettings(
     await SettingsService.setNotificationToggle(key, enabled)
   )

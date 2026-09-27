@@ -1,21 +1,16 @@
 import { ClipboardCheck } from 'lucide-react'
-import type { TeamMemberUser } from '@/lib/users/types'
 import { getTeamTodoData } from '@/lib/weekend/team/todos.actions'
 import { Typography } from '@/components/ui/typography'
 import { Separator } from '@/components/ui/separator'
 import { isNil } from 'lodash'
 import { TeamMemberTodoClient } from './team-member-todo.client'
 
-type TeamMemberTodoProps = {
-  user: TeamMemberUser
-}
-
 /**
- * Displays team member TODO list for their active weekend.
+ * Displays the signed-in team member's TODO list for their active weekend.
  * Server component that fetches data and delegates rendering to client wrapper.
  */
-export async function TeamMemberTodo({ user }: TeamMemberTodoProps) {
-  const todoData = await getTeamTodoData(user)
+export async function TeamMemberTodo() {
+  const todoData = await getTeamTodoData()
 
   if (isNil(todoData)) {
     return null

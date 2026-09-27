@@ -22,10 +22,6 @@ export const updateUserAddress = async (userId: string, address: Address) => {
   return await UserService.updateUserAddress(userId, address)
 }
 
-export const deleteUser = async (userId: string) => {
-  return await UserService.deleteUser(userId)
-}
-
 export const updateUserBasicInfo = async (userId: string, data: BasicInfo) => {
   return await UserService.updateUserBasicInfo(userId, data)
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { logger } from '@/lib/logger'
-import { getHydratedCandidate } from '@/actions/candidates'
+import { getHydratedCandidate } from '@/services/candidates/hydrated-candidates'
 import * as Results from '@/lib/results'
 import { CandidateForms } from './candidate-forms'
 import { Typography } from '@/components/ui/typography'

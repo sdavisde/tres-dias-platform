@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 import { stripe } from '@/lib/stripe'
-import { notifyAssistantHeadForTeamPayment } from '@/services/notifications'
 import { isNil } from 'lodash'
 import { PageContent } from '@/components/member/page-content'
 

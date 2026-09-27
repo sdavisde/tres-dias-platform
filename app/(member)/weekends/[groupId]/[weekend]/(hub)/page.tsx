@@ -7,12 +7,12 @@ import {
   YourPart,
   type YourPartAction,
 } from '@/components/weekend-hub/your-part'
-import { hasCompletedAllTeamForms } from '@/actions/team-forms'
+import { hasCompletedAllTeamForms } from '@/services/weekend-group-member/weekend-group-member-service'
 import {
   getCandidateReviewCountByWeekend,
   getConfirmedCandidateCountByWeekend,
   getSponsoredCandidatesForWeekend,
-} from '@/services/candidates'
+} from '@/services/candidates/candidate-service'
 import { getMyTeamFeeStatus } from '@/services/payment'
 import { isTeamFeeSettled } from '@/lib/payments/checkout-price'
 import { formatFee } from '@/lib/payments/group-fees'
@@ -20,7 +20,7 @@ import { getCachedPrayerWheelUrls } from '@/services/settings/cached'
 import {
   getRosterAssignmentForUser,
   getRosterCountByWeekend,
-} from '@/services/weekend'
+} from '@/services/weekend/weekend-service'
 import { Results } from '@/lib/results'
 import { Permission, userHasPermission } from '@/lib/security'
 import { cn } from '@/lib/utils'

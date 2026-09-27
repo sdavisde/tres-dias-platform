@@ -1,27 +1,9 @@
 'use server'
 
 import type { Result } from '@/lib/results'
-import { err, ok, isErr } from '@/lib/results'
+import { err, isErr } from '@/lib/results'
 import { isNil, isEmpty } from 'lodash'
 import * as GroupMemberRepository from '@/services/weekend-group-member/repository'
-import {
-  getTeamFormsProgress as serviceGetTeamFormsProgress,
-  hasCompletedAllTeamForms as serviceHasCompletedAllTeamForms,
-} from '@/services/weekend-group-member/weekend-group-member-service'
-
-export type TeamFormsProgress = {
-  steps: {
-    statementOfBelief: boolean
-    commitmentForm: boolean
-    releaseOfClaim: boolean
-    campWaiver: boolean
-    infoSheet: boolean
-  }
-  completedSteps: string[]
-  totalSteps: number
-  completedCount: number
-  isComplete: boolean
-}
 
 /**
  * Marks the Statement of Belief as completed for a given group member.
@@ -123,32 +105,6 @@ export async function completeInfoSheet(
     'info_sheet',
     new Date().toISOString()
   )
-}
-
-/**
- * Returns granular progress for team forms.
- */
-export async function getTeamFormsProgress(
-  groupMemberId: string
-): Promise<Result<string, TeamFormsProgress>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
-  }
-
-  return serviceGetTeamFormsProgress(groupMemberId)
-}
-
-/**
- * Checks if a team member has completed all 5 required forms.
- */
-export async function hasCompletedAllTeamForms(
-  groupMemberId: string
-): Promise<Result<string, boolean>> {
-  const result = await getTeamFormsProgress(groupMemberId)
-  if (isErr(result)) {
-    return err(result.error)
-  }
-  return ok(result.data.isComplete)
 }
 
 /**

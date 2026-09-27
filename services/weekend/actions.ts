@@ -5,9 +5,7 @@ import { isNil } from 'lodash'
 import { authorizedAction } from '@/lib/actions/authorized-action'
 import { TAGS } from '@/lib/cache/tags'
 import { Permission } from '@/lib/security'
-import type { User } from '@/lib/users/types'
 import type {
-  Weekend,
   WeekendStatusValue,
   WeekendGroupWithId,
   CreateWeekendGroupInput,
@@ -19,44 +17,7 @@ import { getGroupMemberByRosterId } from '@/services/weekend-group-member/reposi
 import { err, isErr } from '@/lib/results'
 
 // Re-export types for convenience
-export type { WeekendRosterViewData } from './weekend-service'
 export type { LeadershipTeamData, LeadershipTeamMember } from './types'
-
-// ============================================================================
-// Public Actions (No Authorization)
-// ============================================================================
-
-/**
- * Fetches active weekends grouped by type.
- * Public - used by candidate forms and admin layout.
- */
-export async function getActiveWeekends() {
-  return WeekendService.getActiveWeekends()
-}
-
-/**
- * Fetches a weekend group by its group ID.
- * Internal use only.
- */
-export async function getWeekendGroup(groupId: string) {
-  return WeekendService.getWeekendGroup(groupId)
-}
-
-/**
- * Fetches a single weekend by ID.
- * Public - used by team form pages.
- */
-export async function getWeekendById(weekendId: string) {
-  return WeekendService.getWeekendById(weekendId)
-}
-
-/**
- * Fetches the roster for a weekend.
- * Public - everyone should be able to read team rosters.
- */
-export async function getWeekendRoster(weekendId: string) {
-  return WeekendService.getWeekendRoster(weekendId)
-}
 
 /**
  * Fetches all users.
@@ -64,17 +25,6 @@ export async function getWeekendRoster(weekendId: string) {
  */
 export async function getAllUsers() {
   return WeekendService.getAllUsers()
-}
-
-/**
- * Fetches a weekend roster record for payment flow.
- * Public - payment flow uses admin client bypass.
- */
-export async function getWeekendRosterRecord(
-  teamUserId: string | null,
-  weekendId: string | null
-) {
-  return WeekendService.getWeekendRosterRecord(teamUserId, weekendId)
 }
 
 /**
@@ -104,77 +54,6 @@ export async function recordManualPayment(
   )
 }
 
-/**
- * Fetches the special_needs field for a roster record.
- * Public - used by team form pages for pre-fill.
- */
-export async function getRosterSpecialNeeds(rosterId: string) {
-  return WeekendService.getRosterSpecialNeeds(rosterId)
-}
-
-/**
- * Fetches weekend group options for dropdowns.
- * Public - no auth per user request.
- */
-export async function getWeekendOptions() {
-  return WeekendService.getWeekendOptions()
-}
-
-/**
- * Fetches leadership team members from active weekends.
- * Men leaders come from the active MENS weekend, women leaders from WOMENS weekend.
- * Public - displayed on current weekend page.
- */
-export async function getActiveWeekendLeadershipTeam() {
-  return WeekendService.getActiveWeekendLeadershipTeam()
-}
-
-/**
- * Every weekend group, newest first.
- * Public - the member hub index lists every weekend.
- */
-export async function getAllWeekendGroups() {
-  return WeekendService.getAllWeekendGroups()
-}
-
-/**
- * The ACTIVE group id, or null.
- * Public - the member shell builds the Roster link from it.
- */
-export async function getActiveGroupId() {
-  return WeekendService.getActiveGroupId()
-}
-
-/**
- * Counts active roster rows on a weekend.
- * Public - the hub's "team members serving" tile.
- */
-export async function getRosterCountByWeekend(weekendId: string) {
-  return WeekendService.getRosterCountByWeekend(weekendId)
-}
-
-/**
- * The weekends, among those given, a user has a roster row on.
- * Public - the roster builder opens the viewer's own weekend by default.
- */
-export async function getRosterWeekendIdsForUser(
-  userId: string,
-  weekendIds: string[]
-) {
-  return WeekendService.getRosterWeekendIdsForUser(userId, weekendIds)
-}
-
-/**
- * A member's own roster row on a weekend, for any group.
- * Public - the hub's "your part in this weekend" card.
- */
-export async function getRosterAssignmentForUser(
-  userId: string,
-  weekendId: string
-) {
-  return WeekendService.getRosterAssignmentForUser(userId, weekendId)
-}
-
 // ============================================================================
 // Protected Actions (Authorization Required)
 // ============================================================================
@@ -198,9 +77,9 @@ type GetWeekendGroupsByStatusRequest = {
  * Requires READ_WEEKENDS permission.
  */
 export const getWeekendGroupsByStatus = authorizedAction<
-  GetWeekendGroupsByStatusRequest,
+  [GetWeekendGroupsByStatusRequest],
   WeekendGroupWithId[]
->(Permission.READ_WEEKENDS, async ({ statuses }) => {
+>(Permission.READ_WEEKENDS, async (_user, { statuses }) => {
   return WeekendService.getWeekendGroupsByStatus(statuses)
 })
 
@@ -213,9 +92,9 @@ type SetActiveWeekendGroupRequest = {
  * Requires WRITE_WEEKENDS permission.
  */
 export const setActiveWeekendGroup = authorizedAction<
-  SetActiveWeekendGroupRequest,
+  [SetActiveWeekendGroupRequest],
   WeekendGroupWithId
->(Permission.WRITE_WEEKENDS, async ({ groupId }) => {
+>(Permission.WRITE_WEEKENDS, async (_user, { groupId }) => {
   const result = await WeekendService.setActiveWeekendGroup(groupId)
   if (!isErr(result)) invalidateWeekends(groupId)
   return result
@@ -226,9 +105,9 @@ export const setActiveWeekendGroup = authorizedAction<
  * Requires WRITE_WEEKENDS permission.
  */
 export const createWeekendGroup = authorizedAction<
-  CreateWeekendGroupInput,
+  [CreateWeekendGroupInput],
   WeekendGroupWithId
->(Permission.WRITE_WEEKENDS, async (input) => {
+>(Permission.WRITE_WEEKENDS, async (_user, input) => {
   const result = await WeekendService.createWeekendGroup(input)
   if (!isErr(result)) invalidateWeekends(result.data.groupId)
   return result
@@ -244,9 +123,9 @@ type UpdateWeekendGroupRequest = {
  * Requires WRITE_WEEKENDS permission.
  */
 export const updateWeekendGroup = authorizedAction<
-  UpdateWeekendGroupRequest,
+  [UpdateWeekendGroupRequest],
   WeekendGroupWithId
->(Permission.WRITE_WEEKENDS, async ({ groupId, updates }) => {
+>(Permission.WRITE_WEEKENDS, async (_user, { groupId, updates }) => {
   const result = await WeekendService.updateWeekendGroup(groupId, updates)
   if (!isErr(result)) invalidateWeekends(groupId)
   return result
@@ -261,9 +140,9 @@ type DeleteWeekendGroupRequest = {
  * Requires WRITE_WEEKENDS permission.
  */
 export const deleteWeekendGroup = authorizedAction<
-  DeleteWeekendGroupRequest,
+  [DeleteWeekendGroupRequest],
   { success: boolean }
->(Permission.WRITE_WEEKENDS, async ({ groupId }) => {
+>(Permission.WRITE_WEEKENDS, async (_user, { groupId }) => {
   const result = await WeekendService.deleteWeekendGroup(groupId)
   if (!isErr(result)) invalidateWeekends(groupId)
   return result
@@ -274,9 +153,9 @@ export const deleteWeekendGroup = authorizedAction<
  * Requires WRITE_WEEKENDS permission.
  */
 export const saveWeekendGroupFromSidebar = authorizedAction<
-  WeekendSidebarPayload,
+  [WeekendSidebarPayload],
   WeekendGroupWithId
->(Permission.WRITE_WEEKENDS, async (payload) => {
+>(Permission.WRITE_WEEKENDS, async (_user, payload) => {
   const result = await WeekendService.saveWeekendGroupFromSidebar(payload)
   if (!isErr(result)) {
     invalidateWeekends(result.data.groupId)
@@ -298,11 +177,14 @@ type AddUserToWeekendRosterRequest = {
  * Requires WRITE_TEAM_ROSTER permission.
  */
 export const addUserToWeekendRoster = authorizedAction<
-  AddUserToWeekendRosterRequest,
+  [AddUserToWeekendRosterRequest],
   void
->(Permission.WRITE_TEAM_ROSTER, async ({ weekendId, userId, role, rollo }) => {
-  return WeekendService.addUserToWeekendRoster(weekendId, userId, role, rollo)
-})
+>(
+  Permission.WRITE_TEAM_ROSTER,
+  async (_user, { weekendId, userId, role, rollo }) => {
+    return WeekendService.addUserToWeekendRoster(weekendId, userId, role, rollo)
+  }
+)
 
 type UpdateWeekendRosterMemberRequest = {
   rosterId: string
@@ -319,20 +201,8 @@ type UpdateWeekendRosterMemberRequest = {
  * Requires WRITE_TEAM_ROSTER permission.
  */
 export const updateWeekendRosterMember = authorizedAction<
-  UpdateWeekendRosterMemberRequest,
+  [UpdateWeekendRosterMemberRequest],
   void
->(Permission.WRITE_TEAM_ROSTER, async ({ rosterId, updates }) => {
+>(Permission.WRITE_TEAM_ROSTER, async (_user, { rosterId, updates }) => {
   return WeekendService.updateWeekendRosterMember(rosterId, updates)
 })
-
-/**
- * Fetches all data required for the WeekendRosterView component.
- * Public - performs permission-based conditional fetching internally.
- */
-export async function getWeekendRosterViewData(
-  weekendId: string,
-  user: User,
-  weekend?: Weekend
-) {
-  return WeekendService.getWeekendRosterViewData(weekendId, user, weekend)
-}

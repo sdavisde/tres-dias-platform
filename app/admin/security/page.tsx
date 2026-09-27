@@ -1,10 +1,7 @@
 import { Permission } from '@/lib/security'
 import { guardAdminPage } from '@/lib/admin/page-guard'
-import {
-  getFullAccessImpact,
-  getRoleUsage,
-  getRoles,
-} from '@/services/identity/roles'
+import { getFullAccessImpact, getRoleUsage } from '@/services/identity/roles'
+import { getRoles } from '@/services/identity/roles/role-service'
 import { isErr, unwrapOr } from '@/lib/results'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
 import { SecurityWorkspace } from './components/security-workspace'

@@ -1,7 +1,7 @@
 import { Calendar } from 'lucide-react'
 import { isNil } from 'lodash'
+import { getUpcomingEvents } from '@/services/events/events-service'
 import {
-  getUpcomingEvents,
   EVENT_TYPE_COLORS,
   EVENT_TYPE_LABELS,
   type Event,

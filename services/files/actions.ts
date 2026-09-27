@@ -23,9 +23,9 @@ export async function getFileDownloadUrlAction(
  * Server Action body-size limit. RBAC and extension validation happen here.
  */
 export const createUploadUrlAction = authorizedAction<
-  { folder: string; fileName: string },
+  [{ folder: string; fileName: string }],
   { bucket: string; path: string; token: string }
->(Permission.FILES_UPLOAD, async ({ folder, fileName }) => {
+>(Permission.FILES_UPLOAD, async (_user, { folder, fileName }) => {
   if (typeof folder !== 'string' || folder.trim() === '') {
     return err('Folder is required')
   }
@@ -43,9 +43,9 @@ export const createUploadUrlAction = authorizedAction<
  * when listing meeting minutes.
  */
 export const saveMeetingMinutesLocationAction = authorizedAction<
-  { fileName: string; location: string },
+  [{ fileName: string; location: string }],
   null
->(Permission.FILES_UPLOAD, async ({ fileName, location }) => {
+>(Permission.FILES_UPLOAD, async (_user, { fileName, location }) => {
   if (typeof fileName !== 'string' || fileName.trim() === '') {
     return err('A file is required')
   }
@@ -63,9 +63,9 @@ export const saveMeetingMinutesLocationAction = authorizedAction<
 
 /** Creates a folder inside `parentPath` ('' for the top level). */
 export const createFolderAction = authorizedAction<
-  { parentPath: string; name: string },
+  [{ parentPath: string; name: string }],
   { storagePath: string }
->(Permission.FILES_UPLOAD, async ({ parentPath, name }) => {
+>(Permission.FILES_UPLOAD, async (_user, { parentPath, name }) => {
   if (typeof parentPath !== 'string' || typeof name !== 'string') {
     return err('A folder name is required')
   }
@@ -73,19 +73,19 @@ export const createFolderAction = authorizedAction<
   return FileService.createFolder(parentPath, name)
 })
 
-export const deleteFileAction = authorizedAction<{ storagePath: string }, null>(
-  Permission.FILES_DELETE,
-  async ({ storagePath }) => {
-    if (typeof storagePath !== 'string') return err('A file is required')
-    return FileService.deleteFile(storagePath)
-  }
-)
+export const deleteFileAction = authorizedAction<
+  [{ storagePath: string }],
+  null
+>(Permission.FILES_DELETE, async (_user, { storagePath }) => {
+  if (typeof storagePath !== 'string') return err('A file is required')
+  return FileService.deleteFile(storagePath)
+})
 
 /** Deletes a folder and everything inside it, sub-folders included. */
 export const deleteFolderAction = authorizedAction<
-  { storagePath: string },
+  [{ storagePath: string }],
   { removed: number }
->(Permission.FILES_DELETE, async ({ storagePath }) => {
+>(Permission.FILES_DELETE, async (_user, { storagePath }) => {
   if (typeof storagePath !== 'string') return err('A folder is required')
   return FileService.deleteFolderRecursive(storagePath)
 })

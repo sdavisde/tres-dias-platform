@@ -1,7 +1,6 @@
 'use server'
 
 import * as RosterBuilderService from './roster-builder-service'
-import type { DraftRosterMember } from './types'
 import type { Result } from '@/lib/results'
 
 // Re-export types for convenience
@@ -11,19 +10,6 @@ export type {
   EligibilityResult,
   DraftRosterMember,
 } from './types'
-
-// ============================================================================
-// Community Data
-// ============================================================================
-
-/**
- * Fetches all community members with experience, eligibility, and assignment
- * data for the roster builder page.
- * Access control is enforced at the page level (rector-only page).
- */
-export async function getRosterBuilderCommunityData(weekendId: string) {
-  return RosterBuilderService.getRosterBuilderCommunityData(weekendId)
-}
 
 // ============================================================================
 // Draft Roster Management
@@ -46,15 +32,6 @@ export async function addDraftRosterMember(
     createdBy,
     rollo
   )
-}
-
-/**
- * Returns all non-finalized draft roster entries for a weekend.
- */
-export async function getDraftRoster(
-  weekendId: string
-): Promise<Result<string, DraftRosterMember[]>> {
-  return RosterBuilderService.getDraftRoster(weekendId)
 }
 
 /**

@@ -5,8 +5,8 @@ import {
   getAllPaymentsIncludingVoided,
   getFeeBalances,
 } from '@/services/payment'
-import { getGroupFees } from '@/services/fees'
-import { getActiveWeekends } from '@/services/weekend'
+import { getGroupFees } from '@/services/fees/fees-service'
+import { getActiveWeekends } from '@/services/weekend/weekend-service'
 import { isErr, isOk } from '@/lib/results'
 import * as Results from '@/lib/results'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'

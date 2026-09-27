@@ -16,50 +16,45 @@ function invalidatingRoles<T>(result: Result<string, T>): Result<string, T> {
   return result
 }
 
-// Read operations - doesn't require authorizedAction since reading roles list is safe
-export const getRoles = async () => {
-  return await RoleService.getRoles()
-}
-
-export const getRoleUsage = authorizedAction<void, RoleUsageById>(
+export const getRoleUsage = authorizedAction<[], RoleUsageById>(
   Permission.READ_USER_ROLES,
   async () => await RoleService.getRoleUsage()
 )
 
-export const getFullAccessImpact = authorizedAction<void, FullAccessImpact>(
+export const getFullAccessImpact = authorizedAction<[], FullAccessImpact>(
   Permission.READ_USER_ROLES,
   async () => await RoleService.getFullAccessImpact()
 )
 
 export const getRoleEffectivePermissions = authorizedAction<
-  string,
+  [string],
   Permission[]
 >(
   Permission.READ_USER_ROLES,
-  async (roleId) => await RoleService.getRoleEffectivePermissions(roleId)
+  async (_user, roleId) => await RoleService.getRoleEffectivePermissions(roleId)
 )
 
 type UpdateRoleRequest = {
   roleId: string
   input: RoleInput
 }
-export const updateRole = authorizedAction<UpdateRoleRequest, Role>(
+export const updateRole = authorizedAction<[UpdateRoleRequest], Role>(
   Permission.WRITE_USER_ROLES,
-  async ({ roleId, input }) => {
+  async (_user, { roleId, input }) => {
     return invalidatingRoles(await RoleService.updateRole(roleId, input))
   }
 )
 
-export const deleteRole = authorizedAction<string, null>(
+export const deleteRole = authorizedAction<[string], null>(
   Permission.WRITE_USER_ROLES,
-  async (roleId) => {
+  async (_user, roleId) => {
     return invalidatingRoles(await RoleService.deleteRole(roleId))
   }
 )
 
-export const createRole = authorizedAction<RoleInput, Role>(
+export const createRole = authorizedAction<[RoleInput], Role>(
   Permission.WRITE_USER_ROLES,
-  async (input) => {
+  async (_user, input) => {
     return invalidatingRoles(await RoleService.createRole(input))
   }
 )
@@ -68,9 +63,9 @@ type DuplicateRoleRequest = {
   sourceRoleId: string
   label?: string
 }
-export const duplicateRole = authorizedAction<DuplicateRoleRequest, Role>(
+export const duplicateRole = authorizedAction<[DuplicateRoleRequest], Role>(
   Permission.WRITE_USER_ROLES,
-  async ({ sourceRoleId, label }) => {
+  async (_user, { sourceRoleId, label }) => {
     return invalidatingRoles(
       await RoleService.duplicateRole(sourceRoleId, label)
     )
@@ -82,15 +77,15 @@ type UpdateUserRolesRequest = {
   roleIds: string[]
 }
 export const updateUserRoles = authorizedAction<
-  UpdateUserRolesRequest,
+  [UpdateUserRolesRequest],
   Array<Tables<'user_roles'>>
->(Permission.WRITE_USER_ROLES, async ({ userId, roleIds }) => {
+>(Permission.WRITE_USER_ROLES, async (_user, { userId, roleIds }) => {
   return await RoleService.updateUserRoles(userId, roleIds)
 })
 
-export const removeAllUserRoles = authorizedAction<string, null>(
+export const removeAllUserRoles = authorizedAction<[string], null>(
   Permission.WRITE_USER_ROLES,
-  async (userId) => {
+  async (_user, userId) => {
     return await RoleService.removeAllUserRoles(userId)
   }
 )
@@ -104,8 +99,8 @@ type SetRoleMembersRequest = {
  * For COMMITTEE roles, this replaces all current members with the new list.
  */
 export const setRoleMembers = authorizedAction<
-  SetRoleMembersRequest,
+  [SetRoleMembersRequest],
   Array<Tables<'user_roles'>>
->(Permission.WRITE_USER_ROLES, async ({ roleId, userIds }) => {
+>(Permission.WRITE_USER_ROLES, async (_user, { roleId, userIds }) => {
   return await RoleService.setRoleMembers(roleId, userIds)
 })

@@ -5,26 +5,12 @@
  * All server actions and types are exported from this file.
  */
 
-// Actions
+// Actions (client-callable). Server-only reads live in `./weekend-service`
+// and `./cached`; they must never be re-exported here, because client
+// components value-import this barrel.
 export {
-  // Public actions (no auth)
-  getActiveWeekends,
-  getWeekendGroup,
-  getWeekendById,
-  getWeekendRoster,
   getAllUsers,
-  getWeekendRosterRecord,
-  getRosterSpecialNeeds,
   recordManualPayment,
-  getWeekendOptions,
-  getWeekendRosterViewData,
-  getActiveWeekendLeadershipTeam,
-  getAllWeekendGroups,
-  getActiveGroupId,
-  getRosterCountByWeekend,
-  getRosterAssignmentForUser,
-  getRosterWeekendIdsForUser,
-  // Protected actions (auth required)
   getWeekendGroupsByStatus,
   setActiveWeekendGroup,
   createWeekendGroup,
@@ -43,7 +29,7 @@ export type {
   LeadershipTeamMember,
   LeadershipTeamData,
 } from './types'
-export type { WeekendRosterViewData } from './actions'
+export type { WeekendRosterViewData } from './weekend-service'
 export type { RosterAssignmentRow } from './repository'
 
 // Re-export commonly used types from lib/weekend/types

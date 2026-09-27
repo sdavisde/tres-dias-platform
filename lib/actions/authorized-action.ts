@@ -6,20 +6,47 @@ import { err, isErr } from '@/lib/results'
 import { getLoggedInUser } from '@/services/identity/user'
 import type { Permission } from '@/lib/security'
 import { userHasPermission } from '@/lib/security'
+import type { User } from '@/lib/users/types'
 
 /**
- * A wrapper for server actions that ensures the user is authenticated and has the required permission.
+ * What a server action requires of its caller, checked against the session:
  *
- * @param requiredPermission - The permission required to execute the action. If null, only authentication is required.
- * @param action - The action to execute if the user is authorized.
+ * - a `Permission`, or a list of them: the caller must hold any one of them
+ *   (`FULL_ACCESS` always passes);
+ * - `'authenticated'`: any signed-in member;
+ * - a predicate over the session user and the action's own arguments, for
+ *   ownership checks (see `lib/actions/guards.ts`).
  */
-export const authorizedAction = <T, R>(
-  requiredPermission: Permission,
-  action: (data: T) => Promise<Result<string, R>>
+export type ActionGuard<A extends unknown[]> =
+  | Permission
+  | Permission[]
+  | 'authenticated'
+  | ((user: User, ...args: A) => boolean | Promise<boolean>)
+
+type GuardedAction<A extends unknown[], R> = (
+  user: User,
+  ...args: A
+) => Promise<Result<string, R>>
+
+/**
+ * Wraps a server action so that it only runs for a signed-in caller who
+ * satisfies `guard`. Every `'use server'` export is a public HTTP endpoint,
+ * so the check happens here, on the server, against the session — never
+ * against anything the caller passed in.
+ *
+ * The wrapped function keeps the action's own positional arguments; the
+ * action itself additionally receives the session user first, so it can act
+ * on the caller's identity (e.g. attribution) without trusting the client.
+ *
+ * @param guard - What the caller must satisfy; see {@link ActionGuard}.
+ * @param action - The action to run once the caller is authorized.
+ */
+export const authorizedAction = <A extends unknown[], R>(
+  guard: ActionGuard<A>,
+  action: GuardedAction<A, R>
 ) => {
-  return async (data: T): Promise<Result<string, R>> => {
+  return async (...args: A): Promise<Result<string, R>> => {
     try {
-      // 1. Authenticate and get user
       const userResult = await getLoggedInUser()
 
       if (isErr(userResult)) {
@@ -28,12 +55,12 @@ export const authorizedAction = <T, R>(
 
       const user = userResult.data
 
-      if (!userHasPermission(user, [requiredPermission])) {
-        return err(`Forbidden: Missing permission ${requiredPermission}`)
+      const allowed = await satisfiesGuard(guard, user, args)
+      if (!allowed) {
+        return err(describeDenial(guard))
       }
 
-      // 3. Execute action
-      return await action(data)
+      return await action(user, ...args)
     } catch (error) {
       // Let Next's own control flow (dynamic usage, redirect, notFound)
       // through instead of reporting it as a failure.
@@ -43,4 +70,21 @@ export const authorizedAction = <T, R>(
       return err('Internal Server Error')
     }
   }
+}
+
+async function satisfiesGuard<A extends unknown[]>(
+  guard: ActionGuard<A>,
+  user: User,
+  args: A
+): Promise<boolean> {
+  if (guard === 'authenticated') return true
+  if (typeof guard === 'function') return await guard(user, ...args)
+  return userHasPermission(user, Array.isArray(guard) ? guard : [guard])
+}
+
+function describeDenial<A extends unknown[]>(guard: ActionGuard<A>): string {
+  if (typeof guard === 'function') return 'Forbidden: Not allowed'
+  if (guard === 'authenticated') return 'Forbidden'
+  const required = Array.isArray(guard) ? guard.join(' or ') : guard
+  return `Forbidden: Missing permission ${required}`
 }
