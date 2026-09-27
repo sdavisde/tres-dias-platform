@@ -31,6 +31,8 @@ const GENERIC_ERROR =
  * @param returnUrl Where Stripe returns to; may contain {CHECKOUT_SESSION_ID}
  * @returns The client secret for the checkout session
  */
+// publicAction: candidate checkout runs logged out (the payer follows an email
+// link); the team-fee branch verifies the session and ownership itself below.
 export async function beginCheckout(
   target: CheckoutTarget,
   returnUrl: string

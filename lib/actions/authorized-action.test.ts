@@ -10,7 +10,7 @@ jest.mock('@/lib/logger', () => ({
 }))
 
 const getLoggedInUser = jest.fn()
-jest.mock('@/services/identity/user', () => ({
+jest.mock('@/services/identity/user/session', () => ({
   getLoggedInUser: () => getLoggedInUser(),
 }))
 

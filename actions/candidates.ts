@@ -26,50 +26,55 @@ type CandidateInfoUpdate =
   Database['public']['Tables']['candidate_info']['Update']
 
 /**
- * Create a new candidate with sponsorship information
+ * Create a new candidate with sponsorship information. Any signed-in member may
+ * sponsor a candidate (the sponsor form lives on the member site).
  */
-export async function createCandidateWithSponsorshipInfo(
-  data: SponsorFormSchema
-): Promise<Result<string, HydratedCandidate>> {
-  try {
-    const supabase = await createClient()
+export const createCandidateWithSponsorshipInfo = authorizedAction<
+  [SponsorFormSchema],
+  HydratedCandidate
+>(
+  'authenticated',
+  async (_user, data): Promise<Result<string, HydratedCandidate>> => {
+    try {
+      const supabase = await createClient()
 
-    const { weekend_id, ...sponsorshipInfo } = data
+      const { weekend_id, ...sponsorshipInfo } = data
 
-    // Upsert the candidate record
-    const { data: candidate, error: candidateError } = await supabase
-      .from('candidates')
-      .insert({ status: 'sponsored', weekend_id })
-      .select()
-      .single()
+      // Upsert the candidate record
+      const { data: candidate, error: candidateError } = await supabase
+        .from('candidates')
+        .insert({ status: 'sponsored', weekend_id })
+        .select()
+        .single()
 
-    if (!isNil(candidateError) || isNil(candidate)) {
+      if (!isNil(candidateError) || isNil(candidate)) {
+        return err(
+          `Failed to create candidate: ${candidateError?.message ?? 'No data returned'}`
+        )
+      }
+
+      // Create the sponsorship info record
+      const { error: sponsorshipInfoError } = await supabase
+        .from('candidate_sponsorship_info')
+        .insert({
+          candidate_id: candidate.id,
+          ...sponsorshipInfo,
+        })
+
+      if (!isNil(sponsorshipInfoError)) {
+        return err(
+          `Failed to create sponsorship info: ${sponsorshipInfoError.message}`
+        )
+      }
+
+      return ok(candidate as HydratedCandidate)
+    } catch (error) {
       return err(
-        `Failed to create candidate: ${candidateError?.message ?? 'No data returned'}`
+        `Error while creating candidate with sponsorship info: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
-
-    // Create the sponsorship info record
-    const { error: sponsorshipInfoError } = await supabase
-      .from('candidate_sponsorship_info')
-      .insert({
-        candidate_id: candidate.id,
-        ...sponsorshipInfo,
-      })
-
-    if (!isNil(sponsorshipInfoError)) {
-      return err(
-        `Failed to create sponsorship info: ${sponsorshipInfoError.message}`
-      )
-    }
-
-    return ok(candidate as HydratedCandidate)
-  } catch (error) {
-    return err(
-      `Error while creating candidate with sponsorship info: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
   }
-}
+)
 
 /**
  * Moves a candidate to a new status (reject, mark forms as sent, ...).
@@ -99,6 +104,9 @@ export const updateCandidateStatus = authorizedAction<
   }
 })
 
+// publicAction: the candidate filling in their forms is not logged in; the link
+// carries an unguessable candidate UUID. Hardened (status check, admin client,
+// unique candidate_info row) in Unit 5 of docs/specs/19-spec-security-remediation.
 /**
  * Add Candidate Info when a user submits their candidate forms
  * Also updates the candidate status to 'pending_approval'
@@ -148,12 +156,13 @@ export async function addCandidateInfo(
 }
 
 /**
- * Update the payment owner for a candidate
+ * Update the payment owner for a candidate. Mirrors the review page's `canEdit`
+ * (WRITE_CANDIDATES) gate, since the payer is edited as part of approval.
  */
-export async function updateCandidatePaymentOwner(
-  candidateId: string,
-  paymentOwner: string
-): Promise<Result<string, { success: boolean }>> {
+export const updateCandidatePaymentOwner = authorizedAction<
+  [string, string],
+  { success: boolean }
+>(Permission.WRITE_CANDIDATES, async (_user, candidateId, paymentOwner) => {
   try {
     const supabase = await createClient()
 
@@ -172,7 +181,7 @@ export async function updateCandidatePaymentOwner(
       `Error while updating payment owner: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
-}
+})
 
 /**
  * Update a single field in the candidate_sponsorship_info table
@@ -287,9 +296,10 @@ export interface MoveWeekendOption {
  * and the candidate's current weekend is excluded. Each option includes a live
  * candidate count so callers can show a capacity hint.
  */
-export async function getMoveWeekendOptions(
-  candidateId: string
-): Promise<Result<string, MoveWeekendOption[]>> {
+export const getMoveWeekendOptions = authorizedAction<
+  [string],
+  MoveWeekendOption[]
+>(Permission.WRITE_CANDIDATES, async (_user, candidateId) => {
   try {
     const supabase = await createClient()
 
@@ -360,7 +370,7 @@ export async function getMoveWeekendOptions(
       `Error while loading move weekend options: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
-}
+})
 
 /**
  * Moves a candidate to a different weekend.

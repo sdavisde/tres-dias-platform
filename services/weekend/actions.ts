@@ -15,44 +15,58 @@ import type { WeekendSidebarPayload } from './types'
 import * as WeekendService from './weekend-service'
 import { getGroupMemberByRosterId } from '@/services/weekend-group-member/repository'
 import { err, isErr } from '@/lib/results'
+import { canImpersonate } from '@/lib/actions/guards'
+import type { Tables } from '@/database.types'
+import type { PaymentTransactionRow } from '@/services/payment/types'
 
 // Re-export types for convenience
 export type { LeadershipTeamData, LeadershipTeamMember } from './types'
 
 /**
- * Fetches all users.
- * Public - no auth required.
+ * Fetches all users, for the impersonation dialog's target picker. Guarded by
+ * `canImpersonate` rather than a plain FULL_ACCESS check so an admin who is
+ * already impersonating someone can still switch targets.
  */
-export async function getAllUsers() {
-  return WeekendService.getAllUsers()
-}
+export const getAllUsers = authorizedAction<[], Array<Tables<'users'>>>(
+  (user) => canImpersonate(user),
+  async () => WeekendService.getAllUsers()
+)
 
 /**
- * Records a manual (cash/check) payment.
- * Bridges from weekendRosterId to groupMemberId internally.
- * Public - no auth per user request.
+ * Records a manual (cash/check) team-fee payment, bridging from weekendRosterId
+ * to groupMemberId internally. The weekend leadership team
+ * (`READ_WRITE_TEAM_PAYMENTS` via CHA role) and anyone who can record payments
+ * in admin (`WRITE_PAYMENTS`) may do this; it mirrors the "+ Payment" button
+ * on the hub team tab.
  */
-export async function recordManualPayment(
-  weekendRosterId: string,
-  paymentAmount: number,
-  paymentMethod: 'cash' | 'check',
-  paymentOwner: string,
-  notes?: string
-) {
-  const groupMemberResult = await getGroupMemberByRosterId(weekendRosterId)
-  if (isErr(groupMemberResult)) {
-    return err(
-      `Failed to find group member for roster: ${groupMemberResult.error}`
-    )
-  }
-  return WeekendService.recordManualPayment(
-    groupMemberResult.data.id,
+export const recordManualPayment = authorizedAction<
+  [string, number, 'cash' | 'check', string, string | undefined],
+  PaymentTransactionRow
+>(
+  [Permission.READ_WRITE_TEAM_PAYMENTS, Permission.WRITE_PAYMENTS],
+  async (
+    _user,
+    weekendRosterId,
     paymentAmount,
     paymentMethod,
     paymentOwner,
     notes
-  )
-}
+  ) => {
+    const groupMemberResult = await getGroupMemberByRosterId(weekendRosterId)
+    if (isErr(groupMemberResult)) {
+      return err(
+        `Failed to find group member for roster: ${groupMemberResult.error}`
+      )
+    }
+    return WeekendService.recordManualPayment(
+      groupMemberResult.data.id,
+      paymentAmount,
+      paymentMethod,
+      paymentOwner,
+      notes
+    )
+  }
+)
 
 // ============================================================================
 // Protected Actions (Authorization Required)

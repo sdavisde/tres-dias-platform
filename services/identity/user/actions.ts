@@ -2,40 +2,67 @@
 
 import type { Address } from '@/lib/users/validation'
 import type { BasicInfo } from '@/components/team-forms/schemas'
+import { authorizedAction } from '@/lib/actions/authorized-action'
+import { ownsUser, ownsUserOrAdmin } from '@/lib/actions/guards'
+import { Permission } from '@/lib/security'
 import * as UserService from './user-service'
-import { findImpersonatingUser } from '@/services/identity/impersonation/impersonation-service'
+import * as Session from './session'
 
-export const updateUserContactInfo = async (
-  userId: string,
-  data: {
-    first_name: string | null
-    last_name: string | null
-    phone_number: string | null
-    email: string
-    gender: string | null
-  }
-) => {
+type ContactInfo = {
+  first_name: string | null
+  last_name: string | null
+  phone_number: string | null
+  email: string
+  gender: string | null
+}
+
+/**
+ * Rewrites a member's contact details. Only the admin people editor calls it,
+ * so it requires FULL_ACCESS (the page's own gate) rather than ownership.
+ */
+export const updateUserContactInfo = authorizedAction<
+  [string, ContactInfo],
+  null
+>(Permission.FULL_ACCESS, async (_user, userId, data) => {
   return await UserService.updateUserContactInfo(userId, data)
-}
+})
 
-export const updateUserAddress = async (userId: string, address: Address) => {
-  return await UserService.updateUserAddress(userId, address)
-}
+/** A member edits their own address, or an admin edits anyone's. */
+export const updateUserAddress = authorizedAction<[string, Address], null>(
+  (user, userId) => ownsUserOrAdmin(user, userId),
+  async (_user, userId, address) => {
+    return await UserService.updateUserAddress(userId, address)
+  }
+)
 
-export const updateUserBasicInfo = async (userId: string, data: BasicInfo) => {
-  return await UserService.updateUserBasicInfo(userId, data)
-}
+/** A member edits their own basic info, or an admin edits anyone's. */
+export const updateUserBasicInfo = authorizedAction<[string, BasicInfo], null>(
+  (user, userId) => ownsUserOrAdmin(user, userId),
+  async (_user, userId, data) => {
+    return await UserService.updateUserBasicInfo(userId, data)
+  }
+)
 
-export const updateUserProfilePhoto = async (userId: string, path: string) => {
-  return await UserService.updateUserProfilePhoto(userId, path)
-}
+/** Only the owner sets their own avatar. */
+export const updateUserProfilePhoto = authorizedAction<[string, string], null>(
+  (user, userId) => ownsUser(user, userId),
+  async (_user, userId, path) => {
+    return await UserService.updateUserProfilePhoto(userId, path)
+  }
+)
 
-export const removeUserProfilePhoto = async (userId: string) => {
-  return await UserService.removeUserProfilePhoto(userId)
-}
+/** Only the owner removes their own avatar. */
+export const removeUserProfilePhoto = authorizedAction<[string], null>(
+  (user, userId) => ownsUser(user, userId),
+  async (_user, userId) => {
+    return await UserService.removeUserProfilePhoto(userId)
+  }
+)
 
-/** This is required to run `authorizedAction`, so it cannot be wrapped in it. */
+/**
+ * The session primitive `authorizedAction` itself relies on, so it cannot be
+ * wrapped. It only ever returns the caller's own (or impersonated) user.
+ */
 export const getLoggedInUser = async () => {
-  const impersonatingUser = await findImpersonatingUser()
-  return await UserService.getLoggedInUser(impersonatingUser)
+  return await Session.getLoggedInUser()
 }

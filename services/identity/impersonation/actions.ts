@@ -3,7 +3,8 @@
 import { Permission, userHasPermission } from '@/lib/security'
 import * as ImperstonationService from './impersonation-service'
 import { Results } from '@/lib/results'
-import { getLoggedInUser } from '@/services/identity/user'
+import { getLoggedInUser } from '@/services/identity/user/session'
+import { authorizedAction } from '@/lib/actions/authorized-action'
 import { isNil } from 'lodash'
 
 type ImpersonateUserRequest = {
@@ -41,8 +42,14 @@ export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
 }
 
 /**
- * Don't really care to protect this function, since it's removing any impersonation cookies
+ * Ends impersonation. Any signed-in caller may do this: while impersonating a
+ * non-admin the session user has no FULL_ACCESS, so requiring it here would
+ * lock the admin into the impersonated view (FR-2.6 / FR-4.9).
  */
-export async function clearImpersonation() {
-  return ImperstonationService.clearImpersonation()
-}
+export const clearImpersonation = authorizedAction<[], void>(
+  'authenticated',
+  async () => {
+    await ImperstonationService.clearImpersonation()
+    return Results.ok(undefined)
+  }
+)

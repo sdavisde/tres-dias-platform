@@ -63,7 +63,7 @@ export default async function RosterBuilderPage({
   if (!isNil(params.weekendId)) {
     const selectedWeekend = allWeekends.find((w) => w.id === params.weekendId)
     if (!isNil(selectedWeekend)) {
-      return renderBoard(selectedWeekend, user.id)
+      return renderBoard(selectedWeekend)
     }
   }
 
@@ -78,7 +78,7 @@ export default async function RosterBuilderPage({
     const onRoster = new Set(membershipResult.data)
     const ownWeekend = allWeekends.find((w) => onRoster.has(w.id))
     if (!isNil(ownWeekend)) {
-      return renderBoard(ownWeekend, user.id)
+      return renderBoard(ownWeekend)
     }
   }
 
@@ -86,7 +86,7 @@ export default async function RosterBuilderPage({
   return <WeekendPicker weekends={allWeekends} />
 }
 
-async function renderBoard(weekend: Weekend, userId: string) {
+async function renderBoard(weekend: Weekend) {
   const [communityResult, secuelaDateResult] = await Promise.all([
     getRosterBuilderCommunityData(weekend.id),
     !isNil(weekend.groupId)
@@ -117,7 +117,6 @@ async function renderBoard(weekend: Weekend, userId: string) {
       weekendId={weekend.id}
       weekendTitle={weekendTitle(weekend)}
       weekendType={weekend.type}
-      rectorUserId={userId}
       communityMembers={communityResult.data}
       hasSecuelaEvent={hasSecuelaEvent}
     />

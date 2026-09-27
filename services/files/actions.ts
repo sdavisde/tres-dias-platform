@@ -5,16 +5,21 @@ import { err, type Result } from '@/lib/results'
 import { Permission } from '@/lib/security'
 import * as FileService from './file-service'
 
-export async function getFilePublicUrlAction(folder: string, fileName: string) {
-  return FileService.getFilePublicUrl(folder, fileName)
-}
+/** Any signed-in member may resolve a file's public URL (member files pages). */
+export const getFilePublicUrlAction = authorizedAction<
+  [string, string],
+  { publicUrl: string }
+>('authenticated', async (_user, folder, fileName) =>
+  FileService.getFilePublicUrl(folder, fileName)
+)
 
-export async function getFileDownloadUrlAction(
-  folder: string,
-  fileName: string
-) {
-  return FileService.getFileDownloadUrl(folder, fileName)
-}
+/** Any signed-in member may mint a download URL (member files pages). */
+export const getFileDownloadUrlAction = authorizedAction<
+  [string, string],
+  { downloadUrl: string }
+>('authenticated', async (_user, folder, fileName) =>
+  FileService.getFileDownloadUrl(folder, fileName)
+)
 
 /**
  * Mints a one-time signed upload URL for a file. The bytes are uploaded directly

@@ -13,6 +13,8 @@ import { getUrl } from '@/lib/url'
  * Public by design: the forgot-password page and the profile page both use it,
  * and Supabase handles unknown addresses silently.
  */
+// publicAction: /forgot-password has no session; unknown addresses are handled
+// silently so the response does not reveal whether an account exists.
 export async function sendCustomPasswordResetEmail(
   email: string
 ): Promise<Result<string, { data: CreateEmailResponseSuccess | null }>> {
