@@ -31,7 +31,7 @@ brew install go-task
 task setup
 
 # Run development server
-yarn dev
+bun run dev
 
 # Optionally, if you are testing any online payments:
 task dev:webhooks # will startup a webhook listener locally to receive Stripe webhook events
@@ -45,19 +45,19 @@ If you prefer manual setup or need more control:
 
 ```bash
 # Install dependencies
-yarn
+bun install
 
 # Start local database
-yarn db:start # Spins up a local postgres database using supabase CLI
-yarn db:migrate <description> # creates a template migration file
-yarn db:reset # run whenever you update seed file, or add a migration
-yarn db:generate # run after applying migrations to a running database, to update database.types file
+bun run db:start # Spins up a local postgres database using supabase CLI
+bun run db:migrate <description> # creates a template migration file
+bun run db:reset # run whenever you update seed file, or add a migration
+bun run db:generate # run after applying migrations to a running database, to update database.types file
 
 # Run development server
-yarn dev
+bun run dev
 
 # Stops the supabase docker containers running for the backend
-yarn db:stop
+bun run db:stop
 ```
 
 ## Environment Variables
