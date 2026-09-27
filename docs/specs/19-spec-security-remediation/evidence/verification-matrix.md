@@ -84,4 +84,4 @@ merging to `preview`, and the Gherkin ids make them the first residents of the E
 | `lib/security/cha-permissions-sql.test.ts`                     | 6    | SQL CHA helper mirrors `CHA_ROLE_PERMISSIONS`                                                                                            |
 | `lib/redirect.test.ts`, `lib/storage-path.test.ts`             | 7    | Redirect allow-list and storage path normalizer                                                                                          |
 
-`yarn test`: 49 suites, 474 tests (447 before Epic 0).
+`yarn test`: 49 suites, 478 tests (447 before Epic 0).

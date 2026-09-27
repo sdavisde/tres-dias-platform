@@ -1,6 +1,6 @@
 # Platform / Multitenancy — Status Brief
 
-_Status as of 2026-09-26._
+_Status as of 2026-09-27._
 
 ## The plan
 
@@ -30,14 +30,14 @@ Turn DTTD into a multi-tenant platform other Tres Dias communities can run their
 
 Epics are a true sequence: **0 and 1 must land before 2 touches the live schema.**
 
-| Epic                                                                            | Status                                                                                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **0 — Security remediation** (hard gate before community #2)                    | **Spec written 2026-09-26** (`docs/specs/19-spec-security-remediation`), implementation not started. Audit of the same date found four total-compromise paths: anon `USING (true)` policies on `users`/`roles`/`user_roles` and the candidate tables, an unsigned impersonation cookie, open signup, and 93 of 151 server-action exports unguarded. Eight units, in ship order, are in the spec. |
-| **1 — Infra foundation**                                                        | **Partial.** Double-build fixed (`vercel.json` + `deploy` job in `release.yml`). Still missing: PR CI gate (lint / typecheck / tests), E2E harness (Playwright PR #35 closed unmerged), preview env with its own DB (preview currently shares the prod database), backups, migration drift check, build-time cuts.                                                                               |
-| **2 — Tenancy retrofit**                                                        | **No code.** No `community_id` / tenant anywhere. Only trace: TODO on `COMMUNITY_NAME` in `lib/weekend/constants.ts`.                                                                                                                                                                                                                                                                            |
-| **3 — Onboarding**                                                              | **No code.**                                                                                                                                                                                                                                                                                                                                                                                     |
-| **4 — Payments platform** (Connect, webhook hardening, refunds, reconciliation) | **No code.**                                                                                                                                                                                                                                                                                                                                                                                     |
-| **5 — Perf / polish**                                                           | **In progress.** Loading-states Tier 1 shipped (`docs/specs/17-spec-loading-states`). Admin redesign phase 1 (`docs/specs/16-spec-admin-redesign-phase-1`) is 15 commits on `preview`, not yet merged to `main`.                                                                                                                                                                                 |
+| Epic                                                                            | Status                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **0 — Security remediation** (hard gate before community #2)                    | **Implemented on `feat/security-remediation` (PR pending), 2026-09-27.** Eight units, 14 commits, five migrations; tests 447 → 478, build green; 151 → 88 server-action exports, all guarded; anon has no table grants. Independent re-audit: **not yet closed** — blocked on owner decisions (open signup vs. open authenticated reads; public `files` bucket). See `docs/specs/19-spec-security-remediation/EPIC-0-REPORT.md`. |
+| **1 — Infra foundation**                                                        | **Partial.** Double-build fixed (`vercel.json` + `deploy` job in `release.yml`). Still missing: PR CI gate (lint / typecheck / tests), E2E harness (Playwright PR #35 closed unmerged), preview env with its own DB (preview currently shares the prod database), backups, migration drift check, build-time cuts.                                                                                                               |
+| **2 — Tenancy retrofit**                                                        | **No code.** No `community_id` / tenant anywhere. Only trace: TODO on `COMMUNITY_NAME` in `lib/weekend/constants.ts`.                                                                                                                                                                                                                                                                                                            |
+| **3 — Onboarding**                                                              | **No code.**                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **4 — Payments platform** (Connect, webhook hardening, refunds, reconciliation) | **No code.**                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **5 — Perf / polish**                                                           | **In progress.** Loading-states Tier 1 shipped (`docs/specs/17-spec-loading-states`). Admin redesign phase 1 (`docs/specs/16-spec-admin-redesign-phase-1`) is 15 commits on `preview`, not yet merged to `main`.                                                                                                                                                                                                                 |
 
 ## Cross-cutting: audit log (added 2026-09-21)
 
@@ -83,9 +83,11 @@ usage-based billing.
 
 ## Next steps
 
-1. Implement Epic 0 per `docs/specs/19-spec-security-remediation/` — Units 1 and 2 first (access-control
-   RLS + anon revocation part A, signed impersonation cookie). Before Unit 1, diff the 2026-09-26 prod
-   policy dump against the migrations and check the live Treasurer role's permissions.
-2. Resolve the spec's Open Questions (payment-owner edit permission, own-email edits, `files` bucket
-   visibility, Treasurer `WRITE_PAYMENTS`, cookie max age).
-3. Start Epic 1 in parallel where it doesn't touch the schema (PR CI gate running lint/typecheck/tests).
+1. Owner decisions from the Epic 0 report: C1 (open signup + open reads — recommended: approval flag
+   on `users` + email confirmation, existing users pre-approved) and H2 (make the `files` bucket
+   private, serve through signed URLs). Either can land as a further unit on the Epic 0 branch.
+2. Run the 15 manual Gherkin scenarios listed in the report against a preview of the branch, and test
+   the five new migrations against a copy of production.
+3. Merge `feat/security-remediation` → `preview` → `main`; then mark Epic 0 complete here (task 8.5).
+4. Start Epic 1 (preview database, PR CI gate running lint/typecheck/tests, E2E harness seeded from
+   `docs/specs/19-spec-security-remediation/features/`).
