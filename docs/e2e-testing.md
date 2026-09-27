@@ -11,9 +11,12 @@ Prerequisites. The suite reseeds the local database itself on every run (see bel
 starts or stops anything:
 
 - A local Supabase running (`yarn db:start`). **Every run wipes local app data and auth users and
-  rebuilds the `pre-weekend` world** (`yarn seed pre-weekend --yes`, under a second) before the
-  first test, so anything you created by hand locally is gone after `yarn e2e`. Global setup refuses
-  to run unless `NEXT_PUBLIC_SUPABASE_URL` points at `127.0.0.1` or `localhost`.
+  rebuilds the `pre-weekend` world** (under a second) before the first test, so anything you created
+  by hand locally is gone after `yarn e2e`. A bare `yarn e2e` in a terminal asks `Continue? [y/N]`
+  first; answering no aborts with nothing changed. `E2E_RESEED=yes yarn e2e` skips the prompt, and
+  `yarn e2e:ui` needs it because UI mode has no terminal to answer in. CI sets `CI=true`, which also
+  skips it. Global setup refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at `127.0.0.1` or
+  `localhost`.
 - The dev server running on the suite's base URL (`yarn dev`, default `http://localhost:3000`).
 - `.env.local` with the three local Supabase values (`NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) plus `STRIPE_WEBHOOK_SECRET`, which

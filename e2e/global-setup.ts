@@ -113,6 +113,11 @@ const LOCAL_SUPABASE = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/
  * every run (headless, UI mode, filtered, CI) starts from the same world. The
  * seed script only ever talks to the local Supabase container; this guard
  * makes the same promise from this side before invoking it.
+ *
+ * Locally the seed script asks "Continue? [y/N]" first, because the reseed
+ * wipes local app data and auth users; declining aborts the run with nothing
+ * changed. CI (`CI=true`) and an explicit `E2E_RESEED=yes` skip the prompt.
+ * UI mode has no terminal to answer in, so it needs `E2E_RESEED=yes`.
  */
 function reseed(): void {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
@@ -121,14 +126,20 @@ function reseed(): void {
       `global-setup: refusing to reseed because NEXT_PUBLIC_SUPABASE_URL (${url === '' ? 'unset' : url}) is not a local Supabase.`
     )
   }
+  const autoConfirm =
+    process.env.CI === 'true' || process.env.E2E_RESEED === 'yes'
   const result = spawnSync(
     process.execPath,
-    ['scripts/seed/index.ts', SEED_PHASE, '--yes'],
+    ['scripts/seed/index.ts', SEED_PHASE, ...(autoConfirm ? ['--yes'] : [])],
     { stdio: 'inherit' }
   )
   if (result.status !== 0) {
     throw new Error(
-      `global-setup: \`yarn seed ${SEED_PHASE} --yes\` failed (exit ${result.status}). Is the local stack running?`
+      autoConfirm
+        ? `global-setup: \`yarn seed ${SEED_PHASE} --yes\` failed (exit ${result.status}). Is the local stack running?`
+        : 'global-setup: the reseed was declined or there was no terminal to confirm in. ' +
+            'Answer y at the prompt, or run with E2E_RESEED=yes to skip it (UI mode needs this). ' +
+            'Nothing was changed.'
     )
   }
 }
