@@ -432,6 +432,17 @@ Fixed by this spec:
 
 Surfaced, follow-up only:
 
+- **A non-roster member never sees the "not on roster" message** (found by Unit 3, 2026-09-27).
+  `app/(member)/team-forms/layout.tsx` redirects to `/` before `page.tsx` can redirect to
+  `/?error=UserNotOnRoster`, the proxy then forwards `/` to `/home`, and `UserNotOnRoster` is not in
+  the `Errors` enum in `lib/error.ts`, so `Toastbox` would ignore it anyway. The spec asserts today's
+  behaviour (lands on `/home`, no error). Fix: add the enum value and message, and let the layout
+  carry the error through
+- **Commitment Form shows its fallback message.** The page renders `You must agree to all
+commitments.` rather than the schema's `You must agree to all commitments to proceed.`, because the
+  array-level Zod message is not picked up. Cosmetic
+- **Church Affiliation input has no accessible label.** The label points at a wrapper `div`, so the
+  spec fills it by placeholder. Small accessibility fix in `components/team-forms/basic-info-section.tsx`
 - **Candidate approval depends on Resend.** `services/notifications/email-actions.ts:206-234` returns
   before setting `awaiting_payment` when the payment-request email fails. Without a working key the
   approve flow cannot complete, which is why the E2E suite starts from seeded `awaiting_payment`
