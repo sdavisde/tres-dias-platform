@@ -179,20 +179,27 @@ Automated tests added by Epic 0 (31 new): `lib/actions/authorized-action.test.ts
 `lib/redirect.test.ts`, `lib/storage-path.test.ts`, and `roleGrantsFullAccess` cases in
 `services/identity/roles/inheritance.test.ts`.
 
+## Owner decisions (2026-09-27)
+
+- **C1 — accepted risk.** Signup stays open with no email confirmation and authenticated reads stay
+  open. The owner accepts that a stranger who signs up can read member and candidate data through
+  the REST API until a stronger gate exists. Planned mitigation: an invite or join-link mechanism
+  (the Epic 3 "revocable join link, zero privileges by default" design) so strangers cannot simply
+  register. Revisit before community #2 onboards.
+- **H2 — pending.** Whether the `files` bucket goes private with signed URLs is still open.
+- **Full Access members confirmed.** Both current members of the `Full Access` role are intended.
+- **Local database reseeded** on 2026-09-27; seed now matches production for `Treasurer` and
+  `Pre Weekend Couple`.
+
 ## Before merging
 
-1. **Decide C1 and H2** (above). If option 1 for C1, it can land as one more unit on this branch.
+1. Decide H2 (above). If private, it lands as one more unit on this branch.
 2. Run the 15 manual Gherkin scenarios against a preview deployment of the branch.
 3. Test the five migrations against a **copy of production** (Units 1, 5, 6 and the fix-up change
    policies; Unit 5 adds a unique index that de-duplicates `candidate_info` if duplicates exist —
    none did locally or in the prod dump, but confirm).
-4. Confirm both members of the `Full Access` role are intended. Impersonation and the FULL_ACCESS
-   grant guard now trust that role exclusively (`prod-verification-2026-09-26.md`).
-5. Note that merging to `main` runs `supabase config push`, which sets the production password
-   minimum to 8 for new passwords. Existing users are unaffected.
-6. Reseed the local database (`yarn db:reset`, owner-run): local role data had drifted from the seed
-   and from production before the Unit 6 proofs, so `Treasurer` and `Pre Weekend Couple` lacked
-   `WRITE_PAYMENTS` locally. The seed now matches production.
-7. `IMPERSONATION_COOKIE_SECRET` is already set (Sensitive) in Vercel for Production and Preview and
+4. Merging to `main` runs `supabase config push`, which sets the production password minimum to 8
+   for new passwords. Existing users are unaffected. Nothing to do by hand.
+5. `IMPERSONATION_COOKIE_SECRET` is already set (Sensitive) in Vercel for Production and Preview and
    in `.env.local`. Without it, impersonation is disabled and everything else works.
-8. Update the Epic 0 row in `docs/platform-roadmap-status.md` to complete after merge (task 8.5).
+6. Update the Epic 0 row in `docs/platform-roadmap-status.md` to complete after merge (task 8.5).
