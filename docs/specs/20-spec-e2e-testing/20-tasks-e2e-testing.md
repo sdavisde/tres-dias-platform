@@ -18,7 +18,7 @@
 | **Unit 2**                                                                    |                                                                                                                                                    |
 | `package.json`, `yarn.lock`                                                   | Add `@playwright/test` (exact pin), `dotenv`; scripts `e2e`, `e2e:ui`, `e2e:report`, `e2e:stripe` (Unit 6).                                        |
 | `playwright.config.ts`                                                        | New, from PR #35 (`1ace8f5`): serial, Chromium, `setup` project, `webServer` that reuses a running dev server locally and runs `yarn start` in CI. |
-| `e2e/personas.setup.ts`                                                       | New. Runs the seed selectors, writes `e2e/.auth/personas.json`, signs each persona in through `/login`, saves storage state.                       |
+| `e2e/global-setup.ts`                                                         | New. Runs the seed selectors, writes `e2e/.auth/personas.json`, signs each persona in through `/login`, saves storage state.                       |
 | `e2e/fixtures/supabase.ts`                                                    | New, from PR #35: `adminClient()`, `anonClient()`, `signInAs()`, `requireEnv()`.                                                                   |
 | `e2e/fixtures/seed.ts`                                                        | New. Seed Invariant selectors S1–S6; each throws `Seed invariant S<n> not met: …`.                                                                 |
 | `e2e/fixtures/personas.ts`                                                    | New. Types and read/write for `e2e/.auth/personas.json`.                                                                                           |
@@ -179,7 +179,7 @@ seededUser: {...}, nonRosterUser: {...}, candidates: { full: {...}, partial: {..
       `e2e/fixtures/auth-users.ts`: `e2eEmail()` returning `e2e+${process.env.GITHUB_RUN_ID ?? Date.now()}@example.com`
       and `deleteAuthUser(email)` using `adminClient().auth.admin.listUsers()` (page through if needed)
       then `auth.admin.deleteUser(id)`; no-op when not found (FR-2.5).
-- [ ] 2.6 **[O]** Create `e2e/personas.setup.ts` (from PR #35's `auth.setup.ts` pattern): one `setup`
+- [ ] 2.6 **[O]** Create `e2e/global-setup.ts` (from PR #35's `auth.setup.ts` pattern): one `setup`
       test that calls the selectors, writes `personas.json`, then for `teamForms` and `teamFee` opens
       `/login`, fills `#email` / `#password` (`seedPassword()`), clicks `button[type="submit"]`, waits
       for the URL to leave `/login`, and saves `e2e/.auth/teamForms.json` / `teamFee.json`. Assert

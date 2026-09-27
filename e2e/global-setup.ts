@@ -1,4 +1,9 @@
-import { test as setup, expect, type Browser } from '@playwright/test'
+import {
+  chromium,
+  expect,
+  type Browser,
+  type FullConfig,
+} from '@playwright/test'
 import {
   storageStatePath,
   writePersonas,
@@ -21,7 +26,8 @@ import {
 } from './fixtures/seed'
 
 /**
- * Chooses the run's cast by predicate (Seed Invariants S1–S6), writes it to
+ * Runs once before the whole suite (Playwright global setup). Chooses the
+ * run's cast by predicate (Seed Invariants S1–S6), writes it to
  * e2e/.auth/personas.json, and signs in the personas that specs reuse through
  * `test.use({ storageState })`.
  *
@@ -98,7 +104,15 @@ async function signIn(
   }
 }
 
-setup('select personas and sign in', async ({ browser, baseURL }) => {
+export default async function globalSetup(config: FullConfig): Promise<void> {
+  const baseURL = config.projects[0]?.use.baseURL
+  if (baseURL === undefined) {
+    throw new Error(
+      'global-setup: no baseURL found on config.projects[0].use.baseURL. ' +
+        'Set `use.baseURL` in playwright.config.ts.'
+    )
+  }
+
   const { group, weekends, fees } = await activeGroup()
   const teamForms = await pickTeamFormsMember()
   const teamFee = await pickUnpaidTeamMember({
@@ -146,6 +160,11 @@ setup('select personas and sign in', async ({ browser, baseURL }) => {
 
   writePersonas(personas)
 
-  await signIn(browser, baseURL, 'teamForms', personas.teamForms.email)
-  await signIn(browser, baseURL, 'teamFee', personas.teamFee.email)
-})
+  const browser = await chromium.launch()
+  try {
+    await signIn(browser, baseURL, 'teamForms', personas.teamForms.email)
+    await signIn(browser, baseURL, 'teamFee', personas.teamFee.email)
+  } finally {
+    await browser.close()
+  }
+}

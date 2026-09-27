@@ -29,6 +29,12 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   // The real-Stripe specs only run in the nightly workflow.
   grepInvert: process.env.E2E_STRIPE_LIVE === '1' ? undefined : /@stripe-live/,
+  // Picks the personas from the seed, writes e2e/.auth/personas.json and
+  // signs a session per persona, once before the whole suite (also before UI
+  // mode's first run). Being a global setup rather than a project means
+  // there is no separate "setup" entry cluttering the test list in UI mode
+  // or `--list` output — only real specs show up.
+  globalSetup: './e2e/global-setup.ts',
 
   use: {
     baseURL: BASE_URL,
@@ -37,14 +43,9 @@ export default defineConfig({
   },
 
   projects: [
-    // Picks the personas from the seed, writes e2e/.auth/personas.json and
-    // saves a signed-in session per persona. Specs opt in with
-    // test.use({ storageState }).
-    { name: 'setup', testMatch: /personas\.setup\.ts/ },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
     },
   ],
 

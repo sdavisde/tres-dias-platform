@@ -20,13 +20,13 @@ Prerequisites, all the owner's call — the suite never starts, seeds or resets 
   runs too — nothing in the suite talks to the real services.
 - `npx playwright install chromium`, once.
 
-| Command                    | What it does                                               |
-| -------------------------- | ---------------------------------------------------------- |
-| `yarn e2e`                 | Runs the full suite: the `setup` project, then every spec. |
-| `yarn e2e --project=setup` | Runs only persona selection and sign-in, for debugging.    |
-| `yarn e2e --grep <name>`   | Runs specs whose title matches `<name>` (plus `setup`).    |
-| `yarn e2e:ui`              | Opens Playwright's UI mode against the same config.        |
-| `yarn e2e:report`          | Opens the HTML report from the last run.                   |
+| Command       | What it does                                                                 |
+| ------------- | ---------------------------------------------------------------------------- |
+| `yarn e2e`    | Runs global setup, then every spec, headless.                                |
+| `yarn e2e:ui` | Opens Playwright's UI mode against the same config (also runs global setup). |
+
+`yarn e2e --grep <text>` narrows a run to specs whose title matches `<text>`, and `npx playwright
+show-report` opens the HTML report from the last run.
 
 Two environment variables tune a run: `E2E_BASE_URL` (default `http://localhost:3000`) is the base
 URL Playwright drives, and `E2E_SEED_PASSWORD` (default `password`) is the shared password of every
@@ -38,11 +38,11 @@ its own server against a fresh build.
 
 ## How it is put together
 
-A `setup` project runs before any spec. It selects the run's cast by predicate (see Seed Invariants
-below), writes the chosen ids, emails and fee numbers to `e2e/.auth/personas.json`, then signs two
-of those personas in through the real `/login` form and saves their storage state to
-`e2e/.auth/<persona>.json`. The whole `e2e/.auth/` directory is gitignored; it is regenerated every
-run.
+Playwright global setup (`e2e/global-setup.ts`) runs once before the suite, also when the UI mode
+opens. It selects the run's cast by predicate (see Seed Invariants below), writes the chosen ids,
+emails and fee numbers to `e2e/.auth/personas.json`, then signs two of those personas in through the
+real `/login` form and saves their storage state to `e2e/.auth/<persona>.json`. The whole
+`e2e/.auth/` directory is gitignored; it is regenerated every run.
 
 The personas:
 
@@ -59,13 +59,12 @@ The personas:
 A spec opts into a signed-in persona with `test.use({ storageState: storageStatePath('teamForms') })`
 (from `e2e/fixtures/personas.ts`); auth specs use no storage state at all, since they exercise
 login and registration themselves. Every spec reads the chosen cast in `test.beforeAll` with
-`await loadPersonas()`, which throws a clear error if `personas.json` is missing (run
-`yarn e2e --project=setup` first, or just `yarn e2e`, since the `chromium` project depends on
-`setup`). `loadPersonas()` also re-checks every persona id and email against the database before
-handing back the cast, so if the database was reseeded after `setup` ran, specs fail fast with a
-"personas.json is stale" message instead of misbehaving (e.g. treating a stale "existing user"
-email as available and registering it as a new account). The fix is to rerun `setup`; in UI mode,
-keep the `setup` project ticked, or run it once by itself after any reseed.
+`await loadPersonas()`, which throws a clear error if `personas.json` is missing (run `yarn e2e`,
+which always runs global setup first). `loadPersonas()` also re-checks every persona id and email
+against the database before handing back the cast, so if the database was reseeded after global
+setup ran, specs fail fast with a "personas.json is stale" message instead of misbehaving (e.g.
+treating a stale "existing user" email as available and registering it as a new account). The fix
+after a reseed is to rerun `yarn e2e` (or restart the UI mode) so global setup runs again.
 
 `adminClient()` (`e2e/fixtures/supabase.ts`) is a service-role Supabase client for fixtures to
 arrange data, assert on it and clean it up. It bypasses Row Level Security, so it is never used to
@@ -92,12 +91,12 @@ invariant in its own README (the "E2E fixtures" section). `scripts/seed/world.te
 those pins hold. Because this suite selects by predicate rather than by name, a re-pin on the seed
 side never touches a spec here. When a selector cannot find a matching row, it throws a message of
 the form `Seed invariant S<n> not met: <what was looked for>`, which is the first thing to read when
-`setup` fails after a seed change.
+global setup fails after a seed change.
 
 ## Rate limit budget
 
 Local GoTrue allows 30 sign-in/sign-up requests per IP per 5 minutes. A full run costs 2 sign-ins
-from `setup` (`teamForms`, `teamFee`) plus 6 from the auth spec (login, wrong password, unknown
+from global setup (`teamForms`, `teamFee`) plus 6 from the auth spec (login, wrong password, unknown
 email, register, duplicate email, mismatched passwords stops before any request) — about 8 requests,
 doubled to about 16 if one test retries. That leaves headroom, and it must stay that way:
 **`config.toml`'s `[auth]` rate limit is never raised** to buy more room, because `supabase config
