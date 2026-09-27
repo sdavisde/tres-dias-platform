@@ -4,7 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import type { Result } from '@/lib/results'
 import { err, ok, isErr } from '@/lib/results'
 import { isNil } from 'lodash'
-import type { SponsorFormSchema } from '@/app/(member)/sponsor/SponsorForm'
+import { logger } from '@/lib/logger'
+import {
+  sponsorFormSchema,
+  type SponsorFormSchema,
+} from '@/lib/candidates/sponsor-form-schema'
 import type { CandidateStatus, HydratedCandidate } from '@/lib/candidates/types'
 import { authorizedAction } from '@/lib/actions/authorized-action'
 import { Permission } from '@/lib/security'
@@ -22,20 +26,29 @@ type CandidateInfoUpdate =
 
 /**
  * Create a new candidate with sponsorship information. Any signed-in member may
- * sponsor a candidate (the sponsor form lives on the member site).
+ * sponsor a candidate (the sponsor form lives on the member site). The payload
+ * is re-parsed here so only the sponsor-form columns reach the table, the
+ * status is fixed to `sponsored`, and the sponsor email is the session's.
  */
 export const createCandidateWithSponsorshipInfo = authorizedAction<
   [SponsorFormSchema],
   HydratedCandidate
 >(
   'authenticated',
-  async (_user, data): Promise<Result<string, HydratedCandidate>> => {
+  async (user, data): Promise<Result<string, HydratedCandidate>> => {
+    const parsed = sponsorFormSchema.safeParse(data)
+    if (!parsed.success) {
+      const first = parsed.error.issues.at(0)
+      return err(
+        `Please check the form: ${first?.message ?? 'some fields are invalid'}`
+      )
+    }
+
     try {
       const supabase = await createClient()
 
-      const { weekend_id, ...sponsorshipInfo } = data
+      const { weekend_id, ...sponsorshipInfo } = parsed.data
 
-      // Upsert the candidate record
       const { data: candidate, error: candidateError } = await supabase
         .from('candidates')
         .insert({ status: 'sponsored', weekend_id })
@@ -43,30 +56,36 @@ export const createCandidateWithSponsorshipInfo = authorizedAction<
         .single()
 
       if (!isNil(candidateError) || isNil(candidate)) {
-        return err(
-          `Failed to create candidate: ${candidateError?.message ?? 'No data returned'}`
+        logger.error(
+          { error: candidateError?.message },
+          'Failed to create candidate'
         )
+        return err('Failed to create candidate')
       }
 
-      // Create the sponsorship info record
       const { error: sponsorshipInfoError } = await supabase
         .from('candidate_sponsorship_info')
         .insert({
           candidate_id: candidate.id,
           ...sponsorshipInfo,
+          sponsor_email: user.email,
         })
 
       if (!isNil(sponsorshipInfoError)) {
-        return err(
-          `Failed to create sponsorship info: ${sponsorshipInfoError.message}`
+        logger.error(
+          { error: sponsorshipInfoError.message, candidateId: candidate.id },
+          'Failed to create sponsorship info'
         )
+        return err('Failed to create sponsorship info')
       }
 
       return ok(candidate as HydratedCandidate)
     } catch (error) {
-      return err(
-        `Error while creating candidate with sponsorship info: ${error instanceof Error ? error.message : 'Unknown error'}`
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Error while creating candidate with sponsorship info'
       )
+      return err('Failed to create candidate')
     }
   }
 )

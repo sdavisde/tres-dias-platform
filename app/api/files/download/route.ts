@@ -53,6 +53,13 @@ export async function GET(request: NextRequest) {
       })
 
     const fileName = path.split('/').pop() ?? 'download'
+    // Header-safe filename: ASCII fallback with quotes/CR/LF/semicolons removed,
+    // plus the RFC 5987 encoded form so unicode names still round-trip.
+    const strippedName = fileName
+      .replace(/[^\x20-\x7e]/g, '')
+      .replace(/["\\;\r\n]/g, '_')
+    const asciiName = strippedName === '' ? 'download' : strippedName
+    const encodedName = encodeURIComponent(fileName)
     const fileMetadata = fileInfo?.[0]
     const contentType =
       fileMetadata?.metadata?.mimetype ?? 'application/octet-stream'
@@ -62,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return new NextResponse(arrayBuffer, {
       headers: {
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`,
         'Content-Type': contentType,
         'Content-Length': arrayBuffer.byteLength.toString(),
       },

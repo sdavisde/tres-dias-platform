@@ -1,3 +1,5 @@
+import 'server-only'
+
 import type { User } from '@/lib/users/types'
 import { isNil } from 'lodash'
 import { cookies } from 'next/headers'
@@ -75,9 +77,14 @@ export async function findImpersonatingUser(): Promise<User | null> {
   return Results.toNullable(impersonatingUserResult)
 }
 
-/** True when a validly signed, unexpired impersonation cookie is present (FR-2.5). */
+/**
+ * True when this request is genuinely impersonating (FR-2.5): the same full
+ * verification as `findImpersonatingUser`, so a signed-but-stale cookie held
+ * by a demoted admin never shows the banner. The session lookup is cached per
+ * render, so this costs one extra user read at most.
+ */
 export async function isImpersonatingUser(): Promise<boolean> {
-  return !isNil(await readVerifiedPayload())
+  return !isNil(await findImpersonatingUser())
 }
 
 /**

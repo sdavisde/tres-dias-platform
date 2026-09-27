@@ -1130,6 +1130,10 @@ export type Database = {
         Args: { required_permission: string }
         Returns: boolean
       }
+      role_grants_full_access: {
+        Args: { target_role_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       candidate_status:

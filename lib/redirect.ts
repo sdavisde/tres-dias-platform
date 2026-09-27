@@ -53,10 +53,37 @@ export function validateRedirectUrl(
     return defaultPath
   }
 
-  // Normalize the path to resolve any .. or . segments
-  // This prevents path traversal attacks
+  // Normalize the path to resolve any .. or . segments, then validate the
+  // NORMALISED result. Checking only the raw input misses dot-segment tricks
+  // like `/.//evil.com` or `/%2e%2e//evil.com`, which normalise to a
+  // protocol-relative `//evil.com`.
   try {
-    const normalized = new URL(url, 'http://localhost').pathname
+    const base = 'http://localhost'
+    const parsed = new URL(url, base)
+    const normalized = parsed.pathname
+    if (
+      parsed.origin !== base ||
+      normalized.startsWith('//') ||
+      normalized.includes('\\') ||
+      url.includes('\\')
+    ) {
+      return defaultPath
+    }
+    // Decode once and re-check: an encoded `//` or `..` that survived
+    // normalisation must not be handed to the browser.
+    let decoded: string
+    try {
+      decoded = decodeURIComponent(normalized)
+    } catch {
+      return defaultPath
+    }
+    if (
+      decoded.startsWith('//') ||
+      decoded.includes('\\') ||
+      decoded.split('/').some((segment) => segment === '..')
+    ) {
+      return defaultPath
+    }
     // Also preserve query string if present
     const queryIndex = url.indexOf('?')
     const queryString = queryIndex !== -1 ? url.slice(queryIndex) : ''

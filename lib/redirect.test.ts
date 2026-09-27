@@ -12,6 +12,22 @@ describe('validateRedirectUrl', () => {
     expect(validateRedirectUrl('//evil.example', '/profile')).toBe('/profile')
   })
 
+  it('falls back when dot segments normalise to a protocol-relative URL', () => {
+    expect(validateRedirectUrl('/.//evil.com')).toBe('/home')
+    expect(validateRedirectUrl('/a/..//evil.com')).toBe('/home')
+    expect(validateRedirectUrl('/%2e%2e//evil.com')).toBe('/home')
+    expect(validateRedirectUrl('/%2F%2Fevil.com')).toBe('/home')
+    expect(validateRedirectUrl('/\\evil.com')).toBe('/home')
+    expect(validateRedirectUrl('/a/\\\\evil.com')).toBe('/home')
+  })
+
+  it('still allows nested same-site paths after normalisation', () => {
+    expect(validateRedirectUrl('/weekends/abc/./team')).toBe(
+      '/weekends/abc/team'
+    )
+    expect(validateRedirectUrl('/a/../profile')).toBe('/profile')
+  })
+
   it('falls back for dangerous schemes and empty values', () => {
     expect(validateRedirectUrl('javascript:alert(1)')).toBe('/home')
     expect(validateRedirectUrl(null, '/profile')).toBe('/profile')

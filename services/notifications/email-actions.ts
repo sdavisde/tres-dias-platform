@@ -22,20 +22,23 @@ import * as NotificationService from './notification-service'
 import { getCandidateReviewUrl } from './review-links'
 import { sendEmail } from './email-client'
 import { authorizedAction } from '@/lib/actions/authorized-action'
-import { Permission } from '@/lib/security'
+import { Permission, userHasPermission } from '@/lib/security'
 
 type SendResult = { data: CreateEmailResponseSuccess | null }
 
 /**
  * Send sponsorship notification email to preweekend couple. Any signed-in
- * member may sponsor, so this only requires a session (the sponsor form).
+ * member may sponsor, so this only requires a session (the sponsor form), but
+ * the caller must be that candidate's sponsor (matched by the session email
+ * the sponsor form records) or hold WRITE_CANDIDATES, so a member cannot use
+ * it to flood the couple with emails about other people's candidates.
  */
 export const sendSponsorshipNotificationEmail = authorizedAction<
   [string],
   SendResult
 >(
   'authenticated',
-  async (_user, candidateId): Promise<Result<string, SendResult>> => {
+  async (user, candidateId): Promise<Result<string, SendResult>> => {
     try {
       if (!(await isNotificationEnabled(NOTIFY_NEW_SPONSORSHIPS_KEY))) {
         logger.info(
@@ -55,6 +58,21 @@ export const sendSponsorshipNotificationEmail = authorizedAction<
 
       if (isNil(candidate)) {
         return err('Candidate not found')
+      }
+
+      const sponsorEmail = candidate.candidate_sponsorship_info?.sponsor_email
+      const isSponsor =
+        !isNil(sponsorEmail) &&
+        sponsorEmail.trim().toLowerCase() === user.email.trim().toLowerCase()
+      if (
+        !isSponsor &&
+        !userHasPermission(user, [Permission.WRITE_CANDIDATES])
+      ) {
+        logger.warn(
+          { candidateId, userId: user.id },
+          'Sponsorship notification requested by someone other than the sponsor'
+        )
+        return err('Only the sponsor can send this notification')
       }
 
       // Get pre-weekend couple email

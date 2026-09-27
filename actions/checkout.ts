@@ -37,6 +37,23 @@ export async function beginCheckout(
   target: CheckoutTarget,
   returnUrl: string
 ): Promise<Result<string, string>> {
+  // A team fee is paid by the team member themselves, signed in. Check the
+  // session before quoting so an anonymous caller cannot probe whether a
+  // group member exists or has already paid.
+  let sessionUserId: string | null = null
+  let userMetadata: Record<string, string> = {}
+  if (target.kind === 'team') {
+    const userResult = await getLoggedInUser()
+    if (isErr(userResult) || isNil(userResult.data)) {
+      return err('Please sign in to pay your team fee.')
+    }
+    sessionUserId = userResult.data.id
+    userMetadata = {
+      user_id: userResult.data.id,
+      user_email: userResult.data.email ?? '',
+    }
+  }
+
   const quoteResult = await getCheckoutQuote(target)
   if (isErr(quoteResult)) {
     logger.error({ target, error: quoteResult.error }, 'Checkout quote failed')
@@ -45,28 +62,18 @@ export async function beginCheckout(
   const quote = quoteResult.data
   const feeType = target.kind
 
+  if (target.kind === 'team' && sessionUserId !== quote.userId) {
+    logger.warn(
+      { groupMemberId: target.groupMemberId, userId: sessionUserId },
+      'Team fee checkout attempted for another member'
+    )
+    return err(GENERIC_ERROR)
+  }
+
   if (isErr(quote.price)) {
     return err(CHECKOUT_REFUSAL_MESSAGES[feeType][quote.price.error])
   }
   const price = quote.price.data
-
-  // A team fee is paid by the team member themselves, signed in.
-  let userMetadata: Record<string, string> = {}
-  if (target.kind === 'team') {
-    const userResult = await getLoggedInUser()
-    if (isErr(userResult) || isNil(userResult.data)) {
-      return err('Please sign in to pay your team fee.')
-    }
-    const user = userResult.data
-    if (user.id !== quote.userId) {
-      logger.warn(
-        { groupMemberId: target.groupMemberId, userId: user.id },
-        'Team fee checkout attempted for another member'
-      )
-      return err(GENERIC_ERROR)
-    }
-    userMetadata = { user_id: user.id, user_email: user.email ?? '' }
-  }
 
   const productResult = resolveFeeProductId(feeType)
   if (isErr(productResult)) {

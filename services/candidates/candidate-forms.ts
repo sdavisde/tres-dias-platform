@@ -34,6 +34,8 @@ export type CandidateFormsContext = {
 
 export const CANDIDATE_FORMS_ALREADY_SUBMITTED =
   'These forms have already been submitted.'
+export const CANDIDATE_FORMS_SAVE_FAILED =
+  'We could not save your forms. Please try again or contact your sponsor.'
 
 const candidateIdSchema = z.uuid()
 
@@ -69,7 +71,11 @@ export async function getCandidateFormsContext(
       .maybeSingle()
 
     if (!isNil(error)) {
-      return err(`Failed to load candidate: ${error.message}`)
+      logger.error(
+        { error: error.message, candidateId: parsedId.data },
+        'Failed to load candidate forms context'
+      )
+      return err('Failed to load candidate')
     }
     if (isNil(data)) {
       return err('Candidate not found')
@@ -83,9 +89,11 @@ export async function getCandidateFormsContext(
       formsSubmitted: data.candidate_info.length > 0,
     })
   } catch (error) {
-    return err(
-      `Error while loading candidate: ${error instanceof Error ? error.message : 'Unknown error'}`
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      'Error while loading candidate forms context'
     )
+    return err('Failed to load candidate')
   }
 }
 
@@ -161,9 +169,11 @@ export async function submitCandidateForms(
       if (insertError?.code === '23505') {
         return err(CANDIDATE_FORMS_ALREADY_SUBMITTED)
       }
-      return err(
-        `Failed to save candidate forms: ${insertError?.message ?? 'no row returned'}`
+      logger.error(
+        { error: insertError?.message ?? 'no row returned', candidateId: id },
+        'Failed to save candidate forms'
       )
+      return err(CANDIDATE_FORMS_SAVE_FAILED)
     }
 
     const { data: updated, error: statusError } = await supabase
@@ -176,7 +186,11 @@ export async function submitCandidateForms(
     if (!isNil(statusError) || isNil(updated) || updated.length === 0) {
       await supabase.from('candidate_info').delete().eq('id', inserted.id)
       if (!isNil(statusError)) {
-        return err(`Failed to update candidate status: ${statusError.message}`)
+        logger.error(
+          { error: statusError.message, candidateId: id },
+          'Failed to update candidate status after forms'
+        )
+        return err(CANDIDATE_FORMS_SAVE_FAILED)
       }
       return err('This candidate is no longer accepting forms.')
     }
@@ -191,8 +205,13 @@ export async function submitCandidateForms(
 
     return ok(true)
   } catch (error) {
-    return err(
-      `Error while submitting candidate forms: ${error instanceof Error ? error.message : 'Unknown error'}`
+    logger.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        candidateId: id,
+      },
+      'Error while submitting candidate forms'
     )
+    return err(CANDIDATE_FORMS_SAVE_FAILED)
   }
 }

@@ -28,21 +28,22 @@ import {
  * covered, so a partial payment or a raised fee still shows money owed. Uses
  * the same calculation as online checkout.
  */
-export async function getMyTeamFeeStatus(
-  groupMemberId: string
-): Promise<Result<string, TeamFeeStatus>> {
-  const quoteResult = await PaymentService.getCheckoutQuote({
-    kind: 'team',
-    groupMemberId,
-  })
-  if (isErr(quoteResult)) return quoteResult
-
-  const userResult = await getLoggedInUser()
-  if (isErr(userResult) || userResult.data?.id !== quoteResult.data.userId) {
-    return err('Not your team fee')
+export const getMyTeamFeeStatus = authorizedAction<[string], TeamFeeStatus>(
+  'authenticated',
+  async (user, groupMemberId) => {
+    // Session first, then the admin-client quote, so an anonymous caller learns
+    // nothing about whether a group member exists or has paid.
+    const quoteResult = await PaymentService.getCheckoutQuote({
+      kind: 'team',
+      groupMemberId,
+    })
+    if (isErr(quoteResult)) return err('Not your team fee')
+    if (user.id !== quoteResult.data.userId) {
+      return err('Not your team fee')
+    }
+    return ok(teamFeeStatusFromPrice(quoteResult.data.price))
   }
-  return ok(teamFeeStatusFromPrice(quoteResult.data.price))
-}
+)
 
 /**
  * Retrieves all payment records from the new payment_transaction table.

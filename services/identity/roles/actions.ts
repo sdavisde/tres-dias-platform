@@ -40,8 +40,8 @@ type UpdateRoleRequest = {
 }
 export const updateRole = authorizedAction<[UpdateRoleRequest], Role>(
   Permission.WRITE_USER_ROLES,
-  async (_user, { roleId, input }) => {
-    return invalidatingRoles(await RoleService.updateRole(roleId, input))
+  async (user, { roleId, input }) => {
+    return invalidatingRoles(await RoleService.updateRole(roleId, input, user))
   }
 )
 
@@ -54,8 +54,8 @@ export const deleteRole = authorizedAction<[string], null>(
 
 export const createRole = authorizedAction<[RoleInput], Role>(
   Permission.WRITE_USER_ROLES,
-  async (_user, input) => {
-    return invalidatingRoles(await RoleService.createRole(input))
+  async (user, input) => {
+    return invalidatingRoles(await RoleService.createRole(input, user))
   }
 )
 
@@ -65,9 +65,9 @@ type DuplicateRoleRequest = {
 }
 export const duplicateRole = authorizedAction<[DuplicateRoleRequest], Role>(
   Permission.WRITE_USER_ROLES,
-  async (_user, { sourceRoleId, label }) => {
+  async (user, { sourceRoleId, label }) => {
     return invalidatingRoles(
-      await RoleService.duplicateRole(sourceRoleId, label)
+      await RoleService.duplicateRole(sourceRoleId, user, label)
     )
   }
 )
@@ -79,8 +79,8 @@ type UpdateUserRolesRequest = {
 export const updateUserRoles = authorizedAction<
   [UpdateUserRolesRequest],
   Array<Tables<'user_roles'>>
->(Permission.WRITE_USER_ROLES, async (_user, { userId, roleIds }) => {
-  return await RoleService.updateUserRoles(userId, roleIds)
+>(Permission.WRITE_USER_ROLES, async (user, { userId, roleIds }) => {
+  return await RoleService.updateUserRoles(userId, roleIds, user)
 })
 
 export const removeAllUserRoles = authorizedAction<[string], null>(
@@ -101,6 +101,6 @@ type SetRoleMembersRequest = {
 export const setRoleMembers = authorizedAction<
   [SetRoleMembersRequest],
   Array<Tables<'user_roles'>>
->(Permission.WRITE_USER_ROLES, async (_user, { roleId, userIds }) => {
-  return await RoleService.setRoleMembers(roleId, userIds)
+>(Permission.WRITE_USER_ROLES, async (user, { roleId, userIds }) => {
+  return await RoleService.setRoleMembers(roleId, userIds, user)
 })
