@@ -3,7 +3,7 @@ import 'server-only'
 import { isNil } from 'lodash'
 import { endOfMonth, startOfMonth } from 'date-fns'
 import type { CreateEmailResponseSuccess } from 'resend'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { formatWeekendLabelFor } from '@/lib/weekend'
 import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
@@ -22,7 +22,6 @@ import type { HydratedCandidate } from '@/lib/candidates/types'
 import CandidatePaymentCompletedEmail from '@/components/email/CandidatePaymentCompletedEmail'
 import CandidateFormsCompletedEmail from '@/components/email/CandidateFormsCompletedEmail'
 import TeamPaymentNotificationEmail from '@/components/email/TeamPaymentNotificationEmail'
-import { getHydratedCandidate } from '@/services/candidates/hydrated-candidates'
 import { getCandidateReviewUrl } from './review-links'
 
 /**
@@ -290,7 +289,9 @@ export async function notifyAssistantHeadForTeamPayment(
       return ok(true)
     }
 
-    const supabase = await createClient()
+    // Runs inside the Stripe webhook, where there is no user session: the
+    // session client would be anonymous and read nothing.
+    const supabase = createAdminClient()
 
     // Get all weekend roster data and weekend details in parallel
     const [teamMemberResult, weekendResult, assistantHeadResult] =
@@ -398,21 +399,29 @@ export async function sendCandidateFormsCompletedEmail(
   candidateId: string
 ): Promise<Result<string, { data: CreateEmailResponseSuccess | null }>> {
   try {
-    // Fetch candidate data
-    const candidateResult = await getHydratedCandidate(candidateId)
+    // The candidate submitting forms is not logged in, so every read here
+    // goes through the admin client (the session client would be anonymous).
+    const candidateResult =
+      await CandidateRepository.getCandidateByIdAdmin(candidateId)
 
     if (isErr(candidateResult)) {
       return err(`Failed to fetch candidate: ${candidateResult.error}`)
     }
 
-    const candidate = candidateResult.data
+    const rawCandidate = candidateResult.data
 
-    if (isNil(candidate)) {
+    if (isNil(rawCandidate)) {
       return err('Candidate not found')
     }
 
-    // Get pre-weekend couple email
-    const preWeekendEmailResult = await getPreWeekendCoupleEmail()
+    const candidate = {
+      ...rawCandidate,
+      candidate_info: rawCandidate.candidate_info?.at(0),
+      candidate_sponsorship_info:
+        rawCandidate.candidate_sponsorship_info?.at(0),
+    } as HydratedCandidate
+
+    const preWeekendEmailResult = await getPreWeekendCoupleEmailAdmin()
     if (isErr(preWeekendEmailResult)) {
       return err(preWeekendEmailResult.error)
     }
@@ -430,7 +439,9 @@ export async function sendCandidateFormsCompletedEmail(
       subject: `Candidate Forms Completed - ${candidateName}`,
       react: CandidateFormsCompletedEmail({
         ...candidate,
-        reviewUrl: await getCandidateReviewUrl(candidate),
+        reviewUrl: await getCandidateReviewUrl(candidate, {
+          client: createAdminClient(),
+        }),
       }),
     })
 

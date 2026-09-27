@@ -1,11 +1,11 @@
 import PublicCheckout from '@/components/public-checkout'
 import { redirect } from 'next/navigation'
+import { z } from 'zod'
 import { logger } from '@/lib/logger'
 import * as Results from '@/lib/results'
 import { getUrl } from '@/lib/url'
 import { Errors } from '@/lib/error'
 import { isEmpty, isNil } from 'lodash'
-import { getCandidateById } from '@/services/candidates/candidate-service'
 import { getCheckoutQuote } from '@/services/payment/payment-service'
 import type { CheckoutTarget } from '@/lib/payments/checkout-price'
 
@@ -15,13 +15,17 @@ interface CandidateFeesPaymentPageProps {
   }>
 }
 
+const candidateIdSchema = z.uuid()
+
 /**
  * This page renders a stripe checkout page.
  * Since we accept payment for either candidate fees or team fees,
  * we need to pass the candidate_id to the page.
  *
- * The page will then validate that the candidate exists and is awaiting payment.
- * If the candidate is not awaiting payment, the page will redirect to the payment success page.
+ * The visitor is usually not logged in, so everything the page needs comes
+ * from the admin-backed checkout quote: it validates that the candidate exists
+ * and still owes the fee, and who the sponsorship form says is paying.
+ * If the candidate is not awaiting payment, the page redirects home with a reason.
  *
  * If the candidate is awaiting payment, the page will render a stripe checkout page.
  *
@@ -40,26 +44,13 @@ export default async function CandidateFeesPaymentPage({
     redirect(`/home?error=${Errors.MISSING_CANDIDATE_ID}`)
   }
 
-  const candidateResult = await getCandidateById(candidate_id)
-  if (Results.isErr(candidateResult)) {
-    logger.error({
-      path: '/payment/candidate-fee',
-      candidate_id,
-      error: Errors.FAILED_TO_FETCH_CANDIDATE,
-      errorMessage: candidateResult.error,
-      msg: 'Failed to fetch candidate for payment page',
-    })
-    redirect(`/home?error=${Errors.FAILED_TO_FETCH_CANDIDATE}`)
-  }
-
-  const candidate = candidateResult.data
-
-  if (isNil(candidate)) {
+  const parsedId = candidateIdSchema.safeParse(candidate_id)
+  if (!parsedId.success) {
     logger.error({
       path: '/payment/candidate-fee',
       candidate_id,
       error: Errors.INVALID_CANDIDATE,
-      msg: 'Candidate not found for payment page',
+      msg: 'Payment page accessed with a malformed candidate_id',
     })
     redirect(`/home?error=${Errors.INVALID_CANDIDATE}`)
   }
@@ -68,21 +59,28 @@ export default async function CandidateFeesPaymentPage({
   // server along with what's already been paid.
   const target: CheckoutTarget = {
     kind: 'candidate',
-    candidateId: candidate.id,
+    candidateId: parsedId.data,
   }
   const quoteResult = await getCheckoutQuote(target)
   if (Results.isErr(quoteResult)) {
+    const notFound = quoteResult.error === 'Candidate not found'
     logger.error({
       path: '/payment/candidate-fee',
       candidate_id,
-      error: Errors.FAILED_TO_FETCH_CANDIDATE,
+      error: notFound
+        ? Errors.INVALID_CANDIDATE
+        : Errors.FAILED_TO_FETCH_CANDIDATE,
       errorMessage: quoteResult.error,
-      msg: 'Failed to price candidate fee checkout',
+      msg: notFound
+        ? 'Candidate not found for payment page'
+        : 'Failed to price candidate fee checkout',
     })
-    redirect(`/home?error=${Errors.FAILED_TO_FETCH_CANDIDATE}`)
+    redirect(
+      `/home?error=${notFound ? Errors.INVALID_CANDIDATE : Errors.FAILED_TO_FETCH_CANDIDATE}`
+    )
   }
 
-  const { price } = quoteResult.data
+  const { price, paymentOwner } = quoteResult.data
   if (Results.isErr(price)) {
     logger.info({
       path: '/payment/candidate-fee',
@@ -100,11 +98,11 @@ export default async function CandidateFeesPaymentPage({
   }
 
   // Validate payment_owner parameter
-  if (!['candidate', 'sponsor'].includes(candidate.paymentOwner)) {
+  if (isNil(paymentOwner) || !['candidate', 'sponsor'].includes(paymentOwner)) {
     logger.error({
       path: '/payment/candidate-fee',
       candidate_id,
-      payment_owner: candidate.paymentOwner,
+      payment_owner: paymentOwner,
       error: Errors.INVALID_PAYMENT_OWNER,
       msg: 'Invalid payment_owner value',
     })

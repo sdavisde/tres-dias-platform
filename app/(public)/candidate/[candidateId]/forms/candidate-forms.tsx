@@ -2,7 +2,6 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,106 +29,53 @@ import { Textarea } from '@/components/ui/textarea'
 import { DatePicker } from '@/components/ui/date-picker'
 import { CampWaiverText } from '@/components/forms/camp-waiver-text'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { addCandidateInfo } from '@/actions/candidates'
+import { submitCandidateForms } from '@/actions/candidates'
 import { isErr } from '@/lib/results'
-import { calculateAge, formatDateNumeric } from '@/lib/utils'
+import { formatDateNumeric } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { isDevMode } from '@/lib/dev-mode'
 import { CANDIDATE_FORM_TEST_DATA } from './candidate-forms.helpers'
-import type { Database } from '@/database.types'
+import {
+  candidateFormsSchema,
+  type CandidateFormsValues,
+} from '@/lib/candidates/candidate-forms-schema'
 
-type CandidateInfo = Database['public']['Tables']['candidate_info']['Row']
-
-const formSchema = z.object({
-  /** Personal Info */
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  email: z.email('Invalid email address'),
-  dateOfBirth: z.string().min(1, 'Date of birth is required'),
-  shirtSize: z.string().min(1, 'Shirt size is required'),
-  maritalStatus: z
-    .enum(['single', 'married', 'widowed', 'divorced', 'separated'])
-    .optional(),
-  /** Make these fields conditionally render only if maritalStatus is married */
-  hasSpouseAttendedWeekend: z.boolean().optional(),
-  spouseWeekendLocation: z.string().optional(),
-  spouseName: z.string().optional(),
-  hasFriendsAttendingWeekend: z.boolean().optional(),
-  isChristian: z.boolean().optional(),
-  church: z.string().optional(),
-  memberOfClergy: z.boolean().optional(),
-  reasonForAttending: z.string().optional(),
-  /** Address*/
-  addressLine1: z.string().min(1, 'Address Line 1 is required'),
-  addressLine2: z.string().optional(),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State is required'),
-  zip: z.string().min(1, 'ZIP code is required'),
-  phone: z
-    .string()
-    .min(1, 'Phone number is required')
-    .refine(
-      (v) => v.replace(/\D/g, '').length === 10,
-      'Please enter a valid 10-digit phone number'
-    ),
-  /** Health section */
-  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
-  emergencyContactPhone: z
-    .string()
-    .min(1, 'Emergency contact phone is required')
-    .refine(
-      (v) => v.replace(/\D/g, '').length === 10,
-      'Please enter a valid 10-digit phone number'
-    ),
-  medicalConditions: z.string().optional(),
-  medicalPermission: z.boolean(),
-  emergencyContactPermission: z.boolean(),
-  /** Camp Waiver — typed signature acknowledging the Tanglewood waiver */
-  signature: z.string().min(2, 'Signature is required'),
-})
-type FormValues = z.infer<typeof formSchema>
+const formSchema = candidateFormsSchema
+type FormValues = CandidateFormsValues
 
 type CandidateFormsProps = {
   candidateId: string
-  initialData?: CandidateInfo
 }
 
-export function CandidateForms({
-  candidateId,
-  initialData,
-}: CandidateFormsProps) {
+export function CandidateForms({ candidateId }: CandidateFormsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
   const form = useForm<FormValues>({
     defaultValues: {
-      addressLine1: initialData?.address_line_1 ?? '',
-      addressLine2: initialData?.address_line_2 ?? '',
-      city: initialData?.city ?? '',
-      state: initialData?.state ?? '',
-      zip: initialData?.zip ?? '',
-      phone: initialData?.phone ?? '',
-      firstName: initialData?.first_name ?? '',
-      lastName: initialData?.last_name ?? '',
-      email: initialData?.email ?? '',
-      dateOfBirth: initialData?.date_of_birth ?? '',
-      shirtSize: initialData?.shirt_size ?? '',
-      maritalStatus:
-        (initialData?.marital_status as FormValues['maritalStatus']) ??
-        undefined,
-      hasSpouseAttendedWeekend:
-        initialData?.has_spouse_attended_weekend ?? false,
-      spouseWeekendLocation: initialData?.spouse_weekend_location ?? '',
-      spouseName: initialData?.spouse_name ?? '',
-      hasFriendsAttendingWeekend:
-        initialData?.has_friends_attending_weekend ?? false,
-      isChristian: initialData?.is_christian ?? false,
-      church: initialData?.church ?? '',
-      memberOfClergy: initialData?.member_of_clergy ?? false,
-      reasonForAttending: initialData?.reason_for_attending ?? '',
-      emergencyContactName: initialData?.emergency_contact_name ?? '',
-      emergencyContactPhone: initialData?.emergency_contact_phone ?? '',
-      medicalConditions: initialData?.medical_conditions ?? '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      zip: '',
+      phone: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      dateOfBirth: '',
+      shirtSize: '',
+      maritalStatus: undefined,
+      hasSpouseAttendedWeekend: false,
+      spouseWeekendLocation: '',
+      spouseName: '',
+      hasFriendsAttendingWeekend: false,
+      isChristian: false,
+      church: '',
+      memberOfClergy: false,
+      reasonForAttending: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      medicalConditions: '',
       medicalPermission: false,
       emergencyContactPermission: false,
       signature: '',
@@ -141,38 +87,7 @@ export function CandidateForms({
     setIsSubmitting(true)
 
     try {
-      console.log('Form data:', data)
-
-      // Calculate age from date of birth
-      const age = calculateAge(data.dateOfBirth)
-
-      const result = await addCandidateInfo(candidateId, {
-        address_line_1: data.addressLine1,
-        address_line_2: data.addressLine2 ?? null,
-        city: data.city,
-        state: data.state,
-        zip: data.zip,
-        phone: data.phone,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email,
-        date_of_birth: data.dateOfBirth,
-        shirt_size: data.shirtSize,
-        marital_status: data.maritalStatus ?? null,
-        has_spouse_attended_weekend: data.hasSpouseAttendedWeekend ?? null,
-        spouse_weekend_location: data.spouseWeekendLocation ?? null,
-        spouse_name: data.spouseName ?? null,
-        has_friends_attending_weekend: data.hasFriendsAttendingWeekend ?? null,
-        is_christian: data.isChristian ?? null,
-        church: data.church ?? null,
-        member_of_clergy: data.memberOfClergy ?? null,
-        reason_for_attending: data.reasonForAttending ?? null,
-        emergency_contact_name: data.emergencyContactName ?? null,
-        emergency_contact_phone: data.emergencyContactPhone ?? null,
-        medical_conditions: data.medicalConditions ?? null,
-        camp_waiver_signed_at: new Date().toISOString(),
-        age,
-      })
+      const result = await submitCandidateForms(candidateId, data)
       if (isErr(result)) {
         form.setError('root', { message: result.error })
         return

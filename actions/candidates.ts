@@ -5,15 +5,10 @@ import type { Result } from '@/lib/results'
 import { err, ok, isErr } from '@/lib/results'
 import { isNil } from 'lodash'
 import type { SponsorFormSchema } from '@/app/(member)/sponsor/SponsorForm'
-import type {
-  CandidateStatus,
-  HydratedCandidate,
-  CandidateFormData,
-} from '@/lib/candidates/types'
+import type { CandidateStatus, HydratedCandidate } from '@/lib/candidates/types'
 import { authorizedAction } from '@/lib/actions/authorized-action'
 import { Permission } from '@/lib/security'
-import { sendCandidateFormsCompletedEmail } from '@/services/notifications/notification-service'
-import { logger } from '@/lib/logger'
+import * as CandidateForms from '@/services/candidates/candidate-forms'
 import { WeekendStatus, WEEKEND_CANDIDATE_CAPACITY } from '@/lib/weekend/types'
 import { formatWeekendLabelFor } from '@/lib/weekend'
 import type { Database } from '@/database.types'
@@ -105,54 +100,19 @@ export const updateCandidateStatus = authorizedAction<
 })
 
 // publicAction: the candidate filling in their forms is not logged in; the link
-// carries an unguessable candidate UUID. Hardened (status check, admin client,
-// unique candidate_info row) in Unit 5 of docs/specs/19-spec-security-remediation.
+// carries an unguessable candidate UUID. The service validates the id and the
+// payload, writes through the admin client, and only flips the status while the
+// candidate is still in a forms-open state (Unit 5 of
+// docs/specs/19-spec-security-remediation).
 /**
- * Add Candidate Info when a user submits their candidate forms
- * Also updates the candidate status to 'pending_approval'
+ * Records a candidate's completed registration forms and moves them to
+ * `pending_approval`. Replaces `addCandidateInfo`.
  */
-export async function addCandidateInfo(
+export async function submitCandidateForms(
   candidateId: string,
-  data: CandidateFormData
+  values: unknown
 ): Promise<Result<string, true>> {
-  try {
-    const supabase = await createClient()
-
-    const { error: candidateInfoError } = await supabase
-      .from('candidate_info')
-      .insert({
-        candidate_id: candidateId,
-        ...data,
-      })
-
-    if (!isNil(candidateInfoError)) {
-      return err(`Failed to add candidate info: ${candidateInfoError.message}`)
-    }
-
-    // Update candidate status to pending_approval after forms are completed
-    const { error: statusError } = await supabase
-      .from('candidates')
-      .update({ status: 'pending_approval' })
-      .eq('id', candidateId)
-
-    if (!isNil(statusError)) {
-      return err(`Failed to update candidate status: ${statusError.message}`)
-    }
-
-    // Send email notification to pre-weekend couple (don't fail if email fails)
-    const emailResult = await sendCandidateFormsCompletedEmail(candidateId)
-    if (isErr(emailResult)) {
-      logger.error(
-        `Failed to send forms completed email for candidate ${candidateId}: ${emailResult.error}`
-      )
-    }
-
-    return ok(true)
-  } catch (error) {
-    return err(
-      `Error while adding candidate info: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
+  return await CandidateForms.submitCandidateForms(candidateId, values)
 }
 
 /**
