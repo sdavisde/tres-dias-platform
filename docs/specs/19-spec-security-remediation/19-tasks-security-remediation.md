@@ -263,10 +263,10 @@ A non-technical user can confirm this is done by seeing `yarn test` pass with th
 
 #### 8.0 Tasks
 
-- [ ] 8.1 Test 1 lands with Unit 3 (task 3.3): `lib/actions/authorized-action.test.ts` (FR-8.1).
-- [ ] 8.2 Test 2 lands with Unit 1 and is updated in Unit 5: create `supabase/rls.test.ts` that reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, skips the whole suite (`describe.skip` via a guard) unless the URL contains `127.0.0.1` or `localhost`, creates an anon `@supabase/supabase-js` client, and asserts: `from('user_roles').select('*')` returns zero rows or an error; `from('user_roles').insert({...})` returns an error; after Unit 5, `from('candidate_info').select('*')` returns zero rows or an error (in Unit 1 this last assertion is inverted and carries a `// until Unit 5` comment). Add `supabase/**/*.test.ts` to the Jest `testMatch` if the current `**/*.test.ts` glob excludes it (FR-8.2).
-- [ ] 8.3 Test 3 lands with Unit 4 (task 4.10): the flipped `services/identity/user/actions.test.ts` (FR-8.3).
-- [ ] 8.4 Put this checklist in every unit PR description and tick it before merge (FR-8.4):
+- [x] 8.1 Test 1 lands with Unit 3 (task 3.3): `lib/actions/authorized-action.test.ts` (FR-8.1).
+- [x] 8.2 (landed in Unit 8 after Unit 5, so the candidate_info assertion is already in its final form; skips unless the local REST endpoint answers) Test 2 lands with Unit 1 and is updated in Unit 5: create `supabase/rls.test.ts` that reads `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, skips the whole suite (`describe.skip` via a guard) unless the URL contains `127.0.0.1` or `localhost`, creates an anon `@supabase/supabase-js` client, and asserts: `from('user_roles').select('*')` returns zero rows or an error; `from('user_roles').insert({...})` returns an error; after Unit 5, `from('candidate_info').select('*')` returns zero rows or an error (in Unit 1 this last assertion is inverted and carries a `// until Unit 5` comment). Add `supabase/**/*.test.ts` to the Jest `testMatch` if the current `**/*.test.ts` glob excludes it (FR-8.2).
+- [x] 8.3 Test 3 lands with Unit 4 (task 4.10): the flipped `services/identity/user/actions.test.ts` (FR-8.3).
+- [x] 8.4 (evidence mapping in `evidence/verification-matrix.md`: 19 covered, 4 partial, 15 manual with Gherkin ids; the PR description carries the same checklist) Put this checklist in every unit PR description and tick it before merge (FR-8.4):
   - **Logged out:** candidate forms link renders and submits; candidate fee checkout; login; forgot password; reset password.
   - **Member with no roles:** sponsor form; secuela confirm; statement of belief, commitment, release of claim, camp waiver, info sheet; own profile contact/address/photo edits; experience add and delete; hub tabs and roster render.
   - **Rector by CHA only (active weekend, no DB role):** roster builder draft, finalize, drop, remove; team cash/check payment from the roster.
