@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getLoggedInUser } from '@/services/identity/user'
-import { getRosterSpecialNeeds } from '@/services/weekend'
+import { getRosterSpecialNeeds } from '@/services/weekend/weekend-service'
 import { ReleaseOfClaimForm } from '@/components/team-forms/release-of-claim-form'
 import { isErr, unwrapOr } from '@/lib/results'
 import { isNil } from 'lodash'

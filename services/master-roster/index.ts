@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import * as MasterRosterService from './master-roster-service'
 

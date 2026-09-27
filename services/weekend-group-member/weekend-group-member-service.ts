@@ -3,8 +3,21 @@ import 'server-only'
 import type { Result } from '@/lib/results'
 import { err, ok, isErr } from '@/lib/results'
 import { REQUIRED_FORMS } from '@/lib/weekend/team/required-forms.config'
-import type { TeamFormsProgress } from '@/actions/team-forms'
 import * as Repository from './repository'
+
+export type TeamFormsProgress = {
+  steps: {
+    statementOfBelief: boolean
+    commitmentForm: boolean
+    releaseOfClaim: boolean
+    campWaiver: boolean
+    infoSheet: boolean
+  }
+  completedSteps: string[]
+  totalSteps: number
+  completedCount: number
+  isComplete: boolean
+}
 
 /**
  * Builds team forms progress for a group member using team_form_completions.

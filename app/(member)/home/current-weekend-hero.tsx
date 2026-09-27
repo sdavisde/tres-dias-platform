@@ -4,7 +4,7 @@ import { isNil } from 'lodash'
 import type { User } from '@/lib/users/types'
 import { isErr, Results } from '@/lib/results'
 import { getCachedActiveWeekends } from '@/services/weekend/cached'
-import { getCandidateCountByWeekend } from '@/services/candidates'
+import { getCandidateCountByWeekend } from '@/services/candidates/candidate-service'
 import {
   WeekendType,
   WEEKEND_CANDIDATE_CAPACITY,

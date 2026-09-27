@@ -15,24 +15,6 @@ import * as PaymentService from '@/services/payment/payment-service'
 import * as FeesService from './fees-service'
 import type { FeeChange, FeeDefaults } from './types'
 
-/**
- * A group's fees; null when fees aren't tracked for it. Fees are not secret —
- * anyone signed in can see what a weekend costs.
- */
-export async function getGroupFees(groupId: string) {
-  return await FeesService.getGroupFees(groupId)
-}
-
-/** Every weekend group whose fees are set. */
-export async function getTrackedGroupFees() {
-  return await FeesService.getTrackedGroups()
-}
-
-/** What new weekend groups start at. */
-export async function getFeeDefaults() {
-  return await FeesService.getFeeDefaults()
-}
-
 function revalidateFeeViews() {
   revalidatePath('/admin')
   revalidatePath('/admin/payments')
@@ -43,9 +25,9 @@ function revalidateFeeViews() {
 }
 
 /** Changes what new groups start at. Requires MANAGE_FEES. */
-export const updateFeeDefaults = authorizedAction<FeeDefaults, FeeDefaults>(
+export const updateFeeDefaults = authorizedAction<[FeeDefaults], FeeDefaults>(
   Permission.MANAGE_FEES,
-  async (defaults) => {
+  async (_user, defaults) => {
     const result = await FeesService.updateFeeDefaults(defaults)
     if (!isErr(result)) {
       // Defaults live in site_settings.
@@ -61,9 +43,9 @@ export const updateFeeDefaults = authorizedAction<FeeDefaults, FeeDefaults>(
  * change is logged by the database. Requires MANAGE_FEES.
  */
 export const updateGroupFees = authorizedAction<
-  { groupId: string; fees: GroupFees },
+  [{ groupId: string; fees: GroupFees }],
   GroupFees
->(Permission.MANAGE_FEES, async ({ groupId, fees }) => {
+>(Permission.MANAGE_FEES, async (_user, { groupId, fees }) => {
   const result = await FeesService.setGroupFees(groupId, fees)
   if (!isErr(result)) {
     updateTag(TAGS.groupFees)
@@ -78,9 +60,9 @@ export const updateGroupFees = authorizedAction<
  * shown before saving. Requires MANAGE_FEES.
  */
 export const previewGroupFeeChange = authorizedAction<
-  { groupId: string; groupNumber: number | null; fees: GroupFees },
+  [{ groupId: string; groupNumber: number | null; fees: GroupFees }],
   FeeChangeImpact
->(Permission.MANAGE_FEES, async ({ groupId, groupNumber, fees }) => {
+>(Permission.MANAGE_FEES, async (_user, { groupId, groupNumber, fees }) => {
   const [paymentsResult, currentResult] = await Promise.all([
     PaymentService.getAllPayments(),
     FeesService.getGroupFees(groupId),
@@ -106,7 +88,7 @@ export const previewGroupFeeChange = authorizedAction<
 })
 
 /** A group's fee history, newest first. Requires READ_PAYMENTS. */
-export const getGroupFeeHistory = authorizedAction<string, FeeChange[]>(
+export const getGroupFeeHistory = authorizedAction<[string], FeeChange[]>(
   Permission.READ_PAYMENTS,
-  async (groupId) => FeesService.getFeeHistory(groupId)
+  async (_user, groupId) => FeesService.getFeeHistory(groupId)
 )

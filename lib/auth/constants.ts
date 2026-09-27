@@ -1,5 +1,8 @@
 /**
- * Minimum password length enforced by Supabase Auth (GoTrue `password_min_length`).
- * Spec 19 task 7.1 raises this to 8 and reuses this file.
+ * Password rules shared by the signup and reset forms. Keep in step with
+ * `minimum_password_length` in `supabase/config.toml`, which is what the auth
+ * server enforces; the client check only gives the user a clearer message.
  */
-export const MIN_PASSWORD_LENGTH = 6
+export const MIN_PASSWORD_LENGTH = 8
+
+export const PASSWORD_TOO_SHORT_MESSAGE = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`

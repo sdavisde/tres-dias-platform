@@ -4,7 +4,9 @@ import { updateTag } from 'next/cache'
 import { isNil } from 'lodash'
 import { TAGS } from '@/lib/cache/tags'
 import { isErr } from '@/lib/results'
-import type { EventCreateInput, EventUpdateInput } from './types'
+import { authorizedAction } from '@/lib/actions/authorized-action'
+import { Permission } from '@/lib/security'
+import type { Event, EventCreateInput, EventUpdateInput } from './types'
 import * as EventsService from './events-service'
 
 /**
@@ -19,106 +21,50 @@ function invalidateEvents(groupId?: string | null) {
 // Re-export types for convenience
 export type { Event, EventCreateInput, EventUpdateInput } from './types'
 
-// ============================================================================
-// Public Actions (No Authorization)
-// ============================================================================
+/**
+ * Fetches past events (datetime < now). Any signed-in member may read events.
+ */
+export const getPastEvents = authorizedAction<[], Event[]>(
+  'authenticated',
+  async () => EventsService.getPastEvents()
+)
 
 /**
- * Fetches all events, optionally sorted by a field.
- * Public - events are visible to all authenticated users.
+ * Creates a new event. Mirrors the admin events page's `canEdit` gate.
  */
-export async function getEvents(orderBy?: 'datetime' | 'created_at') {
-  return EventsService.getEvents(orderBy)
-}
-
-/**
- * Fetches a single event by ID.
- * Public - events are visible to all authenticated users.
- */
-export async function getEvent(id: number) {
-  return EventsService.getEvent(id)
-}
-
-/**
- * Fetches upcoming events (datetime >= now).
- * Public - events are visible to all authenticated users.
- */
-export async function getUpcomingEvents() {
-  return EventsService.getUpcomingEvents()
-}
-
-/**
- * Fetches past events (datetime < now).
- * Public - events are visible to all authenticated users.
- */
-export async function getPastEvents() {
-  return EventsService.getPastEvents()
-}
-
-/**
- * Fetches events within a specified future time period.
- * Public - events are visible to all authenticated users.
- * @param months - Number of months into the future to fetch events for
- */
-export async function getUpcomingEventsForPeriod(months: number) {
-  return EventsService.getUpcomingEventsForPeriod(months)
-}
-
-/**
- * Fetches all events for a weekend group (both men's and women's weekends).
- * Public - events are visible to all authenticated users.
- * @param groupId - The group_id that links men's and women's weekends together
- */
-export async function getEventsForWeekendGroup(groupId: string) {
-  return EventsService.getEventsForWeekendGroup(groupId)
-}
-
-/**
- * Creates a new event.
- * Public - relies on RLS for authorization.
- */
-export async function createEvent(data: EventCreateInput) {
-  const result = await EventsService.createEvent(data)
-  if (!isErr(result)) invalidateEvents(result.data.weekendGroupId)
-  return result
-}
-
-/**
- * Updates an event.
- * Public - relies on RLS for authorization.
- */
-export async function updateEvent(id: number, data: EventUpdateInput) {
-  const result = await EventsService.updateEvent(id, data)
-  if (!isErr(result)) {
-    invalidateEvents(result.data.weekendGroupId)
-    // Moving an event between groups changes both groups' schedules.
-    if (!isNil(data.weekend_group_id)) invalidateEvents(data.weekend_group_id)
+export const createEvent = authorizedAction<[EventCreateInput], Event>(
+  Permission.WRITE_EVENTS,
+  async (_user, data) => {
+    const result = await EventsService.createEvent(data)
+    if (!isErr(result)) invalidateEvents(result.data.weekendGroupId)
+    return result
   }
-  return result
-}
+)
 
 /**
- * Gets the secuela event date for a weekend group.
- * Public - events are visible to all authenticated users.
+ * Updates an event. Mirrors the admin events page's `canEdit` gate.
  */
-export async function getSecuelaDateForGroup(groupId: string) {
-  return EventsService.getSecuelaDateForGroup(groupId)
-}
+export const updateEvent = authorizedAction<[number, EventUpdateInput], Event>(
+  Permission.WRITE_EVENTS,
+  async (_user, id, data) => {
+    const result = await EventsService.updateEvent(id, data)
+    if (!isErr(result)) {
+      invalidateEvents(result.data.weekendGroupId)
+      // Moving an event between groups changes both groups' schedules.
+      if (!isNil(data.weekend_group_id)) invalidateEvents(data.weekend_group_id)
+    }
+    return result
+  }
+)
 
 /**
- * Fetches upcoming community events (not associated with any weekend group).
- * Public - events are visible to all authenticated users.
+ * Deletes an event. Mirrors the admin events page's `canEdit` gate.
  */
-export async function getCommunityEvents() {
-  return EventsService.getCommunityEvents()
-}
-
-/**
- * Deletes an event.
- * Public - relies on RLS for authorization.
- */
-export async function deleteEvent(id: number) {
-  const result = await EventsService.deleteEvent(id)
-  if (!isErr(result)) invalidateEvents()
-  return result
-}
+export const deleteEvent = authorizedAction<[number], { success: boolean }>(
+  Permission.WRITE_EVENTS,
+  async (_user, id) => {
+    const result = await EventsService.deleteEvent(id)
+    if (!isErr(result)) invalidateEvents()
+    return result
+  }
+)

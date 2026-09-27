@@ -5,6 +5,7 @@ import type { HydratedCandidate } from '@/lib/candidates/types'
 import { reviewQueuePath } from '@/lib/candidates/review'
 import { isErr } from '@/lib/results'
 import { getUrl } from '@/lib/url'
+import type { ReadOptions } from '@/lib/supabase/server'
 import * as WeekendService from '@/services/weekend/weekend-service'
 
 /**
@@ -14,12 +15,14 @@ import * as WeekendService from '@/services/weekend/weekend-service'
  * still lands somewhere useful.
  */
 export async function getCandidateReviewUrl(
-  candidate: Pick<HydratedCandidate, 'id' | 'weekend_id'>
+  candidate: Pick<HydratedCandidate, 'id' | 'weekend_id'>,
+  options?: ReadOptions
 ): Promise<string> {
   if (isNil(candidate.weekend_id)) return getUrl('/weekends')
 
   const weekendResult = await WeekendService.getWeekendById(
-    candidate.weekend_id
+    candidate.weekend_id,
+    options
   )
   if (isErr(weekendResult) || isNil(weekendResult.data.groupId)) {
     return getUrl('/weekends')

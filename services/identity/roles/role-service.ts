@@ -5,15 +5,31 @@ import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import * as RoleRepository from './repository'
 import type { Tables } from '@/database.types'
-import type { Permission } from '@/lib/security'
+import { Permission, userHasPermission } from '@/lib/security'
+import type { User } from '@/lib/users/types'
 import type { Role, RoleInput, RoleUsageById } from './types'
 import { roleInputSchema } from './validation'
 import {
   computeFullAccessImpact,
   getEffectivePermissions,
+  inputGrantsFullAccess,
+  roleGrantsFullAccess,
   wouldCreateCycle,
   type FullAccessImpact,
 } from './inheritance'
+
+export const FULL_ACCESS_GRANT_REFUSED =
+  'Only someone with Full Access can grant or edit Full Access.'
+
+/**
+ * WRITE_USER_ROLES lets a board member manage roles, but must never be a
+ * ladder to FULL_ACCESS: granting it, editing a role that has it, or basing a
+ * role on one that has it all require the actor to hold FULL_ACCESS already.
+ * The database enforces the same rule (role_grants_full_access policies).
+ */
+function mayTouchFullAccess(actor: User): boolean {
+  return userHasPermission(actor, [Permission.FULL_ACCESS])
+}
 
 function normalizeRole(rawRole: Tables<'roles'>): Role {
   return {
@@ -127,20 +143,39 @@ async function validateRoleInput(
 
 export async function updateRole(
   roleId: string,
-  input: RoleInput
+  input: RoleInput,
+  actor: User
 ): Promise<Result<string, Role>> {
   const validated = await validateRoleInput(roleId, input)
   if (isErr(validated)) return validated
+  if (!mayTouchFullAccess(actor)) {
+    const graph = await RoleRepository.getRoleGraph()
+    if (isErr(graph)) return graph
+    if (
+      roleGrantsFullAccess(roleId, graph.data) ||
+      inputGrantsFullAccess(validated.data, graph.data)
+    ) {
+      return err(FULL_ACCESS_GRANT_REFUSED)
+    }
+  }
   const result = await RoleRepository.updateRole(roleId, validated.data)
   if (isErr(result)) return result
   return ok(normalizeRole(result.data))
 }
 
 export async function createRole(
-  input: RoleInput
+  input: RoleInput,
+  actor: User
 ): Promise<Result<string, Role>> {
   const validated = await validateRoleInput(null, input)
   if (isErr(validated)) return validated
+  if (!mayTouchFullAccess(actor)) {
+    const graph = await RoleRepository.getRoleGraph()
+    if (isErr(graph)) return graph
+    if (inputGrantsFullAccess(validated.data, graph.data)) {
+      return err(FULL_ACCESS_GRANT_REFUSED)
+    }
+  }
   const roleResult = await RoleRepository.createRole(validated.data)
   if (isErr(roleResult)) {
     return roleResult
@@ -154,6 +189,7 @@ export async function createRole(
  */
 export async function duplicateRole(
   sourceRoleId: string,
+  actor: User,
   label?: string
 ): Promise<Result<string, Role>> {
   const rolesResult = await RoleRepository.getAllRoles()
@@ -161,13 +197,30 @@ export async function duplicateRole(
   const source = rolesResult.data.find((r) => r.id === sourceRoleId)
   if (isNil(source)) return err('Role not found')
 
-  return await createRole({
-    label: label ?? `${source.label} (copy)`,
-    description: source.description ?? '',
-    type: source.type ?? 'INDIVIDUAL',
-    based_on_role_id: source.based_on_role_id ?? null,
-    permissions: source.permissions as Permission[],
-  })
+  return await createRole(
+    {
+      label: label ?? `${source.label} (copy)`,
+      description: source.description ?? '',
+      type: source.type ?? 'INDIVIDUAL',
+      based_on_role_id: source.based_on_role_id ?? null,
+      permissions: source.permissions as Permission[],
+    },
+    actor
+  )
+}
+
+/** Refuses when any of `roleIds` grants FULL_ACCESS and the actor lacks it. */
+async function assertMayAssign(
+  roleIds: readonly string[],
+  actor: User
+): Promise<Result<string, null>> {
+  if (mayTouchFullAccess(actor)) return ok(null)
+  const graph = await RoleRepository.getRoleGraph()
+  if (isErr(graph)) return graph
+  if (roleIds.some((id) => roleGrantsFullAccess(id, graph.data))) {
+    return err(FULL_ACCESS_GRANT_REFUSED)
+  }
+  return ok(null)
 }
 
 /**
@@ -202,8 +255,11 @@ export async function deleteRole(
 
 export async function updateUserRoles(
   userId: string,
-  roleIds: string[]
+  roleIds: string[],
+  actor: User
 ): Promise<Result<string, Array<Tables<'user_roles'>>>> {
+  const allowed = await assertMayAssign(roleIds, actor)
+  if (isErr(allowed)) return allowed
   const result = await RoleRepository.updateUserRoles(userId, roleIds)
   if (isErr(result)) {
     return result
@@ -223,8 +279,11 @@ export async function removeAllUserRoles(
  */
 export async function setRoleMembers(
   roleId: string,
-  userIds: string[]
+  userIds: string[],
+  actor: User
 ): Promise<Result<string, Array<Tables<'user_roles'>>>> {
+  const allowed = await assertMayAssign([roleId], actor)
+  if (isErr(allowed)) return allowed
   const result = await RoleRepository.setRoleMembers(roleId, userIds)
   if (isErr(result)) {
     return result

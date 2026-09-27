@@ -7,6 +7,8 @@ import {
   getEffectivePermissions,
   getInheritedPermissions,
   indexRoles,
+  inputGrantsFullAccess,
+  roleGrantsFullAccess,
   wouldCreateCycle,
   type RoleNode,
 } from './inheritance'
@@ -177,5 +179,49 @@ describe('computeFullAccessImpact', () => {
     expect(impact.totalHolders).toBe(2)
     expect(impact.holdersLostIfRemoved.full).toBe(1)
     expect(impact.holdersLostIfRemoved.backup).toBe(0)
+  })
+})
+
+describe('FULL_ACCESS grant detection', () => {
+  const fullAccess: RoleNode = {
+    id: 'full-access',
+    permissions: [Permission.FULL_ACCESS],
+    based_on_role_id: null,
+  }
+  const inheritsFullAccess: RoleNode = {
+    id: 'inherits',
+    permissions: [],
+    based_on_role_id: 'full-access',
+  }
+  const graph = [member, board, fullAccess, inheritsFullAccess]
+
+  it('flags roles that grant FULL_ACCESS directly or through a parent', () => {
+    expect(roleGrantsFullAccess('full-access', graph)).toBe(true)
+    expect(roleGrantsFullAccess('inherits', graph)).toBe(true)
+    expect(roleGrantsFullAccess('board', graph)).toBe(false)
+  })
+
+  it('flags role inputs that would grant FULL_ACCESS', () => {
+    expect(
+      inputGrantsFullAccess(
+        { permissions: [Permission.FULL_ACCESS], based_on_role_id: null },
+        graph
+      )
+    ).toBe(true)
+    expect(
+      inputGrantsFullAccess(
+        { permissions: [], based_on_role_id: 'inherits' },
+        graph
+      )
+    ).toBe(true)
+    expect(
+      inputGrantsFullAccess(
+        {
+          permissions: [Permission.WRITE_USER_ROLES],
+          based_on_role_id: 'board',
+        },
+        graph
+      )
+    ).toBe(false)
   })
 })

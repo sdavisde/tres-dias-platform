@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Results } from '@/lib/results'
-import { getFeeDefaults } from '@/services/fees'
+import { getFeeDefaults } from '@/services/fees/fees-service'
 import { FeeDefaultsEditor } from './fee-defaults-editor'
 
 /**

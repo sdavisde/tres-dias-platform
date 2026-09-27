@@ -7,7 +7,7 @@ import { logger } from '@/lib/logger'
 import {
   notifyAssistantHeadForTeamPayment,
   notifyCandidatePaymentReceivedAdmin,
-} from '@/services/notifications'
+} from '@/services/notifications/notification-service'
 import { isNil } from 'lodash'
 import { getTransactionData } from '../stripe-service'
 import type {

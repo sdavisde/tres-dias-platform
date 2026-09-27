@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getCommunityEncouragement } from '@/services/community'
+import { getCommunityEncouragement } from '@/services/community/community-service'
 import { EncouragementEditor } from './EncouragementEditor'
 import type { User } from '@/lib/users/types'
 import { Permission, userHasPermission } from '@/lib/security'

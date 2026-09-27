@@ -36,7 +36,7 @@ jest.mock('../stripe-service', () => ({
   getTransactionData: jest.fn(),
 }))
 
-jest.mock('@/services/notifications', () => ({
+jest.mock('@/services/notifications/notification-service', () => ({
   notifyAssistantHeadForTeamPayment: jest.fn(),
   notifyCandidatePaymentReceivedAdmin: jest.fn(),
 }))
@@ -44,7 +44,7 @@ jest.mock('@/services/notifications', () => ({
 import * as PaymentService from '@/services/payment/payment-service'
 import { getGroupMemberById } from '@/services/weekend-group-member/repository'
 import { getTransactionData } from '../stripe-service'
-import { notifyAssistantHeadForTeamPayment } from '@/services/notifications'
+import { notifyAssistantHeadForTeamPayment } from '@/services/notifications/notification-service'
 import { checkoutSessionCompletedHandler } from './checkout-session-completed'
 
 const findPaymentByIntentId = jest.mocked(PaymentService.findPaymentByIntentId)

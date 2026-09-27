@@ -1,5 +1,4 @@
 export * from './actions'
-export { FEES_NOT_SET } from './payment-service'
 export type { PaymentRecord, PaymentType } from '@/lib/payments/types'
 
 // New types for payment_transaction table
@@ -35,12 +34,9 @@ export {
   VoidPaymentSchema,
 } from './types'
 
-// Service functions for payment_transaction table (used by webhooks with dangerouslyBypassRLS)
-export {
-  recordPayment,
-  getPaymentForTarget,
-  hasPaymentForTarget,
-  backfillStripeData,
-} from './payment-service'
+// Server-only service functions (recordPayment, getPaymentForTarget, ...) are
+// deliberately NOT re-exported here: client components import this barrel, and
+// pulling `payment-service` into a client graph fails the build. Server callers
+// import '@/services/payment/payment-service' directly.
 
 export type { ActiveWeekendFinancials } from '@/lib/payments/compute-totals'

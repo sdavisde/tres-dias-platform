@@ -77,6 +77,11 @@ export type CheckoutQuote = {
   groupNumber: number | null
   /** The team member's user; null for a candidate. */
   userId: string | null
+  /**
+   * Who the sponsorship form says pays ('candidate' | 'sponsor'); null for a
+   * team member. Lets the public fee page work without a candidate read.
+   */
+  paymentOwner: string | null
 }
 
 /**
@@ -118,6 +123,7 @@ export async function getCheckoutQuote(
       groupId: row.groupId,
       groupNumber: row.group?.number ?? null,
       userId: null,
+      paymentOwner: row.paymentOwner,
     })
   }
 
@@ -148,6 +154,7 @@ export async function getCheckoutQuote(
     groupId: row.groupId,
     groupNumber: row.group?.number ?? null,
     userId: row.userId,
+    paymentOwner: null,
   })
 }
 

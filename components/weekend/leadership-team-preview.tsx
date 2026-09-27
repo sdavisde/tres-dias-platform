@@ -1,9 +1,6 @@
 import { Typography } from '@/components/ui/typography'
-import type {
-  LeadershipTeamMember} from '@/services/weekend';
-import {
-  getActiveWeekendLeadershipTeam
-} from '@/services/weekend'
+import type { LeadershipTeamMember } from '@/services/weekend'
+import { getActiveWeekendLeadershipTeam } from '@/services/weekend/weekend-service'
 import { isErr } from '@/lib/results'
 
 export async function LeadershipTeamPreview() {

@@ -1,6 +1,8 @@
-'use server'
+import 'server-only'
 
 import { isNil } from 'lodash'
+import { isErr } from '@/lib/results'
+import { getLoggedInUser } from '@/services/identity/user'
 import { teamTodoItems } from './todos.config'
 import {
   getTodoUrl,
@@ -18,13 +20,26 @@ export type TeamTodoData = {
 }
 
 /**
- * Fetches and prepares team TODO data for display.
- * Server action that handles URL generation and completion checks.
+ * Fetches and prepares team TODO data for the signed-in member's active
+ * weekend. Returns null when the viewer is not on a team, or has no group
+ * membership to key the todos on.
  * Uses groupMemberId (not weekendId) as the storage key since todos are group-scoped.
  */
-export async function getTeamTodoData(
-  user: TeamMemberUser
-): Promise<TeamTodoData | null> {
+export async function getTeamTodoData(): Promise<TeamTodoData | null> {
+  const userResult = await getLoggedInUser()
+  if (isErr(userResult)) {
+    return null
+  }
+
+  const sessionUser = userResult.data
+  if (isNil(sessionUser.teamMemberInfo)) {
+    return null
+  }
+
+  const user: TeamMemberUser = {
+    ...sessionUser,
+    teamMemberInfo: sessionUser.teamMemberInfo,
+  }
   const { groupMemberId } = user.teamMemberInfo
 
   if (isNil(groupMemberId)) {

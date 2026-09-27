@@ -5,20 +5,10 @@
  * All server actions and types are exported from this file.
  */
 
-// Actions
-export {
-  getEvents,
-  getEvent,
-  getUpcomingEvents,
-  getPastEvents,
-  getUpcomingEventsForPeriod,
-  getEventsForWeekendGroup,
-  getSecuelaDateForGroup,
-  getCommunityEvents,
-  createEvent,
-  updateEvent,
-  deleteEvent,
-} from './actions'
+// Actions (client-callable). Server-only reads live in `./events-service`
+// and `./cached`; they must never be re-exported here, because client
+// components value-import this barrel.
+export { getPastEvents, createEvent, updateEvent, deleteEvent } from './actions'
 
 // Types
 export type { Event, EventCreateInput, EventUpdateInput } from './actions'

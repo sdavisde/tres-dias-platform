@@ -14,7 +14,6 @@ import type {
   UpdatePaymentDetailsInput,
   VoidPaymentInput,
 } from './types'
-import type { Weekend } from '@/lib/weekend/types'
 import type { FeeBalances } from '@/lib/payments/fee-balances'
 import type { Result } from '@/lib/results'
 import { err, isErr, isOk, ok } from '@/lib/results'
@@ -29,27 +28,28 @@ import {
  * covered, so a partial payment or a raised fee still shows money owed. Uses
  * the same calculation as online checkout.
  */
-export async function getMyTeamFeeStatus(
-  groupMemberId: string
-): Promise<Result<string, TeamFeeStatus>> {
-  const quoteResult = await PaymentService.getCheckoutQuote({
-    kind: 'team',
-    groupMemberId,
-  })
-  if (isErr(quoteResult)) return quoteResult
-
-  const userResult = await getLoggedInUser()
-  if (isErr(userResult) || userResult.data?.id !== quoteResult.data.userId) {
-    return err('Not your team fee')
+export const getMyTeamFeeStatus = authorizedAction<[string], TeamFeeStatus>(
+  'authenticated',
+  async (user, groupMemberId) => {
+    // Session first, then the admin-client quote, so an anonymous caller learns
+    // nothing about whether a group member exists or has paid.
+    const quoteResult = await PaymentService.getCheckoutQuote({
+      kind: 'team',
+      groupMemberId,
+    })
+    if (isErr(quoteResult)) return err('Not your team fee')
+    if (user.id !== quoteResult.data.userId) {
+      return err('Not your team fee')
+    }
+    return ok(teamFeeStatusFromPrice(quoteResult.data.price))
   }
-  return ok(teamFeeStatusFromPrice(quoteResult.data.price))
-}
+)
 
 /**
  * Retrieves all payment records from the new payment_transaction table.
  * Requires READ_PAYMENTS permission.
  */
-export const getAllPayments = authorizedAction<void, PaymentTransactionDTO[]>(
+export const getAllPayments = authorizedAction<[], PaymentTransactionDTO[]>(
   Permission.READ_PAYMENTS,
   async () => {
     return await PaymentService.getAllPayments()
@@ -62,7 +62,7 @@ export const getAllPayments = authorizedAction<void, PaymentTransactionDTO[]>(
  * other caller. Requires READ_PAYMENTS permission.
  */
 export const getAllPaymentsIncludingVoided = authorizedAction<
-  void,
+  [],
   PaymentTransactionDTO[]
 >(Permission.READ_PAYMENTS, async () => {
   return await PaymentService.getAllPaymentsIncludingVoided()
@@ -73,7 +73,7 @@ export const getAllPaymentsIncludingVoided = authorizedAction<
  * Requires WRITE_PAYMENTS permission.
  */
 export const getPaymentTargetOptions = authorizedAction<
-  void,
+  [],
   PaymentTargetOption[]
 >(Permission.WRITE_PAYMENTS, async () => {
   return await PaymentService.getPaymentTargetOptions()
@@ -84,9 +84,9 @@ export const getPaymentTargetOptions = authorizedAction<
  * weekend with it. Requires WRITE_PAYMENTS permission.
  */
 export const reassignPayment = authorizedAction<
-  ReassignPaymentInput,
+  [ReassignPaymentInput],
   PaymentTransactionRow
->(Permission.WRITE_PAYMENTS, async (input) => {
+>(Permission.WRITE_PAYMENTS, async (_user, input) => {
   const result = await PaymentService.reassignPayment(input)
   if (isOk(result)) revalidatePaymentViews()
   return result
@@ -96,9 +96,9 @@ export const reassignPayment = authorizedAction<
  * Voids a payment without deleting it. Requires WRITE_PAYMENTS permission.
  */
 export const voidPayment = authorizedAction<
-  VoidPaymentInput,
+  [VoidPaymentInput],
   PaymentTransactionRow
->(Permission.WRITE_PAYMENTS, async (input) => {
+>(Permission.WRITE_PAYMENTS, async (_user, input) => {
   const result = await PaymentService.voidPayment(input)
   if (isOk(result)) revalidatePaymentViews()
   return result
@@ -109,9 +109,9 @@ export const voidPayment = authorizedAction<
  * Requires WRITE_PAYMENTS permission.
  */
 export const updatePaymentDetails = authorizedAction<
-  UpdatePaymentDetailsInput,
+  [UpdatePaymentDetailsInput],
   PaymentTransactionRow
->(Permission.WRITE_PAYMENTS, async (input) => {
+>(Permission.WRITE_PAYMENTS, async (_user, input) => {
   const result = await PaymentService.updatePaymentDetails(input)
   if (isOk(result)) revalidatePaymentViews()
   return result
@@ -122,9 +122,9 @@ export const updatePaymentDetails = authorizedAction<
  * check, or a waived fee. Requires WRITE_PAYMENTS permission.
  */
 export const recordAdminPayment = authorizedAction<
-  RecordAdminPaymentInput,
+  [RecordAdminPaymentInput],
   PaymentTransactionRow
->(Permission.WRITE_PAYMENTS, async (input) => {
+>(Permission.WRITE_PAYMENTS, async (_user, input) => {
   const result = await PaymentService.recordAdminPayment(input)
   if (isOk(result)) revalidatePaymentViews()
   return result
@@ -136,9 +136,9 @@ export const recordAdminPayment = authorizedAction<
  * every call — fee balances are never stored. Requires READ_PAYMENTS.
  */
 export const getFeeBalances = authorizedAction<
-  { payments: PaymentTransactionDTO[] },
+  [{ payments: PaymentTransactionDTO[] }],
   FeeBalances
->(Permission.READ_PAYMENTS, async ({ payments }) => {
+>(Permission.READ_PAYMENTS, async (_user, { payments }) => {
   return await PaymentService.getFeeBalances(payments)
 })
 
@@ -152,18 +152,4 @@ function revalidatePaymentViews() {
   revalidatePath('/admin')
   // Every hub page (overview tiles, Candidates tab) under any group.
   revalidatePath('/weekends/[groupId]', 'layout')
-}
-
-/**
- * Computes financial health metrics for the active weekend group.
- * Requires READ_PAYMENTS permission.
- */
-export async function getActiveWeekendFinancials(
-  payments: PaymentTransactionDTO[],
-  activeWeekends: Record<'MENS' | 'WOMENS', Weekend>
-) {
-  return await PaymentService.getActiveWeekendFinancials(
-    payments,
-    activeWeekends
-  )
 }

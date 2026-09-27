@@ -5,16 +5,21 @@ import { err, type Result } from '@/lib/results'
 import { Permission } from '@/lib/security'
 import * as FileService from './file-service'
 
-export async function getFilePublicUrlAction(folder: string, fileName: string) {
-  return FileService.getFilePublicUrl(folder, fileName)
-}
+/** Any signed-in member may resolve a file's public URL (member files pages). */
+export const getFilePublicUrlAction = authorizedAction<
+  [string, string],
+  { publicUrl: string }
+>('authenticated', async (_user, folder, fileName) =>
+  FileService.getFilePublicUrl(folder, fileName)
+)
 
-export async function getFileDownloadUrlAction(
-  folder: string,
-  fileName: string
-) {
-  return FileService.getFileDownloadUrl(folder, fileName)
-}
+/** Any signed-in member may mint a download URL (member files pages). */
+export const getFileDownloadUrlAction = authorizedAction<
+  [string, string],
+  { downloadUrl: string }
+>('authenticated', async (_user, folder, fileName) =>
+  FileService.getFileDownloadUrl(folder, fileName)
+)
 
 /**
  * Mints a one-time signed upload URL for a file. The bytes are uploaded directly
@@ -23,9 +28,9 @@ export async function getFileDownloadUrlAction(
  * Server Action body-size limit. RBAC and extension validation happen here.
  */
 export const createUploadUrlAction = authorizedAction<
-  { folder: string; fileName: string },
+  [{ folder: string; fileName: string }],
   { bucket: string; path: string; token: string }
->(Permission.FILES_UPLOAD, async ({ folder, fileName }) => {
+>(Permission.FILES_UPLOAD, async (_user, { folder, fileName }) => {
   if (typeof folder !== 'string' || folder.trim() === '') {
     return err('Folder is required')
   }
@@ -43,9 +48,9 @@ export const createUploadUrlAction = authorizedAction<
  * when listing meeting minutes.
  */
 export const saveMeetingMinutesLocationAction = authorizedAction<
-  { fileName: string; location: string },
+  [{ fileName: string; location: string }],
   null
->(Permission.FILES_UPLOAD, async ({ fileName, location }) => {
+>(Permission.FILES_UPLOAD, async (_user, { fileName, location }) => {
   if (typeof fileName !== 'string' || fileName.trim() === '') {
     return err('A file is required')
   }
@@ -63,9 +68,9 @@ export const saveMeetingMinutesLocationAction = authorizedAction<
 
 /** Creates a folder inside `parentPath` ('' for the top level). */
 export const createFolderAction = authorizedAction<
-  { parentPath: string; name: string },
+  [{ parentPath: string; name: string }],
   { storagePath: string }
->(Permission.FILES_UPLOAD, async ({ parentPath, name }) => {
+>(Permission.FILES_UPLOAD, async (_user, { parentPath, name }) => {
   if (typeof parentPath !== 'string' || typeof name !== 'string') {
     return err('A folder name is required')
   }
@@ -73,19 +78,19 @@ export const createFolderAction = authorizedAction<
   return FileService.createFolder(parentPath, name)
 })
 
-export const deleteFileAction = authorizedAction<{ storagePath: string }, null>(
-  Permission.FILES_DELETE,
-  async ({ storagePath }) => {
-    if (typeof storagePath !== 'string') return err('A file is required')
-    return FileService.deleteFile(storagePath)
-  }
-)
+export const deleteFileAction = authorizedAction<
+  [{ storagePath: string }],
+  null
+>(Permission.FILES_DELETE, async (_user, { storagePath }) => {
+  if (typeof storagePath !== 'string') return err('A file is required')
+  return FileService.deleteFile(storagePath)
+})
 
 /** Deletes a folder and everything inside it, sub-folders included. */
 export const deleteFolderAction = authorizedAction<
-  { storagePath: string },
+  [{ storagePath: string }],
   { removed: number }
->(Permission.FILES_DELETE, async ({ storagePath }) => {
+>(Permission.FILES_DELETE, async (_user, { storagePath }) => {
   if (typeof storagePath !== 'string') return err('A folder is required')
   return FileService.deleteFolderRecursive(storagePath)
 })

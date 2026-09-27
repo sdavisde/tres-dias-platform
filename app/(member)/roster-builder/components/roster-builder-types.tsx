@@ -38,7 +38,6 @@ export type RosterBuilderBoardProps = {
   weekendId: string
   weekendTitle: string
   weekendType: string
-  rectorUserId: string
   communityMembers: RosterBuilderCommunityMember[]
   hasSecuelaEvent: boolean
 }

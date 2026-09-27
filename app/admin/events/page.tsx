@@ -2,14 +2,13 @@ import { getLoggedInUser } from '@/services/identity/user'
 import {
   getEventsForWeekendGroup,
   getCommunityEvents,
-  type Event,
-} from '@/services/events'
+} from '@/services/events/events-service'
+import { type Event } from '@/services/events'
 import {
   getActiveWeekends,
   getWeekendOptions,
-  WeekendType,
-  type Weekend,
-} from '@/services/weekend'
+} from '@/services/weekend/weekend-service'
+import { WeekendType, type Weekend } from '@/services/weekend'
 import type { WeekendIndividualOption } from '@/components/events/event-form-schema'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
 import EventsClient from './components/events-client'

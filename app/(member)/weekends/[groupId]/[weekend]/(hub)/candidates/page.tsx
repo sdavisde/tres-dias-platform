@@ -1,4 +1,4 @@
-import { getAllCandidatesWithDetails } from '@/actions/candidates'
+import { getAllCandidatesWithDetails } from '@/services/candidates/hydrated-candidates'
 import { Results } from '@/lib/results'
 import { formatWeekendTitle } from '@/lib/weekend'
 import { CandidateListTable } from './components/CandidateListTable'

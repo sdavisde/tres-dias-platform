@@ -82,6 +82,27 @@ export function getEffectivePermissions(
   return effective
 }
 
+/** True when the role's own or inherited permissions include FULL_ACCESS. */
+export function roleGrantsFullAccess(
+  roleId: string,
+  roles: readonly RoleNode[]
+): boolean {
+  return getEffectivePermissions(roleId, roles).has(Permission.FULL_ACCESS)
+}
+
+/**
+ * Would a role with these own permissions and parent grant FULL_ACCESS? Used
+ * before a role is created or edited, when it may not be in the graph yet.
+ */
+export function inputGrantsFullAccess(
+  input: { permissions: readonly string[]; based_on_role_id: string | null },
+  roles: readonly RoleNode[]
+): boolean {
+  if (input.permissions.includes(Permission.FULL_ACCESS)) return true
+  if (isNil(input.based_on_role_id)) return false
+  return roleGrantsFullAccess(input.based_on_role_id, roles)
+}
+
 /** Effective permissions for every role in the graph, keyed by role id. */
 export function expandRoleGraph(
   roles: readonly RoleNode[]

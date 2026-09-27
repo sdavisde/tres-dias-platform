@@ -13,9 +13,9 @@ import type { ContactInfo } from './types'
  * Get contact information by ID.
  * Requires READ_ADMIN_PORTAL permission.
  */
-export const getContactInformation = authorizedAction<string, ContactInfo>(
+export const getContactInformation = authorizedAction<[string], ContactInfo>(
   Permission.READ_ADMIN_PORTAL,
-  async (contactId) => {
+  async (_user, contactId) => {
     return await NotificationService.getContactInformation(contactId)
   }
 )
@@ -24,7 +24,7 @@ export const getContactInformation = authorizedAction<string, ContactInfo>(
  * Count of emails successfully sent so far this calendar month.
  * Requires FULL_ACCESS, matching the email_log RLS read policy.
  */
-export const getEmailsSentThisMonth = authorizedAction<void, number>(
+export const getEmailsSentThisMonth = authorizedAction<[], number>(
   Permission.FULL_ACCESS,
   async () => {
     return await NotificationService.getEmailsSentThisMonth()
@@ -41,41 +41,11 @@ type UpdateContactInformationRequest = {
  * Requires WRITE_USER_ROLES permission (board members can update).
  */
 export const updateContactInformation = authorizedAction<
-  UpdateContactInformationRequest,
+  [UpdateContactInformationRequest],
   ContactInfo
->(Permission.WRITE_USER_ROLES, async ({ contactId, emailAddress }) => {
+>(Permission.WRITE_USER_ROLES, async (_user, { contactId, emailAddress }) => {
   return await NotificationService.updateContactInformation(
     contactId,
     emailAddress
   )
 })
-
-// ============================================================================
-// Admin Actions (For Server-to-Server Use, e.g., Webhooks)
-// These functions bypass auth because they're called from contexts
-// with their own authentication (e.g., Stripe webhook signature verification)
-// ============================================================================
-
-/**
- * Notifies the pre-weekend couple when a candidate payment is received.
- * Uses admin client - for use in webhook contexts where there is no user session.
- */
-export async function notifyCandidatePaymentReceivedAdmin(
-  candidateId: string,
-  paymentAmount: number,
-  paymentMethod: 'card' | 'cash' | 'check'
-) {
-  return NotificationService.notifyCandidatePaymentReceivedAdmin(
-    candidateId,
-    paymentAmount,
-    paymentMethod
-  )
-}
-
-/**
- * Gets the pre-weekend couple's email address.
- * Uses regular client (requires user session).
- */
-export async function getPreWeekendCoupleEmail() {
-  return NotificationService.getPreWeekendCoupleEmail()
-}

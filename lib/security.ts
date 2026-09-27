@@ -111,6 +111,14 @@ export enum Permission {
  * Maps CHA roles to the permissions they implicitly grant during an active weekend.
  * Leadership roles (Rector, Head, etc.) get broad roster management permissions,
  * while support roles (Tech) get limited permissions relevant to their function.
+ *
+ * MIRRORED IN SQL: `public.auth_user_cha_has_permission()`
+ * (supabase/migrations/20260927000002_permission_helpers.sql) copies the role
+ * lists for WRITE_TEAM_ROSTER, READ_WRITE_TEAM_PAYMENTS and
+ * READ_TEAM_ROSTER_BUILDER so row-level security lets weekend leaders write
+ * roster and team-payment rows without a database role. When you change those
+ * entries here, change the SQL too; lib/security/cha-permissions-sql.test.ts
+ * fails if they drift.
  */
 const CHA_ROLE_PERMISSIONS: Readonly<Record<CHARole, readonly Permission[]>> = {
   [CHARole.RECTOR]: [

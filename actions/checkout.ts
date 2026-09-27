@@ -32,10 +32,26 @@ const GENERIC_ERROR =
  * @param returnUrl Where Stripe returns to; may contain {CHECKOUT_SESSION_ID}
  * @returns The client secret for the checkout session
  */
+// publicAction: candidate checkout runs logged out (the payer follows an email
+// link); the team-fee branch verifies the session and ownership itself below.
 export async function beginCheckout(
   target: CheckoutTarget,
   returnUrl: string
 ): Promise<Result<string, string>> {
+  // A team fee is paid by the team member themselves, signed in. Check the
+  // session before quoting so an anonymous caller cannot probe whether a
+  // group member exists or has already paid.
+  let sessionUserId: string | null = null
+  let userEmail: string | null = null
+  if (target.kind === 'team') {
+    const userResult = await getLoggedInUser()
+    if (isErr(userResult) || isNil(userResult.data)) {
+      return err('Please sign in to pay your team fee.')
+    }
+    sessionUserId = userResult.data.id
+    userEmail = userResult.data.email ?? null
+  }
+
   const quoteResult = await getCheckoutQuote(target)
   if (isErr(quoteResult)) {
     logger.error({ target, error: quoteResult.error }, 'Checkout quote failed')
@@ -44,28 +60,18 @@ export async function beginCheckout(
   const quote = quoteResult.data
   const feeType = target.kind
 
+  if (target.kind === 'team' && sessionUserId !== quote.userId) {
+    logger.warn(
+      { groupMemberId: target.groupMemberId, userId: sessionUserId },
+      'Team fee checkout attempted for another member'
+    )
+    return err(GENERIC_ERROR)
+  }
+
   if (isErr(quote.price)) {
     return err(CHECKOUT_REFUSAL_MESSAGES[feeType][quote.price.error])
   }
   const price = quote.price.data
-
-  // A team fee is paid by the team member themselves, signed in.
-  let userEmail: string | null = null
-  if (target.kind === 'team') {
-    const userResult = await getLoggedInUser()
-    if (isErr(userResult) || isNil(userResult.data)) {
-      return err('Please sign in to pay your team fee.')
-    }
-    const user = userResult.data
-    if (user.id !== quote.userId) {
-      logger.warn(
-        { groupMemberId: target.groupMemberId, userId: user.id },
-        'Team fee checkout attempted for another member'
-      )
-      return err(GENERIC_ERROR)
-    }
-    userEmail = user.email ?? null
-  }
 
   const productResult = resolveFeeProductId(feeType)
   if (isErr(productResult)) {

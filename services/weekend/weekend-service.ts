@@ -6,7 +6,7 @@ import { isEmpty, isNil, sumBy } from 'lodash'
 import type { Result } from '@/lib/results'
 import { err, ok, isErr, map, unwrap, unwrapOr } from '@/lib/results'
 import { Permission, userHasPermission } from '@/lib/security'
-import type { User } from '@/lib/users/types'
+import { getLoggedInUser } from '@/services/identity/user'
 import { getWeekendRosterExperienceDistribution } from '@/services/master-roster/master-roster-service'
 import type { ExperienceDistribution } from '@/services/master-roster/types'
 import { formatWeekendGroupTitle } from '@/lib/weekend'
@@ -1267,9 +1267,16 @@ export type WeekendRosterViewData = {
  */
 export async function getWeekendRosterViewData(
   weekendId: string,
-  user: User,
   weekend?: Weekend
 ): Promise<Result<string, WeekendRosterViewData>> {
+  // The viewer decides which branches load, so resolve them from the session
+  // rather than trusting a caller-supplied user.
+  const userResult = await getLoggedInUser()
+  if (isErr(userResult)) {
+    return err('Unauthorized: User not authenticated')
+  }
+  const user = userResult.data
+
   const canEditRoster = userHasPermission(user, [Permission.WRITE_TEAM_ROSTER])
   const canViewExperienceDistribution = userHasPermission(user, [
     Permission.READ_USER_EXPERIENCE,

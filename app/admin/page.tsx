@@ -14,12 +14,16 @@ import {
 } from '@/lib/admin/dashboard-metrics'
 import { deriveSystemAlerts } from '@/lib/admin/system-alerts'
 import { getAllPayments, getFeeBalances } from '@/services/payment'
-import { getGroupFees } from '@/services/fees'
+import { getGroupFees } from '@/services/fees/fees-service'
 import type { FeeBalances } from '@/lib/payments/fee-balances'
 import type { GroupFees } from '@/lib/payments/group-fees'
 import { getMasterRoster } from '@/services/master-roster'
-import { getSecuelaDateForGroup, getUpcomingEvents } from '@/services/events'
-import { getActiveWeekends, getWeekendGroupsByStatus } from '@/services/weekend'
+import {
+  getSecuelaDateForGroup,
+  getUpcomingEvents,
+} from '@/services/events/events-service'
+import { getWeekendGroupsByStatus } from '@/services/weekend'
+import { getActiveWeekends } from '@/services/weekend/weekend-service'
 import { MetricCards } from './components/metric-cards'
 import { ActionItemsList } from './components/action-items-list'
 import { CalendarPreview } from './components/calendar-preview'

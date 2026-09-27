@@ -10,6 +10,10 @@ import { logger } from '@/lib/logger'
 import PasswordInput from './PasswordInput'
 import Link from 'next/link'
 import { isNil } from 'lodash'
+import {
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_TOO_SHORT_MESSAGE,
+} from '@/lib/auth/constants'
 
 interface ResetPasswordFormProps {
   searchParams?: { [key: string]: string | string[] | undefined }
@@ -91,8 +95,8 @@ export default function ResetPasswordForm({
     }
 
     // Validate password strength
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long')
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(PASSWORD_TOO_SHORT_MESSAGE)
       setLoading(false)
       return
     }
@@ -219,7 +223,7 @@ export default function ResetPasswordForm({
         value={password}
         onChange={setPassword}
         required
-        helpText="Password must be at least 6 characters"
+        helpText={PASSWORD_TOO_SHORT_MESSAGE}
         disabled={loading}
       />
 
