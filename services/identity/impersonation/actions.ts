@@ -10,8 +10,10 @@ type ImpersonateUserRequest = {
   userId: string
 }
 /**
- * Requires FULL_ACCESS - adds impersonation cookie to the response, and kicks off
- * the impersonation flow. Impersonation = view the site as another user.
+ * Requires FULL_ACCESS - writes the signed impersonation cookie and kicks off the
+ * impersonation flow. Impersonation = view the site as another user. The cookie
+ * records the real admin's id and is re-verified on every read
+ * (services/identity/impersonation/impersonation-service.ts).
  */
 export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
   // 1. Authenticate and get user
@@ -30,7 +32,7 @@ export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
     (!isNil(user.originalUser) &&
       userHasPermission(user.originalUser, [Permission.FULL_ACCESS]))
   ) {
-    return Results.ok(await ImperstonationService.impersonateUser(userId))
+    return await ImperstonationService.impersonateUser(userId)
   }
 
   return Results.err(
