@@ -1,5 +1,6 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ type AdminErrorProps = {
 export default function AdminError({ error, reset }: AdminErrorProps) {
   useEffect(() => {
     logger.error(error, 'Admin page error boundary')
+    Sentry.captureException(error)
   }, [error])
 
   return (

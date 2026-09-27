@@ -1,5 +1,6 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ type MemberErrorProps = {
 export default function MemberError({ error, reset }: MemberErrorProps) {
   useEffect(() => {
     logger.error(error, 'Member page error boundary')
+    Sentry.captureException(error)
   }, [error])
 
   return (

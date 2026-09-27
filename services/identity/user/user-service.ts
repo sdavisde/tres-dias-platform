@@ -1,5 +1,6 @@
 import 'server-only'
 
+import * as Sentry from '@sentry/nextjs'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { isNil, union } from 'lodash'
@@ -149,6 +150,9 @@ const getAuthenticatedUser = cache(async (): Promise<Result<string, User>> => {
   } = await supabase.auth.getUser()
 
   if (isNil(authUser)) return err('User not logged in')
+
+  // Tags this request's Sentry events with who hit them.
+  Sentry.setUser({ id: authUser.id, email: authUser.email })
 
   return await getUserById(authUser.id)
 })

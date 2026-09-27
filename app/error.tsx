@@ -66,13 +66,8 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    // todo: Log the error to our logging service, powered by sentry instead of just pino
     // The error digest can be used to correlate with server-side logs
-    Sentry.captureException({
-      message: error.message,
-      digest: error.digest,
-      stack: error.stack,
-    })
+    Sentry.captureException(error, { extra: { digest: error.digest } })
   }, [error])
 
   return (

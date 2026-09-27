@@ -1,8 +1,10 @@
 import 'server-only'
-import type { Result} from '@/lib/results';
+import { unstable_rethrow } from 'next/navigation'
+import { logger } from '@/lib/logger'
+import type { Result } from '@/lib/results'
 import { err, isErr } from '@/lib/results'
 import { getLoggedInUser } from '@/services/identity/user'
-import type { Permission} from '@/lib/security';
+import type { Permission } from '@/lib/security'
 import { userHasPermission } from '@/lib/security'
 
 /**
@@ -33,7 +35,11 @@ export const authorizedAction = <T, R>(
       // 3. Execute action
       return await action(data)
     } catch (error) {
-      console.error('Unexpected error in authorized action:', error)
+      // Let Next's own control flow (dynamic usage, redirect, notFound)
+      // through instead of reporting it as a failure.
+      unstable_rethrow(error)
+      // `err` is the key pino (and so Sentry) reads the exception from.
+      logger.error({ err: error }, 'Unexpected error in authorized action')
       return err('Internal Server Error')
     }
   }

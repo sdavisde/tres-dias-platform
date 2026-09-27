@@ -1,8 +1,10 @@
 'use client'
 
+import * as Sentry from '@sentry/nextjs'
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   useCallback,
@@ -103,6 +105,21 @@ export function SessionScope({ user, children }: SessionScopeProps) {
 
   const current =
     !isNil(override) && override.base === user ? override.value : user
+
+  // Tags browser Sentry events with the signed-in user, so a reported bug
+  // can be found by who hit it.
+  useEffect(() => {
+    Sentry.setUser(
+      isNil(current)
+        ? null
+        : {
+            id: current.id,
+            email: current.email,
+            impersonatedBy: current.originalUser?.email,
+          }
+    )
+    return () => Sentry.setUser(null)
+  }, [current])
   const value = useMemo(
     () => ({
       user: current,
