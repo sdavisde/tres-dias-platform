@@ -7,11 +7,13 @@ of `yarn test` and never runs under Jest.
 
 ## Running locally
 
-Prerequisites, all the owner's call — the suite never starts, seeds or resets anything for you:
+Prerequisites. The suite reseeds the local database itself on every run (see below) but never
+starts or stops anything:
 
-- A local Supabase running (`yarn db:start`) and seeded with `yarn seed pre-weekend --yes`. This is
-  **destructive**: it wipes all app data and every local auth user before rebuilding the
-  `pre-weekend` world. Only run it when you mean to.
+- A local Supabase running (`yarn db:start`). **Every run wipes local app data and auth users and
+  rebuilds the `pre-weekend` world** (`yarn seed pre-weekend --yes`, under a second) before the
+  first test, so anything you created by hand locally is gone after `yarn e2e`. Global setup refuses
+  to run unless `NEXT_PUBLIC_SUPABASE_URL` points at `127.0.0.1` or `localhost`.
 - The dev server running on the suite's base URL (`yarn dev`, default `http://localhost:3000`).
 - `.env.local` with the three local Supabase values (`NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) plus `STRIPE_WEBHOOK_SECRET`, which

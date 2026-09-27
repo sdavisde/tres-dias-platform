@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import {
   chromium,
   expect,
@@ -104,6 +105,34 @@ async function signIn(
   }
 }
 
+const SEED_PHASE = 'pre-weekend'
+const LOCAL_SUPABASE = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/|$)/
+
+/**
+ * Rebuilds the local database into the phase the suite is written against, so
+ * every run (headless, UI mode, filtered, CI) starts from the same world. The
+ * seed script only ever talks to the local Supabase container; this guard
+ * makes the same promise from this side before invoking it.
+ */
+function reseed(): void {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  if (!LOCAL_SUPABASE.test(url)) {
+    throw new Error(
+      `global-setup: refusing to reseed because NEXT_PUBLIC_SUPABASE_URL (${url === '' ? 'unset' : url}) is not a local Supabase.`
+    )
+  }
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/seed/index.ts', SEED_PHASE, '--yes'],
+    { stdio: 'inherit' }
+  )
+  if (result.status !== 0) {
+    throw new Error(
+      `global-setup: \`yarn seed ${SEED_PHASE} --yes\` failed (exit ${result.status}). Is the local stack running?`
+    )
+  }
+}
+
 export default async function globalSetup(config: FullConfig): Promise<void> {
   const baseURL = config.projects[0]?.use.baseURL
   if (baseURL === undefined) {
@@ -112,6 +141,8 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
         'Set `use.baseURL` in playwright.config.ts.'
     )
   }
+
+  reseed()
 
   const { group, weekends, fees } = await activeGroup()
   const teamForms = await pickTeamFormsMember()

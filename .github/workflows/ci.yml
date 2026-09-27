@@ -80,10 +80,8 @@ jobs:
       - name: Start local Supabase
         run: supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor
 
-      # supabase/seed.sql holds only roles; the app data comes from the date-relative generator.
-      # The E2E suite targets the pre-weekend phase (see scripts/seed/README.md, "E2E fixtures").
-      - name: Seed the pre-weekend world
-        run: yarn seed pre-weekend --yes
+      # No seed step: Playwright's global setup runs `yarn seed pre-weekend --yes` itself, so CI
+      # and local runs start from the same world (see scripts/seed/README.md, "E2E fixtures").
 
       - name: Export local Supabase keys
         run: |
