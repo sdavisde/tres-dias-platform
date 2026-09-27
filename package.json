@@ -16,7 +16,8 @@
     "db:stop": "supabase stop --project-id dttd",
     "db:status": "supabase status",
     "db:migrate": "supabase migration new",
-    "db:reset": "supabase db reset",
+    "db:reset": "supabase db reset && bun run seed --yes",
+    "seed": "node scripts/seed/index.ts",
     "db:generate": "supabase gen types typescript --local > database.types.ts",
     "test": "jest"
   },
