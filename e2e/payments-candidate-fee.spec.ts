@@ -9,7 +9,7 @@ import {
   test,
 } from './fixtures/payments'
 import {
-  readPersonas,
+  loadPersonas,
   type CandidatePersona,
   type Personas,
 } from './fixtures/personas'
@@ -39,8 +39,8 @@ const INVALID_SIGNATURE = 'INVALID_SIGNATURE'
 
 let personas: Personas
 
-test.beforeAll(() => {
-  personas = readPersonas()
+test.beforeAll(async () => {
+  personas = await loadPersonas()
 })
 
 /** The page redirects to /home?error=…, and the proxy sends anonymous visitors to /login. */

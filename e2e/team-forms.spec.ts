@@ -5,7 +5,7 @@ import { formatPhoneInput } from '@/lib/formatting/phone-input'
 import { RECOGNIZED_COMMUNITIES } from '@/lib/communities/whitelist'
 import { REQUIRED_FORMS } from '@/lib/weekend/team/required-forms.config'
 import {
-  readPersonas,
+  loadPersonas,
   storageStatePath,
   type Personas,
 } from './fixtures/personas'
@@ -290,8 +290,8 @@ test.describe('team forms for someone on no roster', () => {
 
   let personas: Personas
 
-  test.beforeAll(() => {
-    personas = readPersonas()
+  test.beforeAll(async () => {
+    personas = await loadPersonas()
   })
 
   test('a user on no active roster is sent from /team-forms to /home with no error toast', async ({

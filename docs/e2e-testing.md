@@ -58,9 +58,14 @@ The personas:
 
 A spec opts into a signed-in persona with `test.use({ storageState: storageStatePath('teamForms') })`
 (from `e2e/fixtures/personas.ts`); auth specs use no storage state at all, since they exercise
-login and registration themselves. Any spec reads the chosen cast with `readPersonas()`, which
-throws a clear error if `personas.json` is missing (run `yarn e2e --project=setup` first, or just
-`yarn e2e`, since the `chromium` project depends on `setup`).
+login and registration themselves. Every spec reads the chosen cast in `test.beforeAll` with
+`await loadPersonas()`, which throws a clear error if `personas.json` is missing (run
+`yarn e2e --project=setup` first, or just `yarn e2e`, since the `chromium` project depends on
+`setup`). `loadPersonas()` also re-checks every persona id and email against the database before
+handing back the cast, so if the database was reseeded after `setup` ran, specs fail fast with a
+"personas.json is stale" message instead of misbehaving (e.g. treating a stale "existing user"
+email as available and registering it as a new account). The fix is to rerun `setup`; in UI mode,
+keep the `setup` project ticked, or run it once by itself after any reseed.
 
 `adminClient()` (`e2e/fixtures/supabase.ts`) is a service-role Supabase client for fixtures to
 arrange data, assert on it and clean it up. It bypasses Row Level Security, so it is never used to

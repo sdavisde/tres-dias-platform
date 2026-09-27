@@ -1,8 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 import { isNil } from 'lodash'
 import { AUTH_HINTS, AUTH_MESSAGES } from '@/lib/auth/auth-errors'
-import { deleteAuthUser, e2eEmail } from './fixtures/auth-users'
-import { readPersonas, type Personas } from './fixtures/personas'
+import {
+  deleteAuthUser,
+  e2eEmail,
+  listAllAuthUsers,
+} from './fixtures/auth-users'
+import { loadPersonas, type Personas } from './fixtures/personas'
 import { seedPassword } from './fixtures/seed'
 import { adminClient } from './fixtures/supabase'
 
@@ -25,8 +29,8 @@ let personas: Personas
 // Every account this file creates, so a failed test still gets cleaned up.
 const createdEmails: string[] = []
 
-test.beforeAll(() => {
-  personas = readPersonas()
+test.beforeAll(async () => {
+  personas = await loadPersonas()
 })
 
 test.afterEach(async () => {
@@ -139,6 +143,18 @@ test('registering on /join lands on /home and creates a public.users row', async
 test('registering an existing email offers to switch to sign in', async ({
   page,
 }) => {
+  // loadPersonas() already confirmed this user exists in public.users, but
+  // don't push it onto createdEmails below: this test must never delete the
+  // seeded login persona that other specs depend on.
+  const authUsers = await listAllAuthUsers()
+  const exists = authUsers.some(
+    (u) => u.email?.toLowerCase() === personas.seededUser.email.toLowerCase()
+  )
+  expect(
+    exists,
+    'seeded login persona must exist before the duplicate-signup test'
+  ).toBe(true)
+
   await fillRegistration(page, {
     email: personas.seededUser.email,
     password: PASSWORD,

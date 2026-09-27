@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { adminClient } from './supabase'
 
 /**
  * The cast of one run, chosen by the selectors in ./seed.ts during the
@@ -90,4 +91,106 @@ export function readPersonas(): Personas {
     )
   }
   return JSON.parse(fs.readFileSync(PERSONAS_PATH, 'utf8')) as Personas
+}
+
+/**
+ * Reads the cast written by the `setup` project and verifies it still matches
+ * the database. If the database was reseeded after setup ran, ids in
+ * personas.json can point at rows that no longer exist (or, worse, at ids
+ * that now belong to something else) — specs should fail fast with a clear
+ * message instead of misbehaving (e.g. treating a stale "existing user" email
+ * as available and registering it as a new account).
+ */
+export async function loadPersonas(): Promise<Personas> {
+  const personas = readPersonas()
+  const db = adminClient()
+  const missing: string[] = []
+
+  const { data: groups, error: groupError } = await db
+    .from('weekend_groups')
+    .select('id')
+    .eq('id', personas.group.id)
+  if (groupError !== null) {
+    throw new Error(
+      `Failed to verify personas.json against the database: ${groupError.message}`
+    )
+  }
+  if (groups.length === 0) {
+    missing.push(`weekend group ${personas.group.id}`)
+  }
+
+  const userChecks = [
+    {
+      field: 'teamForms',
+      userId: personas.teamForms.userId,
+      email: personas.teamForms.email,
+    },
+    {
+      field: 'teamFee',
+      userId: personas.teamFee.userId,
+      email: personas.teamFee.email,
+    },
+    {
+      field: 'seededUser',
+      userId: personas.seededUser.userId,
+      email: personas.seededUser.email,
+    },
+    {
+      field: 'nonRosterUser',
+      userId: personas.nonRosterUser.userId,
+      email: personas.nonRosterUser.email,
+    },
+  ]
+  const { data: users, error: usersError } = await db
+    .from('users')
+    .select('id, email')
+    .in(
+      'id',
+      userChecks.map((check) => check.userId)
+    )
+  if (usersError !== null) {
+    throw new Error(
+      `Failed to verify personas.json against the database: ${usersError.message}`
+    )
+  }
+  const emailById = new Map(users.map((user) => [user.id, user.email]))
+  for (const check of userChecks) {
+    const email = emailById.get(check.userId)
+    if (email === undefined || email === null) {
+      missing.push(`${check.field} user ${check.userId} (${check.email})`)
+    } else if (email.toLowerCase() !== check.email.toLowerCase()) {
+      missing.push(
+        `${check.field} user ${check.userId} email changed from ${check.email} to ${email}`
+      )
+    }
+  }
+
+  const candidateIds = [
+    personas.candidates.full.candidateId,
+    personas.candidates.partial.candidateId,
+  ]
+  const { data: candidates, error: candidatesError } = await db
+    .from('candidates')
+    .select('id')
+    .in('id', candidateIds)
+  if (candidatesError !== null) {
+    throw new Error(
+      `Failed to verify personas.json against the database: ${candidatesError.message}`
+    )
+  }
+  const candidateIdSet = new Set(candidates.map((candidate) => candidate.id))
+  for (const id of candidateIds) {
+    if (!candidateIdSet.has(id)) {
+      missing.push(`candidate ${id}`)
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `${PERSONAS_PATH} is stale: ${missing.join('; ')}. The database changed since setup ran; ` +
+        'rerun with `yarn e2e --project=setup` (or plain `yarn e2e`, which runs setup first).'
+    )
+  }
+
+  return personas
 }

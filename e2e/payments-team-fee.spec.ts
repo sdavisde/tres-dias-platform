@@ -3,7 +3,7 @@ import { CHECKOUT_REFUSAL_MESSAGES } from '@/lib/payments/checkout-price'
 import { formatFee } from '@/lib/payments/group-fees'
 import { expect, paymentRows, test } from './fixtures/payments'
 import {
-  readPersonas,
+  loadPersonas,
   storageStatePath,
   type Personas,
 } from './fixtures/personas'
@@ -26,8 +26,8 @@ test.use({ storageState: storageStatePath('teamFee') })
 
 let personas: Personas
 
-test.beforeAll(() => {
-  personas = readPersonas()
+test.beforeAll(async () => {
+  personas = await loadPersonas()
 })
 
 function payTeamFeeLink(page: Page) {
