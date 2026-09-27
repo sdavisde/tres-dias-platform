@@ -1,0 +1,133 @@
+# PR gate for spec 20 (docs/specs/20-spec-e2e-testing): lint, types, unit tests, and a
+# production build driven by the Playwright suite against a local Supabase.
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: yarn test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    # Placeholders only: they satisfy import-time checks; nothing in the build talks to these services.
+    # The Supabase values are replaced with the local stack's real keys before the build, because the
+    # NEXT_PUBLIC_ ones are inlined into the browser bundle at build time.
+    env:
+      CI: 'true'
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_e2e_dummy
+      STRIPE_SECRET_KEY: sk_test_e2e_dummy
+      # Shared by the app and the E2E fixtures, which sign synthetic webhook events with it.
+      STRIPE_WEBHOOK_SECRET: whsec_e2e_dummy
+      CANDIDATE_FEE_PRODUCT_ID: prod_e2e_dummy
+      TEAM_FEE_PRODUCT_ID: prod_e2e_dummy
+      RESEND_API_KEY: re_e2e_dummy
+      SITE_URL: http://localhost:3000
+      E2E_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_SENTRY_ENABLED: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Only the containers the app needs: auth, REST, storage, the gateway and Postgres.
+      - name: Start local Supabase
+        run: supabase start -x studio,postgres-meta,imgproxy,mailpit,logflare,vector,edge-runtime,realtime,supavisor
+
+      # supabase/seed.sql holds only roles; the app data comes from the date-relative generator.
+      # The E2E suite targets the pre-weekend phase (see scripts/seed/README.md, "E2E fixtures").
+      - name: Seed the pre-weekend world
+        run: yarn seed pre-weekend --yes
+
+      - name: Export local Supabase keys
+        run: |
+          eval "$(supabase status -o env 2>/dev/null)"
+          test -n "$PUBLISHABLE_KEY" && test -n "$SECRET_KEY" || { echo "Supabase keys not found in status output"; exit 1; }
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL:-http://127.0.0.1:54321}"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_SECRET_KEY=$SECRET_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('yarn.lock') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('yarn.lock') }}-
+
+      - name: Build
+        run: yarn build
+
+      - name: Read Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E suite
+        run: yarn e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
