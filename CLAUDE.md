@@ -11,6 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Generate Supabase types**: `bun run db:generate` (regenerates `database.types.ts`)
 - **Stripe webhooks (local)**: `bun run stripe:listen` forwards test-mode events to `/api/webhooks/stripe`
   (requires `stripe login` with a test-mode account; its `whsec_` secret must match `STRIPE_WEBHOOK_SECRET`)
+- **Platform billing webhooks (local)**: `bun run stripe:listen:platform` forwards the PLATFORM Stripe
+  account's events to `/api/webhooks/platform-billing` (see `docs/platform-billing.md`)
 - **Database Operations**:
   - bun run db:start - starts all supabase containers, if they aren't already running
   - bun run db:stop - stops all supabase containers

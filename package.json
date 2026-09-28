@@ -7,6 +7,7 @@
     "preview": "dotenv -e .env.preview -v SITE_URL=http://localhost:3000 -- next dev --turbopack",
     "preview:pull": "vercel env pull .env.preview --environment=preview --yes",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
+    "stripe:listen:platform": "stripe listen --project-name sdavis.dev --forward-to localhost:3000/api/webhooks/platform-billing",
     "build": "next build",
     "start": "next start",
     "lint": "npx eslint . --ext .ts,.tsx",
