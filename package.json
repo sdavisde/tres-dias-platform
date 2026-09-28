@@ -116,7 +116,7 @@
     "typescript-eslint": "^8.49.0"
   },
   "main": "index.js",
-  "repository": "https://github.com/sdavisde/dttd.git",
+  "repository": "https://github.com/sdavisde/tres-dias-platform.git",
   "author": "sdavisde <sdavisde@gmail.com>",
   "license": "MIT"
 }
