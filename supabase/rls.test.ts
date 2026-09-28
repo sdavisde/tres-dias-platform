@@ -8,7 +8,7 @@
 import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 function readLocalEnv(): Record<string, string> {
   const file = join(process.cwd(), '.env.local')
@@ -39,8 +39,14 @@ function localStackReachable(): boolean {
 const describeLocal = localStackReachable() ? describe : describe.skip
 
 describeLocal('RLS: anonymous role against the local stack', () => {
-  const anon = createClient(url, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  // Built in beforeAll, not at collection time: a skipped describe still runs
+  // its body, and createClient throws when the URL is empty (CI's checks job).
+  let anon: SupabaseClient
+
+  beforeAll(() => {
+    anon = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
   })
 
   it('cannot read candidate_info', async () => {
