@@ -1,4 +1,5 @@
 import { isNil } from 'lodash'
+import type { BillingStatus } from '@/services/platform-billing/types'
 
 // Pure derivation for the admin dashboard's alert banner. No server imports so
 // the whole module stays unit-testable in Jest.
@@ -17,6 +18,7 @@ export type SystemAlertKey =
   | 'email'
   | 'site-url'
   | 'no-active-weekend'
+  | 'billing-past-due'
   | 'degraded-data'
 
 export type SystemAlert = {
@@ -52,6 +54,12 @@ export type SystemAlertChecks = {
   /** False when the site's public address is missing, which breaks emailed links. */
   siteUrlConfigured: boolean
   /**
+   * The platform subscription's Stripe status. Null (or omitted) when the
+   * community has never subscribed or the mirror couldn't be read; only
+   * `past_due` / `unpaid` raise an alert. A deliberate cancellation does not.
+   */
+  billingStatus?: BillingStatus | null
+  /**
    * Friendly names of dashboard panels whose data failed to load, e.g.
    * `['Payments', 'Community roster']`. Never raw error text.
    */
@@ -76,6 +84,7 @@ export function deriveSystemAlerts({
   stripeWebhookConfigured,
   emailConfigured,
   siteUrlConfigured,
+  billingStatus = null,
   degradedSources,
 }: SystemAlertChecks): SystemAlert[] {
   const alerts: SystemAlert[] = []
@@ -121,6 +130,19 @@ export function deriveSystemAlerts({
       impact:
         "The site doesn't know its own web address, so password-reset and sponsorship links in email — and the page people land on after paying — point nowhere.",
       action: "Ask a developer to set the site's address.",
+    })
+  }
+
+  if (billingStatus === 'past_due' || billingStatus === 'unpaid') {
+    alerts.push({
+      key: 'billing-past-due',
+      severity: 'warning',
+      title: 'The platform subscription payment failed',
+      impact:
+        "Stripe couldn't charge the card on file for the site's monthly plan. Nothing is turned off, but the card needs attention.",
+      action: 'Update the payment method on the Billing page.',
+      href: '/admin/billing',
+      linkLabel: 'Go to billing',
     })
   }
 
