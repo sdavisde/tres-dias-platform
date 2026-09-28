@@ -3,15 +3,18 @@
 import { Permission, userHasPermission } from '@/lib/security'
 import * as ImperstonationService from './impersonation-service'
 import { Results } from '@/lib/results'
-import { getLoggedInUser } from '@/services/identity/user'
+import { getLoggedInUser } from '@/services/identity/user/session'
+import { authorizedAction } from '@/lib/actions/authorized-action'
 import { isNil } from 'lodash'
 
 type ImpersonateUserRequest = {
   userId: string
 }
 /**
- * Requires FULL_ACCESS - adds impersonation cookie to the response, and kicks off
- * the impersonation flow. Impersonation = view the site as another user.
+ * Requires FULL_ACCESS - writes the signed impersonation cookie and kicks off the
+ * impersonation flow. Impersonation = view the site as another user. The cookie
+ * records the real admin's id and is re-verified on every read
+ * (services/identity/impersonation/impersonation-service.ts).
  */
 export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
   // 1. Authenticate and get user
@@ -30,7 +33,7 @@ export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
     (!isNil(user.originalUser) &&
       userHasPermission(user.originalUser, [Permission.FULL_ACCESS]))
   ) {
-    return Results.ok(await ImperstonationService.impersonateUser(userId))
+    return await ImperstonationService.impersonateUser(userId)
   }
 
   return Results.err(
@@ -39,8 +42,14 @@ export const impersonateUser = async ({ userId }: ImpersonateUserRequest) => {
 }
 
 /**
- * Don't really care to protect this function, since it's removing any impersonation cookies
+ * Ends impersonation. Any signed-in caller may do this: while impersonating a
+ * non-admin the session user has no FULL_ACCESS, so requiring it here would
+ * lock the admin into the impersonated view (FR-2.6 / FR-4.9).
  */
-export async function clearImpersonation() {
-  return ImperstonationService.clearImpersonation()
-}
+export const clearImpersonation = authorizedAction<[], void>(
+  'authenticated',
+  async () => {
+    await ImperstonationService.clearImpersonation()
+    return Results.ok(undefined)
+  }
+)

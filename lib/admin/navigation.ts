@@ -8,6 +8,7 @@ import {
   Folder,
   Landmark,
   LayoutGrid,
+  Receipt,
   Settings2,
   ShieldCheck,
   Users,
@@ -76,6 +77,12 @@ export const adminNavItems: AdminNavItem[] = [
     href: '/admin/settings',
     icon: Settings2,
     permissionsNeeded: [Permission.FULL_ACCESS],
+  },
+  {
+    title: 'Billing',
+    href: '/admin/billing',
+    icon: Receipt,
+    permissionsNeeded: [Permission.MANAGE_BILLING],
   },
   {
     title: 'Security',

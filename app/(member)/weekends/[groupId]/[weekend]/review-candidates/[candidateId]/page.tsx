@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
-import { getHydratedCandidate } from '@/actions/candidates'
+import { getHydratedCandidate } from '@/services/candidates/hydrated-candidates'
 import { MemberBreadcrumbs } from '@/components/member/breadcrumbs'
 import { PageContent } from '@/components/member/page-content'
 import { Errors } from '@/lib/error'

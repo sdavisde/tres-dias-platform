@@ -14,12 +14,21 @@ import {
 } from '@/lib/admin/dashboard-metrics'
 import { deriveSystemAlerts } from '@/lib/admin/system-alerts'
 import { getAllPayments, getFeeBalances } from '@/services/payment'
-import { getGroupFees } from '@/services/fees'
+import { getGroupFees } from '@/services/fees/fees-service'
 import type { FeeBalances } from '@/lib/payments/fee-balances'
 import type { GroupFees } from '@/lib/payments/group-fees'
 import { getMasterRoster } from '@/services/master-roster'
-import { getSecuelaDateForGroup, getUpcomingEvents } from '@/services/events'
-import { getActiveWeekends, getWeekendGroupsByStatus } from '@/services/weekend'
+import {
+  getSecuelaDateForGroup,
+  getUpcomingEvents,
+} from '@/services/events/events-service'
+import { getWeekendGroupsByStatus } from '@/services/weekend'
+import { getActiveWeekends } from '@/services/weekend/weekend-service'
+import { createAdminClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/logger'
+import { getBillingAccount } from '@/services/platform-billing/repository'
+import { toBillingAccount } from '@/services/platform-billing/platform-billing-service'
+import type { BillingStatus } from '@/services/platform-billing/types'
 import { MetricCards } from './components/metric-cards'
 import { ActionItemsList } from './components/action-items-list'
 import { CalendarPreview } from './components/calendar-preview'
@@ -34,6 +43,29 @@ function isConfigured(value: string | undefined): boolean {
   return !isNil(value) && value !== ''
 }
 
+/**
+ * The platform subscription's status for the banner. Read through the admin
+ * client: the dashboard is gated on READ_ADMIN_PORTAL, not MANAGE_BILLING, and
+ * a failed platform payment is worth telling any admin about (they can ask
+ * whoever holds billing access). Null when unreadable, which stays silent.
+ */
+async function readBillingStatus(): Promise<BillingStatus | null> {
+  try {
+    const result = await getBillingAccount(createAdminClient())
+    if (Results.isErr(result)) {
+      logger.warn(
+        { error: result.error },
+        'Dashboard: billing status unavailable'
+      )
+      return null
+    }
+    return isNil(result.data) ? null : toBillingAccount(result.data).status
+  } catch (error) {
+    logger.warn({ err: error }, 'Dashboard: billing status unavailable')
+    return null
+  }
+}
+
 export default async function Page() {
   await guardAdminPage()
 
@@ -45,12 +77,14 @@ export default async function Page() {
     eventsResult,
     groupsResult,
     activeWeekendsResult,
+    billingStatus,
   ] = await Promise.all([
     getAllPayments(),
     getMasterRoster(),
     getUpcomingEvents(),
     getWeekendGroupsByStatus({}),
     getActiveWeekends(),
+    readBillingStatus(),
   ])
   Results.logFailures(
     paymentsResult,
@@ -154,6 +188,7 @@ export default async function Page() {
     stripeWebhookConfigured: isConfigured(process.env.STRIPE_WEBHOOK_SECRET),
     emailConfigured: isConfigured(process.env.RESEND_API_KEY),
     siteUrlConfigured: isConfigured(process.env.SITE_URL),
+    billingStatus,
     degradedSources,
   })
 

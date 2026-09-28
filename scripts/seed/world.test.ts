@@ -135,6 +135,7 @@ describe('E2E fixtures (pre-weekend)', () => {
     candidateUnpaid: 'luke.thompson@example.com',
     candidatePartial: 'timothy.martinez@example.com',
     neverRostered: 'steven.kim@example.com',
+    billingManager: 'nick44fierro@gmail.com',
   }
 
   it('the README names these people', () => {
@@ -183,6 +184,14 @@ describe('E2E fixtures (pre-weekend)', () => {
     ])
     expect(paymentsOf(unpaid.id)).toEqual([])
     expect(paymentsOf(partial.id).map((p) => p.gross_amount)).toEqual([100])
+  })
+
+  it('has a billing manager holding the same Full Access role as Sean', () => {
+    const roleOf = (id: unknown) =>
+      tables.userRoles.filter((r) => r.user_id === id).map((r) => r.role_id)
+    const fullAccess = roleOf(SEAN_ID)
+    expect(fullAccess).toHaveLength(1)
+    expect(roleOf(person(FIXTURES.billingManager).id)).toEqual(fullAccess)
   })
 
   it('has a member on no roster and with no roles', () => {

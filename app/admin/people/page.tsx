@@ -1,6 +1,6 @@
 import { Permission, userHasPermission } from '@/lib/security'
 import { guardAdminPage } from '@/lib/admin/page-guard'
-import { getRoles } from '@/services/identity/roles'
+import { getRoles } from '@/services/identity/roles/role-service'
 import { getMasterRoster } from '@/services/master-roster'
 import { isErr } from '@/lib/results'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'

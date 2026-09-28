@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { isNil } from 'lodash'
 import { CircleCheck } from 'lucide-react'
-import { getHydratedCandidate } from '@/actions/candidates'
+import { getHydratedCandidate } from '@/services/candidates/hydrated-candidates'
 import { Button } from '@/components/ui/button'
 import { MemberBreadcrumbs } from '@/components/member/breadcrumbs'
 import { PageContent } from '@/components/member/page-content'

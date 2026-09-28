@@ -10,17 +10,18 @@ import {
 import { isErr } from '@/lib/results'
 import * as Results from '@/lib/results'
 import { isNil } from 'lodash'
-import {
-  getRosterCountByWeekend,
-  getWeekendGroupsByStatus,
-} from '@/services/weekend'
+import { getWeekendGroupsByStatus } from '@/services/weekend'
+import { getRosterCountByWeekend } from '@/services/weekend/weekend-service'
 import {
   getCandidateCountByWeekend,
   getCandidateCountsByWeekends,
   getCandidateReviewCountByWeekend,
-} from '@/services/candidates'
+} from '@/services/candidates/candidate-service'
 import { getAllPayments, getFeeBalances } from '@/services/payment'
-import { getFeeDefaults, getTrackedGroupFees } from '@/services/fees'
+import {
+  getFeeDefaults,
+  getTrackedGroups as getTrackedGroupFees,
+} from '@/services/fees/fees-service'
 import type { GroupFees } from '@/lib/payments/group-fees'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
 import { Weekends } from './components/Weekends'

@@ -49,6 +49,25 @@ describe('deriveSystemAlerts', () => {
     ])
   })
 
+  it('warns with a billing link when the platform payment failed', () => {
+    for (const status of ['past_due', 'unpaid'] as const) {
+      const [alert] = deriveSystemAlerts(checks({ billingStatus: status }))
+      expect(alert.key).toBe('billing-past-due')
+      expect(alert.severity).toBe('warning')
+      expect(alert.href).toBe('/admin/billing')
+      expect(alert.linkLabel).toBe('Go to billing')
+      expect(alert.title).toBe('The platform subscription payment failed')
+    }
+  })
+
+  it('stays quiet about billing when active, never subscribed, or canceled', () => {
+    expect(keys(checks({ billingStatus: 'active' }))).toEqual([])
+    expect(keys(checks({ billingStatus: null }))).toEqual([])
+    expect(keys(checks())).toEqual([])
+    expect(keys(checks({ billingStatus: 'canceled' }))).toEqual([])
+    expect(keys(checks({ billingStatus: 'trialing' }))).toEqual([])
+  })
+
   it('links to weekend management when no group is active', () => {
     const [alert] = deriveSystemAlerts(checks({ activeWeekendGroup: false }))
     expect(alert.key).toBe('no-active-weekend')
@@ -92,6 +111,7 @@ describe('deriveSystemAlerts', () => {
           stripeWebhookConfigured: false,
           emailConfigured: false,
           siteUrlConfigured: false,
+          billingStatus: 'past_due',
           degradedSources: ['Payments'],
         })
       )
@@ -100,6 +120,7 @@ describe('deriveSystemAlerts', () => {
       'stripe-webhook',
       'email',
       'site-url',
+      'billing-past-due',
       'no-active-weekend',
       'active-group-fees',
       'degraded-data',

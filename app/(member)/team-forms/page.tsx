@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getLoggedInUser } from '@/services/identity/user'
-import { getTeamFormsProgress } from '@/actions/team-forms'
+import { getTeamFormsProgress } from '@/services/weekend-group-member/weekend-group-member-service'
 import { isErr } from '@/lib/results'
 import { isNil } from 'lodash'
 import {

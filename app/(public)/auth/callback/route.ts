@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { logger } from '@/lib/logger'
+import { validateRedirectUrl } from '@/lib/redirect'
 import { isNil } from 'lodash'
 
 /**
@@ -14,11 +15,15 @@ import { isNil } from 'lodash'
  *
  * The `next` query param tells us where to redirect after code exchange.
  * Defaults to /home for general auth, but password reset sets it to /reset-password.
+ * `next` comes from the URL, so it is validated to a same-site path before use:
+ * an absolute or protocol-relative value falls back to /home.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/home'
+  const next = validateRedirectUrl(searchParams.get('next'), '/home', {
+    allowAuthPages: ['/reset-password'],
+  })
 
   if (!isNil(code)) {
     const response = NextResponse.redirect(new URL(next, request.url))

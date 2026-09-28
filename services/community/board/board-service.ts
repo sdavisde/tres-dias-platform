@@ -2,7 +2,7 @@ import 'server-only'
 
 import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
-import { getRoles } from '@/services/identity/roles'
+import { getRoles } from '@/services/identity/roles/role-service'
 import { getMasterRoster } from '@/services/master-roster'
 import { getContactInformation } from '@/services/notifications'
 import type { BoardMember, BoardRole, CommunityBoardData } from './types'

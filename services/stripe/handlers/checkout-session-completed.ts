@@ -7,10 +7,14 @@ import { logger } from '@/lib/logger'
 import {
   notifyAssistantHeadForTeamPayment,
   notifyCandidatePaymentReceivedAdmin,
-} from '@/services/notifications'
+} from '@/services/notifications/notification-service'
 import { isNil } from 'lodash'
 import { getTransactionData } from '../stripe-service'
-import type { WebhookHandler, WebhookHandlerContext } from './types'
+import type {
+  HandlerSuccess,
+  WebhookHandler,
+  WebhookHandlerContext,
+} from './types'
 import { WebhookErrorCodes } from './types'
 import { webhookErr } from '../webhook-context'
 import * as PaymentService from '@/services/payment/payment-service'
@@ -51,6 +55,36 @@ export const checkoutSessionCompletedHandler: WebhookHandler<Stripe.CheckoutSess
         'Processing completed checkout session'
       )
 
+      // A replayed event (same payment intent) records nothing and answers
+      // 200, so Stripe stops retrying. Checked before any write.
+      const existingResult = await PaymentService.findPaymentByIntentId(
+        session.payment_intent,
+        { dangerouslyBypassRLS: true }
+      )
+      if (isErr(existingResult)) {
+        // Fail so Stripe retries, rather than risk recording it twice.
+        return webhookErr(
+          WebhookErrorCodes.PROCESSING_ERROR,
+          `Failed to look up existing payment: ${existingResult.error}`,
+          'database_lookup',
+          'error',
+          ctx.paymentContext
+        )
+      }
+      if (!isNil(existingResult.data)) {
+        const paymentId = existingResult.data.id
+        logger.info(
+          { paymentIntentId: session.payment_intent, paymentId },
+          'Payment already recorded; ignoring replayed checkout.session.completed'
+        )
+        return ok({
+          processed: false,
+          entityType: replayEntityType(session.metadata),
+          entityId: paymentId,
+        })
+      }
+
+      // Metadata keys are written by lib/payments/checkout-metadata.ts.
       switch (checkoutFeeTypeFromMetadata(session.metadata)) {
         case 'candidate':
           return handleCandidatePayment(session, ctx)
@@ -69,6 +103,20 @@ export const checkoutSessionCompletedHandler: WebhookHandler<Stripe.CheckoutSess
     },
   }
 
+/** The success entity type a replay reports, from the session's fee type. */
+function replayEntityType(
+  metadata: Stripe.Checkout.Session['metadata']
+): HandlerSuccess['entityType'] {
+  switch (checkoutFeeTypeFromMetadata(metadata)) {
+    case 'candidate':
+      return 'candidate_payment'
+    case 'team':
+      return 'team_payment'
+    default:
+      return undefined
+  }
+}
+
 /**
  * Handles candidate payment processing.
  */
@@ -76,6 +124,7 @@ async function handleCandidatePayment(
   session: Stripe.Checkout.Session,
   ctx: WebhookHandlerContext
 ): Promise<ReturnType<WebhookHandler['handle']>> {
+  // Written by lib/payments/checkout-metadata.ts.
   const candidateId = session.metadata?.candidateId ?? null
 
   if (isNil(candidateId)) {
@@ -213,6 +262,7 @@ async function handleTeamPayment(
   session: Stripe.Checkout.Session,
   ctx: WebhookHandlerContext
 ): Promise<ReturnType<WebhookHandler['handle']>> {
+  // Written by lib/payments/checkout-metadata.ts.
   const groupMemberId = session.metadata?.group_member_id ?? null
 
   if (isNil(groupMemberId)) {

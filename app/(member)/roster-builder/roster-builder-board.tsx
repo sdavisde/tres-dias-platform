@@ -36,7 +36,6 @@ export function RosterBuilderBoard({
   weekendId,
   weekendTitle,
   weekendType,
-  rectorUserId,
   communityMembers,
   hasSecuelaEvent,
 }: RosterBuilderBoardProps) {
@@ -97,7 +96,6 @@ export function RosterBuilderBoard({
           weekendId,
           member.id,
           targetSlot!.role,
-          rectorUserId,
           targetSlot!.rollo ?? undefined
         )
 
@@ -141,7 +139,7 @@ export function RosterBuilderBoard({
         }
       })
     },
-    [categories, weekendId, rectorUserId]
+    [categories, weekendId]
   )
 
   // Remove a member from a slot (handles both draft and finalized)

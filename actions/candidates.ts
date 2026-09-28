@@ -2,30 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Result } from '@/lib/results'
-import { err, ok, isErr, unwrapOr } from '@/lib/results'
+import { err, ok, isErr } from '@/lib/results'
 import { isNil } from 'lodash'
-import type { SponsorFormSchema } from '@/app/(member)/sponsor/SponsorForm'
-import type {
-  CandidateStatus,
-  PaymentRecord,
-  HydratedCandidate,
-  CandidateFormData,
-} from '@/lib/candidates/types'
+import { logger } from '@/lib/logger'
+import {
+  sponsorFormSchema,
+  type SponsorFormSchema,
+} from '@/lib/candidates/sponsor-form-schema'
+import type { CandidateStatus, HydratedCandidate } from '@/lib/candidates/types'
 import { authorizedAction } from '@/lib/actions/authorized-action'
 import { Permission } from '@/lib/security'
-import { sendCandidateFormsCompletedEmail } from '@/services/notifications'
-import { logger } from '@/lib/logger'
-import type { WeekendType } from '@/lib/weekend/types'
+import * as CandidateForms from '@/services/candidates/candidate-forms'
 import { WeekendStatus, WEEKEND_CANDIDATE_CAPACITY } from '@/lib/weekend/types'
 import { formatWeekendLabelFor } from '@/lib/weekend'
 import type { Database } from '@/database.types'
-import { getCandidateCountByWeekend } from '@/services/candidates/actions'
-import {
-  getPaymentsForTargets,
-  movePaymentsToWeekend,
-} from '@/services/payment/payment-service'
-import { getTrackedGroups } from '@/services/fees/fees-service'
-import { getPaymentSummary } from '@/lib/payments/utils'
+import { getCandidateCountByWeekend } from '@/services/candidates/candidate-service'
+import { movePaymentsToWeekend } from '@/services/payment/payment-service'
 
 type CandidateSponsorshipInfoUpdate =
   Database['public']['Tables']['candidate_sponsorship_info']['Update']
@@ -33,258 +25,79 @@ type CandidateInfoUpdate =
   Database['public']['Tables']['candidate_info']['Update']
 
 /**
- * Create a new candidate with sponsorship information
+ * Create a new candidate with sponsorship information. Any signed-in member may
+ * sponsor a candidate (the sponsor form lives on the member site). The payload
+ * is re-parsed here so only the sponsor-form columns reach the table, the
+ * status is fixed to `sponsored`, and the sponsor email is the session's.
  */
-export async function createCandidateWithSponsorshipInfo(
-  data: SponsorFormSchema
-): Promise<Result<string, HydratedCandidate>> {
-  try {
-    const supabase = await createClient()
-
-    const { weekend_id, ...sponsorshipInfo } = data
-
-    // Upsert the candidate record
-    const { data: candidate, error: candidateError } = await supabase
-      .from('candidates')
-      .insert({ status: 'sponsored', weekend_id })
-      .select()
-      .single()
-
-    if (!isNil(candidateError) || isNil(candidate)) {
+export const createCandidateWithSponsorshipInfo = authorizedAction<
+  [SponsorFormSchema],
+  HydratedCandidate
+>(
+  'authenticated',
+  async (user, data): Promise<Result<string, HydratedCandidate>> => {
+    const parsed = sponsorFormSchema.safeParse(data)
+    if (!parsed.success) {
+      const first = parsed.error.issues.at(0)
       return err(
-        `Failed to create candidate: ${candidateError?.message ?? 'No data returned'}`
+        `Please check the form: ${first?.message ?? 'some fields are invalid'}`
       )
     }
 
-    // Create the sponsorship info record
-    const { error: sponsorshipInfoError } = await supabase
-      .from('candidate_sponsorship_info')
-      .insert({
-        candidate_id: candidate.id,
-        ...sponsorshipInfo,
-      })
+    try {
+      const supabase = await createClient()
 
-    if (!isNil(sponsorshipInfoError)) {
-      return err(
-        `Failed to create sponsorship info: ${sponsorshipInfoError.message}`
-      )
-    }
+      const { weekend_id, ...sponsorshipInfo } = parsed.data
 
-    return ok(candidate as HydratedCandidate)
-  } catch (error) {
-    return err(
-      `Error while creating candidate with sponsorship info: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
-}
+      const { data: candidate, error: candidateError } = await supabase
+        .from('candidates')
+        .insert({ status: 'sponsored', weekend_id })
+        .select()
+        .single()
 
-/**
- * Delete a candidate and all related data
- */
-export async function deleteCandidate(
-  candidateId: string
-): Promise<Result<string, { success: boolean }>> {
-  try {
-    const supabase = await createClient()
-
-    // Delete sponsorship info first (due to foreign key constraint)
-    const { error: sponsorshipInfoError } = await supabase
-      .from('candidate_sponsorship_info')
-      .delete()
-      .eq('candidate_id', candidateId)
-
-    if (!isNil(sponsorshipInfoError)) {
-      return err(
-        `Failed to delete sponsorship info: ${sponsorshipInfoError.message}`
-      )
-    }
-
-    // Delete candidate info if it exists
-    const { error: candidateInfoError } = await supabase
-      .from('candidate_info')
-      .delete()
-      .eq('candidate_id', candidateId)
-
-    if (!isNil(candidateInfoError)) {
-      return err(
-        `Failed to delete candidate info: ${candidateInfoError.message}`
-      )
-    }
-
-    // Finally delete the candidate
-    const { error: candidateError } = await supabase
-      .from('candidates')
-      .delete()
-      .eq('id', candidateId)
-
-    if (!isNil(candidateError)) {
-      return err(`Failed to delete candidate: ${candidateError.message}`)
-    }
-
-    return ok({ success: true })
-  } catch (error) {
-    return err(
-      `Error while deleting candidate: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
-}
-
-/**
- * Gets a candidate with all related information
- */
-export async function getHydratedCandidate(
-  candidateId: string
-): Promise<Result<string, HydratedCandidate>> {
-  try {
-    const supabase = await createClient()
-
-    const { data: candidate, error: candidateError } = await supabase
-      .from('candidates')
-      .select(
-        `
-        *,
-        candidate_sponsorship_info(*),
-        candidate_info(*)
-      `
-      )
-      .eq('id', candidateId)
-      .single()
-
-    if (!isNil(candidateError) || isNil(candidate)) {
-      return err(
-        `Failed to get candidate with details: ${candidateError?.message ?? 'No data returned'}`
-      )
-    }
-
-    const hydratedCandidate: HydratedCandidate = {
-      ...candidate,
-      candidate_sponsorship_info: candidate.candidate_sponsorship_info.at(0),
-      candidate_info: candidate.candidate_info.at(0),
-    } as HydratedCandidate
-
-    return ok(hydratedCandidate)
-  } catch (error) {
-    return err(
-      `Error while getting candidate with details: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
-}
-
-/**
- * Gets all candidates with their related information
- */
-export type CandidateFilterOptions = {
-  weekendGroupId?: string
-  weekendType?: WeekendType
-}
-
-/**
- * Gets all candidates with their related information.
- * Payments are fetched from the payment_transaction table.
- */
-export async function getAllCandidatesWithDetails(
-  options: CandidateFilterOptions = {}
-): Promise<Result<string, Array<HydratedCandidate>>> {
-  try {
-    const supabase = await createClient()
-
-    // Determine if we need to filter by weekend (requires inner join)
-    const needsWeekendFilter =
-      !isNil(options.weekendGroupId) || !isNil(options.weekendType)
-    const weekendJoinType = needsWeekendFilter ? '!inner' : ''
-
-    // Query candidates (payments are fetched separately from payment_transaction)
-    let query = supabase.from('candidates').select(`
-        *,
-        candidate_sponsorship_info(*),
-        candidate_info(*),
-        weekends${weekendJoinType} (
-          id,
-          title,
-          group_id,
-          type
+      if (!isNil(candidateError) || isNil(candidate)) {
+        logger.error(
+          { error: candidateError?.message },
+          'Failed to create candidate'
         )
-      `)
+        return err('Failed to create candidate')
+      }
 
-    if (!isNil(options.weekendGroupId)) {
-      query = query.eq('weekends.group_id', options.weekendGroupId)
-    }
+      const { error: sponsorshipInfoError } = await supabase
+        .from('candidate_sponsorship_info')
+        .insert({
+          candidate_id: candidate.id,
+          ...sponsorshipInfo,
+          sponsor_email: user.email,
+        })
 
-    if (!isNil(options.weekendType)) {
-      query = query.eq('weekends.type', options.weekendType)
-    }
+      if (!isNil(sponsorshipInfoError)) {
+        logger.error(
+          { error: sponsorshipInfoError.message, candidateId: candidate.id },
+          'Failed to create sponsorship info'
+        )
+        return err('Failed to create sponsorship info')
+      }
 
-    const { data: candidates, error: candidatesError } = await query
-
-    if (!isNil(candidatesError) || isNil(candidates)) {
-      return err(
-        `Failed to get candidates with details: ${candidatesError?.message ?? 'No data returned'}`
+      return ok(candidate as HydratedCandidate)
+    } catch (error) {
+      logger.error(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Error while creating candidate with sponsorship info'
       )
+      return err('Failed to create candidate')
     }
-
-    // Fetch every candidate's payments (one query) and the tracked groups'
-    // fees in parallel
-    const [paymentsResult, trackedGroupsResult] = await Promise.all([
-      getPaymentsForTargets(
-        'candidate',
-        candidates.map((candidate) => candidate.id)
-      ),
-      getTrackedGroups(),
-    ])
-
-    // Each candidate is priced from their own group. A fee we can't read is
-    // not a fee of $0 — log it and show "Not owed" rather than guess.
-    if (isErr(trackedGroupsResult)) {
-      logger.error({
-        error: trackedGroupsResult.error,
-        msg: 'Group fee lookup failed; candidate payment summaries show no fee',
-      })
-    }
-    const candidateFeeByGroup = new Map(
-      unwrapOr(trackedGroupsResult, []).map((g) => [
-        g.groupId,
-        g.fees.candidateFee,
-      ])
-    )
-
-    // Candidate ID to payments; a failed read leaves every list empty, as a
-    // failed per-candidate read did.
-    const paymentsMap: Map<string, PaymentRecord[]> = unwrapOr(
-      paymentsResult,
-      new Map<string, PaymentRecord[]>()
-    )
-
-    return ok(
-      candidates.map((candidate) => {
-        const payments = paymentsMap.get(candidate.id) ?? []
-        return {
-          ...candidate,
-          candidate_sponsorship_info:
-            candidate.candidate_sponsorship_info.at(0),
-          candidate_info: candidate.candidate_info.at(0),
-          payments,
-          paymentSummary: getPaymentSummary(
-            payments,
-            candidateFeeByGroup.get(candidate.weekends?.group_id ?? '') ?? null
-          ),
-        }
-      }) as HydratedCandidate[]
-    )
-  } catch (error) {
-    return err(
-      `Error while getting candidates with details: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
   }
-}
+)
 
 /**
  * Moves a candidate to a new status (reject, mark forms as sent, ...).
  * Requires WRITE_CANDIDATES permission.
  */
 export const updateCandidateStatus = authorizedAction<
-  { candidateId: string; status: CandidateStatus },
+  [{ candidateId: string; status: CandidateStatus }],
   { success: boolean }
->(Permission.WRITE_CANDIDATES, async ({ candidateId, status }) => {
+>(Permission.WRITE_CANDIDATES, async (_user, { candidateId, status }) => {
   try {
     const supabase = await createClient()
 
@@ -305,61 +118,30 @@ export const updateCandidateStatus = authorizedAction<
   }
 })
 
+// publicAction: the candidate filling in their forms is not logged in; the link
+// carries an unguessable candidate UUID. The service validates the id and the
+// payload, writes through the admin client, and only flips the status while the
+// candidate is still in a forms-open state (Unit 5 of
+// docs/specs/19-spec-security-remediation).
 /**
- * Add Candidate Info when a user submits their candidate forms
- * Also updates the candidate status to 'pending_approval'
+ * Records a candidate's completed registration forms and moves them to
+ * `pending_approval`. Replaces `addCandidateInfo`.
  */
-export async function addCandidateInfo(
+export async function submitCandidateForms(
   candidateId: string,
-  data: CandidateFormData
+  values: unknown
 ): Promise<Result<string, true>> {
-  try {
-    const supabase = await createClient()
-
-    const { error: candidateInfoError } = await supabase
-      .from('candidate_info')
-      .insert({
-        candidate_id: candidateId,
-        ...data,
-      })
-
-    if (!isNil(candidateInfoError)) {
-      return err(`Failed to add candidate info: ${candidateInfoError.message}`)
-    }
-
-    // Update candidate status to pending_approval after forms are completed
-    const { error: statusError } = await supabase
-      .from('candidates')
-      .update({ status: 'pending_approval' })
-      .eq('id', candidateId)
-
-    if (!isNil(statusError)) {
-      return err(`Failed to update candidate status: ${statusError.message}`)
-    }
-
-    // Send email notification to pre-weekend couple (don't fail if email fails)
-    const emailResult = await sendCandidateFormsCompletedEmail(candidateId)
-    if (isErr(emailResult)) {
-      logger.error(
-        `Failed to send forms completed email for candidate ${candidateId}: ${emailResult.error}`
-      )
-    }
-
-    return ok(true)
-  } catch (error) {
-    return err(
-      `Error while adding candidate info: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
+  return await CandidateForms.submitCandidateForms(candidateId, values)
 }
 
 /**
- * Update the payment owner for a candidate
+ * Update the payment owner for a candidate. Mirrors the review page's `canEdit`
+ * (WRITE_CANDIDATES) gate, since the payer is edited as part of approval.
  */
-export async function updateCandidatePaymentOwner(
-  candidateId: string,
-  paymentOwner: string
-): Promise<Result<string, { success: boolean }>> {
+export const updateCandidatePaymentOwner = authorizedAction<
+  [string, string],
+  { success: boolean }
+>(Permission.WRITE_CANDIDATES, async (_user, candidateId, paymentOwner) => {
   try {
     const supabase = await createClient()
 
@@ -378,20 +160,22 @@ export async function updateCandidatePaymentOwner(
       `Error while updating payment owner: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
-}
+})
 
 /**
  * Update a single field in the candidate_sponsorship_info table
  * Requires WRITE_CANDIDATES permission
  */
 export const updateCandidateSponsorshipField = authorizedAction<
-  {
-    candidateId: string
-    field: keyof CandidateSponsorshipInfoUpdate
-    value: string | null
-  },
+  [
+    {
+      candidateId: string
+      field: keyof CandidateSponsorshipInfoUpdate
+      value: string | null
+    },
+  ],
   { success: boolean }
->(Permission.WRITE_CANDIDATES, async ({ candidateId, field, value }) => {
+>(Permission.WRITE_CANDIDATES, async (_user, { candidateId, field, value }) => {
   try {
     const supabase = await createClient()
 
@@ -417,13 +201,15 @@ export const updateCandidateSponsorshipField = authorizedAction<
  * Requires WRITE_CANDIDATES permission
  */
 export const updateCandidateInfoField = authorizedAction<
-  {
-    candidateId: string
-    field: keyof CandidateInfoUpdate
-    value: string | number | boolean | null
-  },
+  [
+    {
+      candidateId: string
+      field: keyof CandidateInfoUpdate
+      value: string | number | boolean | null
+    },
+  ],
   { success: boolean }
->(Permission.WRITE_CANDIDATES, async ({ candidateId, field, value }) => {
+>(Permission.WRITE_CANDIDATES, async (_user, { candidateId, field, value }) => {
   try {
     const supabase = await createClient()
 
@@ -449,9 +235,9 @@ export const updateCandidateInfoField = authorizedAction<
  * Requires WRITE_CANDIDATES permission
  */
 export const updateCandidateStatusField = authorizedAction<
-  { candidateId: string; status: CandidateStatus },
+  [{ candidateId: string; status: CandidateStatus }],
   { success: boolean }
->(Permission.WRITE_CANDIDATES, async ({ candidateId, status }) => {
+>(Permission.WRITE_CANDIDATES, async (_user, { candidateId, status }) => {
   try {
     const supabase = await createClient()
 
@@ -489,9 +275,10 @@ export interface MoveWeekendOption {
  * and the candidate's current weekend is excluded. Each option includes a live
  * candidate count so callers can show a capacity hint.
  */
-export async function getMoveWeekendOptions(
-  candidateId: string
-): Promise<Result<string, MoveWeekendOption[]>> {
+export const getMoveWeekendOptions = authorizedAction<
+  [string],
+  MoveWeekendOption[]
+>(Permission.WRITE_CANDIDATES, async (_user, candidateId) => {
   try {
     const supabase = await createClient()
 
@@ -562,7 +349,7 @@ export async function getMoveWeekendOptions(
       `Error while loading move weekend options: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
-}
+})
 
 /**
  * Moves a candidate to a different weekend.
@@ -571,42 +358,45 @@ export async function getMoveWeekendOptions(
  * weekend so financials follow them. Requires WRITE_CANDIDATES permission.
  */
 export const moveCandidateToWeekend = authorizedAction<
-  { candidateId: string; targetWeekendId: string },
+  [{ candidateId: string; targetWeekendId: string }],
   { success: boolean }
->(Permission.WRITE_CANDIDATES, async ({ candidateId, targetWeekendId }) => {
-  try {
-    const supabase = await createClient()
+>(
+  Permission.WRITE_CANDIDATES,
+  async (_user, { candidateId, targetWeekendId }) => {
+    try {
+      const supabase = await createClient()
 
-    const { error: updateError } = await supabase
-      .from('candidates')
-      .update({ weekend_id: targetWeekendId })
-      .eq('id', candidateId)
+      const { error: updateError } = await supabase
+        .from('candidates')
+        .update({ weekend_id: targetWeekendId })
+        .eq('id', candidateId)
 
-    if (!isNil(updateError)) {
-      return err(`Failed to move candidate: ${updateError.message}`)
+      if (!isNil(updateError)) {
+        return err(`Failed to move candidate: ${updateError.message}`)
+      }
+
+      // Reassign the candidate's payments to the new weekend. This runs with
+      // RLS bypassed because it is a system-level consequence of the candidate
+      // move authorized above, not a user-initiated payment edit — payment
+      // writes now require WRITE_PAYMENTS, which a WRITE_CANDIDATES holder need
+      // not have. Without the bypass the update would match zero rows and
+      // report success, leaving the payments on the old weekend.
+      const paymentsResult = await movePaymentsToWeekend(
+        'candidate',
+        candidateId,
+        targetWeekendId,
+        { dangerouslyBypassRLS: true }
+      )
+
+      if (isErr(paymentsResult)) {
+        return err(`Failed to move candidate payments: ${paymentsResult.error}`)
+      }
+
+      return ok({ success: true })
+    } catch (error) {
+      return err(
+        `Error while moving candidate: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
-
-    // Reassign the candidate's payments to the new weekend. This runs with
-    // RLS bypassed because it is a system-level consequence of the candidate
-    // move authorized above, not a user-initiated payment edit — payment
-    // writes now require WRITE_PAYMENTS, which a WRITE_CANDIDATES holder need
-    // not have. Without the bypass the update would match zero rows and
-    // report success, leaving the payments on the old weekend.
-    const paymentsResult = await movePaymentsToWeekend(
-      'candidate',
-      candidateId,
-      targetWeekendId,
-      { dangerouslyBypassRLS: true }
-    )
-
-    if (isErr(paymentsResult)) {
-      return err(`Failed to move candidate payments: ${paymentsResult.error}`)
-    }
-
-    return ok({ success: true })
-  } catch (error) {
-    return err(
-      `Error while moving candidate: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
   }
-})
+)

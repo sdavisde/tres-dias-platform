@@ -2,12 +2,14 @@ import { Permission, userHasPermission } from '@/lib/security'
 import { redirect } from 'next/navigation'
 import { getLoggedInUser } from '@/services/identity/user'
 import {
-  getAllPayments,
-  getActiveWeekendFinancials,
   FEES_NOT_SET,
+  getActiveWeekendFinancials,
+} from '@/services/payment/payment-service'
+import {
+  getAllPayments,
   type ActiveWeekendFinancials,
 } from '@/services/payment'
-import { getActiveWeekends } from '@/services/weekend'
+import { getActiveWeekends } from '@/services/weekend/weekend-service'
 import { isErr, isOk } from '@/lib/results'
 import * as Results from '@/lib/results'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'

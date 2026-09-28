@@ -17,7 +17,7 @@ import { isNil } from 'lodash'
 import { WeekendStatus, type Weekend } from '@/lib/weekend/types'
 import { formatWeekendTitle } from '@/lib/weekend'
 import { hubPath } from '@/lib/weekend/hub'
-import { getWeekendRosterViewData } from '@/services/weekend'
+import { getWeekendRosterViewData } from '@/services/weekend/weekend-service'
 import { Permission, userHasPermission } from '@/lib/security'
 import type { User } from '@/lib/users/types'
 import { formatDateOnly } from '@/lib/utils'
@@ -49,7 +49,7 @@ export async function WeekendRosterView({
   hideWeekendHeader = false,
 }: WeekendRosterViewProps) {
   // Load all data using the service
-  const result = await getWeekendRosterViewData(weekendId, user, knownWeekend)
+  const result = await getWeekendRosterViewData(weekendId, knownWeekend)
 
   if (Results.isErr(result)) {
     throw new Error(result.error)

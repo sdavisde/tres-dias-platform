@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
+import { validateRedirectUrl } from '@/lib/redirect'
 import { isNil } from 'lodash'
 import { appendQueryParams } from '@/lib/url'
 
@@ -18,12 +19,16 @@ import { appendQueryParams } from '@/lib/url'
  * After verifying we re-read the user: if `new_email` is still set, only one
  * of the two confirmations has landed, and the redirect carries
  * ?emailChange=pending so the UI can say "check your other inbox".
+ *
+ * `next` comes from the URL and is validated to a same-site path before any
+ * redirect, including the invalid-token branch, so a forged link cannot send
+ * the user off-site.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
-  const next = searchParams.get('next') ?? '/profile'
+  const next = validateRedirectUrl(searchParams.get('next'), '/profile')
 
   if (isNil(tokenHash) || isNil(type)) {
     logger.warn('Auth confirm called without token_hash or type parameter')

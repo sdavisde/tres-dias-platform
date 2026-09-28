@@ -77,6 +77,11 @@ export type CheckoutQuote = {
   groupNumber: number | null
   /** The team member's user; null for a candidate. */
   userId: string | null
+  /**
+   * Who the sponsorship form says pays ('candidate' | 'sponsor'); null for a
+   * team member. Lets the public fee page work without a candidate read.
+   */
+  paymentOwner: string | null
 }
 
 /**
@@ -118,6 +123,7 @@ export async function getCheckoutQuote(
       groupId: row.groupId,
       groupNumber: row.group?.number ?? null,
       userId: null,
+      paymentOwner: row.paymentOwner,
     })
   }
 
@@ -148,6 +154,7 @@ export async function getCheckoutQuote(
     groupId: row.groupId,
     groupNumber: row.group?.number ?? null,
     userId: row.userId,
+    paymentOwner: null,
   })
 }
 
@@ -557,6 +564,21 @@ export async function syncGroupMemberPaymentsToRoster(
   }
 
   return moveResult
+}
+
+/**
+ * Finds the payment recorded for a Stripe payment intent, if any. The unique
+ * partial index on `payment_intent_id` means there is at most one.
+ *
+ * @param paymentIntentId - The Stripe payment intent ID
+ * @param options - Service options including RLS bypass flag
+ * @returns Result containing the payment, or null when none is recorded
+ */
+export async function findPaymentByIntentId(
+  paymentIntentId: string,
+  options?: ServiceOptions
+): Promise<Result<string, PaymentTransactionRow | null>> {
+  return PaymentRepository.getPaymentByPaymentIntentId(paymentIntentId, options)
 }
 
 /**

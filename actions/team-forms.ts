@@ -1,179 +1,164 @@
 'use server'
 
 import type { Result } from '@/lib/results'
-import { err, ok, isErr } from '@/lib/results'
+import { err, isErr } from '@/lib/results'
 import { isNil, isEmpty } from 'lodash'
+import { authorizedAction } from '@/lib/actions/authorized-action'
+import { ownsGroupMember, ownsUser } from '@/lib/actions/guards'
 import * as GroupMemberRepository from '@/services/weekend-group-member/repository'
-import {
-  getTeamFormsProgress as serviceGetTeamFormsProgress,
-  hasCompletedAllTeamForms as serviceHasCompletedAllTeamForms,
-} from '@/services/weekend-group-member/weekend-group-member-service'
 
-export type TeamFormsProgress = {
-  steps: {
-    statementOfBelief: boolean
-    commitmentForm: boolean
-    releaseOfClaim: boolean
-    campWaiver: boolean
-    infoSheet: boolean
-  }
-  completedSteps: string[]
-  totalSteps: number
-  completedCount: number
-  isComplete: boolean
-}
+/**
+ * Every form action below is keyed by the caller's own group-member row (or,
+ * for the medical profile, their own user id). The guard checks that key
+ * against the session, so a member can only ever sign their own forms.
+ */
 
 /**
  * Marks the Statement of Belief as completed for a given group member.
  */
-export async function signStatementOfBelief(
-  groupMemberId: string
-): Promise<Result<string, void>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
-  }
+export const signStatementOfBelief = authorizedAction<[string], void>(
+  (user, groupMemberId) => ownsGroupMember(user, groupMemberId),
+  async (_user, groupMemberId: string) => {
+    if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
+      return err('Group member ID is required')
+    }
 
-  return GroupMemberRepository.upsertFormCompletion(
-    groupMemberId,
-    'statement_of_belief',
-    new Date().toISOString()
-  )
-}
+    return GroupMemberRepository.upsertFormCompletion(
+      groupMemberId,
+      'statement_of_belief',
+      new Date().toISOString()
+    )
+  }
+)
 
 /**
  * Marks the Commitment Form as completed for a given group member.
  */
-export async function signCommitmentForm(
-  groupMemberId: string
-): Promise<Result<string, void>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
-  }
+export const signCommitmentForm = authorizedAction<[string], void>(
+  (user, groupMemberId) => ownsGroupMember(user, groupMemberId),
+  async (_user, groupMemberId: string) => {
+    if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
+      return err('Group member ID is required')
+    }
 
-  return GroupMemberRepository.upsertFormCompletion(
-    groupMemberId,
-    'commitment_form',
-    new Date().toISOString()
-  )
-}
+    return GroupMemberRepository.upsertFormCompletion(
+      groupMemberId,
+      'commitment_form',
+      new Date().toISOString()
+    )
+  }
+)
 
 /**
  * Submits the Release of Claim form, saving special needs information.
  * Updates special_needs on all active roster rows for the same group.
  */
-export async function submitReleaseOfClaim(
-  groupMemberId: string,
-  specialNeeds: string | null
-): Promise<Result<string, void>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
+export const submitReleaseOfClaim = authorizedAction<
+  [string, string | null],
+  void
+>(
+  (user, groupMemberId) => ownsGroupMember(user, groupMemberId),
+  async (_user, groupMemberId: string, specialNeeds: string | null) => {
+    if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
+      return err('Group member ID is required')
+    }
+
+    // Upsert form completion
+    const formResult = await GroupMemberRepository.upsertFormCompletion(
+      groupMemberId,
+      'release_of_claim',
+      new Date().toISOString()
+    )
+    if (isErr(formResult)) {
+      return formResult
+    }
+
+    // Update special_needs on all active roster rows for this group member
+    const finalSpecialNeeds =
+      !isNil(specialNeeds) && !isEmpty(specialNeeds.trim())
+        ? specialNeeds.trim()
+        : 'None'
+
+    return GroupMemberRepository.updateSpecialNeedsForGroup(
+      groupMemberId,
+      finalSpecialNeeds
+    )
   }
-
-  // Upsert form completion
-  const formResult = await GroupMemberRepository.upsertFormCompletion(
-    groupMemberId,
-    'release_of_claim',
-    new Date().toISOString()
-  )
-  if (isErr(formResult)) {
-    return formResult
-  }
-
-  // Update special_needs on all active roster rows for this group member
-  const finalSpecialNeeds =
-    !isNil(specialNeeds) && !isEmpty(specialNeeds.trim())
-      ? specialNeeds.trim()
-      : 'None'
-
-  return GroupMemberRepository.updateSpecialNeedsForGroup(
-    groupMemberId,
-    finalSpecialNeeds
-  )
-}
+)
 
 /**
  * Marks the Camp Waiver as completed for a given group member.
  */
-export async function signCampWaiver(
-  groupMemberId: string
-): Promise<Result<string, void>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
-  }
+export const signCampWaiver = authorizedAction<[string], void>(
+  (user, groupMemberId) => ownsGroupMember(user, groupMemberId),
+  async (_user, groupMemberId: string) => {
+    if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
+      return err('Group member ID is required')
+    }
 
-  return GroupMemberRepository.upsertFormCompletion(
-    groupMemberId,
-    'camp_waiver',
-    new Date().toISOString()
-  )
-}
+    return GroupMemberRepository.upsertFormCompletion(
+      groupMemberId,
+      'camp_waiver',
+      new Date().toISOString()
+    )
+  }
+)
 
 /**
  * Marks the Info Sheet as completed for a given group member.
  */
-export async function completeInfoSheet(
-  groupMemberId: string
-): Promise<Result<string, void>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
+export const completeInfoSheet = authorizedAction<[string], void>(
+  (user, groupMemberId) => ownsGroupMember(user, groupMemberId),
+  async (_user, groupMemberId: string) => {
+    if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
+      return err('Group member ID is required')
+    }
+
+    return GroupMemberRepository.upsertFormCompletion(
+      groupMemberId,
+      'info_sheet',
+      new Date().toISOString()
+    )
   }
-
-  return GroupMemberRepository.upsertFormCompletion(
-    groupMemberId,
-    'info_sheet',
-    new Date().toISOString()
-  )
-}
-
-/**
- * Returns granular progress for team forms.
- */
-export async function getTeamFormsProgress(
-  groupMemberId: string
-): Promise<Result<string, TeamFormsProgress>> {
-  if (isNil(groupMemberId) || isEmpty(groupMemberId)) {
-    return err('Group member ID is required')
-  }
-
-  return serviceGetTeamFormsProgress(groupMemberId)
-}
-
-/**
- * Checks if a team member has completed all 5 required forms.
- */
-export async function hasCompletedAllTeamForms(
-  groupMemberId: string
-): Promise<Result<string, boolean>> {
-  const result = await getTeamFormsProgress(groupMemberId)
-  if (isErr(result)) {
-    return err(result.error)
-  }
-  return ok(result.data.isComplete)
-}
+)
 
 /**
  * Updates emergency contact and medical information.
  * Writes to user_medical_profiles keyed by userId.
  */
-export async function updateRosterMedicalInfo(
-  userId: string,
-  medicalInfo: {
-    emergency_contact_name: string
-    emergency_contact_phone: string
-    medical_conditions?: string
-  }
-): Promise<Result<string, void>> {
-  if (isNil(userId) || isEmpty(userId)) {
-    return err('User ID is required')
-  }
+export const updateRosterMedicalInfo = authorizedAction<
+  [
+    string,
+    {
+      emergency_contact_name: string
+      emergency_contact_phone: string
+      medical_conditions?: string
+    },
+  ],
+  void
+>(
+  (user, userId) => ownsUser(user, userId),
+  async (
+    _user,
+    userId: string,
+    medicalInfo: {
+      emergency_contact_name: string
+      emergency_contact_phone: string
+      medical_conditions?: string
+    }
+  ) => {
+    if (isNil(userId) || isEmpty(userId)) {
+      return err('User ID is required')
+    }
 
-  return GroupMemberRepository.upsertUserMedicalProfile(userId, {
-    emergency_contact_name: medicalInfo.emergency_contact_name,
-    emergency_contact_phone: medicalInfo.emergency_contact_phone,
-    medical_conditions:
-      !isNil(medicalInfo.medical_conditions) &&
-      !isEmpty(medicalInfo.medical_conditions.trim())
-        ? medicalInfo.medical_conditions.trim()
-        : null,
-  })
-}
+    return GroupMemberRepository.upsertUserMedicalProfile(userId, {
+      emergency_contact_name: medicalInfo.emergency_contact_name,
+      emergency_contact_phone: medicalInfo.emergency_contact_phone,
+      medical_conditions:
+        !isNil(medicalInfo.medical_conditions) &&
+        !isEmpty(medicalInfo.medical_conditions.trim())
+          ? medicalInfo.medical_conditions.trim()
+          : null,
+    })
+  }
+)

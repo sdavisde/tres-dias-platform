@@ -142,20 +142,22 @@ function normalizeUser(
  * `cache()` so the layout/page/action calls within a single server render
  * share one Supabase round-trip instead of re-fetching per caller.
  */
-const getAuthenticatedUser = cache(async (): Promise<Result<string, User>> => {
-  const supabase = await createClient()
+export const getAuthenticatedUser = cache(
+  async (): Promise<Result<string, User>> => {
+    const supabase = await createClient()
 
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
 
-  if (isNil(authUser)) return err('User not logged in')
+    if (isNil(authUser)) return err('User not logged in')
 
-  // Tags this request's Sentry events with who hit them.
-  Sentry.setUser({ id: authUser.id, email: authUser.email })
+    // Tags this request's Sentry events with who hit them.
+    Sentry.setUser({ id: authUser.id, email: authUser.email })
 
-  return await getUserById(authUser.id)
-})
+    return await getUserById(authUser.id)
+  }
+)
 
 /**
  * Gets the logged in user's session using middleware server session,

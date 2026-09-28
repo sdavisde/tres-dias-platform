@@ -33,6 +33,7 @@ export type ProcessingStage =
   | 'notification'
   | 'fee_backfill'
   | 'payout_processing'
+  | 'billing_sync'
 
 /**
  * Structured webhook error with context for Sentry reporting.
@@ -51,7 +52,12 @@ export type WebhookError = {
  */
 export type HandlerSuccess = {
   processed: boolean
-  entityType?: 'candidate_payment' | 'team_payment' | 'payout' | 'fee_backfill'
+  entityType?:
+    | 'candidate_payment'
+    | 'team_payment'
+    | 'payout'
+    | 'fee_backfill'
+    | 'billing_account'
   entityId?: string | number
   /** Additional details for logging */
   details?: Record<string, unknown>
@@ -110,6 +116,10 @@ export const WebhookErrorCodes = {
   FEE_FETCH_FAILED: 'FEE_FETCH_FAILED',
   PAYOUT_RECORD_FAILED: 'PAYOUT_RECORD_FAILED',
   TRANSACTION_FETCH_FAILED: 'TRANSACTION_FETCH_FAILED',
+
+  // Platform billing (services/platform-billing/webhook)
+  BILLING_SYNC_FAILED: 'BILLING_SYNC_FAILED',
+  BILLING_ACCOUNT_NOT_FOUND: 'BILLING_ACCOUNT_NOT_FOUND',
 
   // General
   PROCESSING_ERROR: 'PROCESSING_ERROR',

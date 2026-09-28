@@ -1,4 +1,4 @@
-'use server'
+import 'server-only'
 
 import * as BoardService from './board-service'
 

@@ -39,7 +39,7 @@ import {
   updateUserProfilePhoto,
   removeUserProfilePhoto,
 } from '@/services/identity/user'
-import { sendPasswordResetEmail } from '@/actions/password-reset'
+import { sendCustomPasswordResetEmail } from '@/actions/password-reset'
 import { isErr } from '@/lib/results'
 import { toastError } from '@/lib/toast-error'
 import { toast } from 'sonner'
@@ -267,7 +267,7 @@ export default function ProfilePage() {
     if (isNil(user?.email)) return
     setResetBusy(true)
     try {
-      const result = await sendPasswordResetEmail(user.email)
+      const result = await sendCustomPasswordResetEmail(user.email)
       if (isErr(result)) {
         toastError('Unable to send the reset email. Please try again.', {
           error: result.error,

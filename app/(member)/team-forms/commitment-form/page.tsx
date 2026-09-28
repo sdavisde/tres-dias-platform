@@ -3,7 +3,7 @@ import { getLoggedInUser } from '@/services/identity/user'
 import { CommitmentFormComponent } from '@/components/team-forms/commitment-form-component'
 import { Results } from '@/lib/results'
 import { isNil } from 'lodash'
-import { getGroupFees } from '@/services/fees'
+import { getGroupFees } from '@/services/fees/fees-service'
 import { formatTeamMemberTitle, formatTeamMemberRole } from '@/lib/weekend'
 
 export default async function CommitmentFormPage() {
