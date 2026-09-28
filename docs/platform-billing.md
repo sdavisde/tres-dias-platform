@@ -70,7 +70,7 @@ dunning for v1; the app sends none of its own.
 
 **Developers → Webhooks → Add endpoint**.
 
-- Endpoint URL: `https://dustytrailstresdias.org/api/webhooks/platform-billing`
+- Endpoint URL: `https://www.dustytrailstresdias.org/api/webhooks/platform-billing`
   (for a Vercel preview, the preview's URL with the same path)
 - Events (exactly these six):
   - `checkout.session.completed`
