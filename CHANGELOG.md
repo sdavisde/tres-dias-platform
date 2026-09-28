@@ -1,3 +1,30 @@
+## [1.56.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.55.1...v1.56.0) (2026-09-28)
+
+### Features
+
+- **auth:** map GoTrue errors to owned messages with remediation hints ([50dd2da](https://github.com/sdavisde/tres-dias-platform/commit/50dd2da1b3db57f332946fabde8809e6037a6c8c))
+- **billing:** add the admin Billing page ([8a3f77a](https://github.com/sdavisde/tres-dias-platform/commit/8a3f77aa167611acdee229e64f827ef056c52d8a))
+- **billing:** add the platform billing webhook ([4664898](https://github.com/sdavisde/tres-dias-platform/commit/4664898ce785d588452299ec2c4430649b629b7f))
+- **billing:** add the platform Stripe client and MANAGE_BILLING permission ([bfc18f5](https://github.com/sdavisde/tres-dias-platform/commit/bfc18f59791e1ee2b3a53317829ddf9f02d0ee8a))
+- **billing:** mirror the platform subscription in billing_account ([fd74e16](https://github.com/sdavisde/tres-dias-platform/commit/fd74e161ab9658ea9403c66203cc05f1168428ac))
+- **billing:** sync subscription state from Stripe and shape it for the page ([7c90b02](https://github.com/sdavisde/tres-dias-platform/commit/7c90b024e5c17510c2e4d17cccdf8b18980dd4c9))
+- **billing:** warn on the dashboard when the platform payment fails ([4967f1e](https://github.com/sdavisde/tres-dias-platform/commit/4967f1e407a6b7d9568941c7674d987db40970bb))
+- **payments:** share the checkout metadata builder and ignore replayed webhooks ([3a8058b](https://github.com/sdavisde/tres-dias-platform/commit/3a8058b469cc7bf3388d4b9cc27bbd6081607113))
+- **seed:** generate date-relative local seed data by weekend phase ([8a2c7e0](https://github.com/sdavisde/tres-dias-platform/commit/8a2c7e0a6c498e078c1a54204186a3519e117d61))
+- **sentry:** report handled failures and tag events with the user ([ba91841](https://github.com/sdavisde/tres-dias-platform/commit/ba918417e3b0e21fdf8d444148cde061ca5ae85b))
+
+### Bug Fixes
+
+- **release:** point semantic-release at the renamed GitHub repository ([aa313cf](https://github.com/sdavisde/tres-dias-platform/commit/aa313cf98a4345a8d14ef68f53a9188dd3114f5d))
+- **security:** close the redirect bypass and block FULL_ACCESS self-grants ([495db8b](https://github.com/sdavisde/tres-dias-platform/commit/495db8b7ec1d8d8ef93df0595d1856978676314c))
+- **security:** gate every remaining server action against the session ([707b771](https://github.com/sdavisde/tres-dias-platform/commit/707b771975cfe0da53a527355026710b5b20cc66))
+- **security:** move the public candidate flows to the admin client and finish anon revocation ([8cb8429](https://github.com/sdavisde/tres-dias-platform/commit/8cb842989980644ea1a41fbcb2f673ff8a0a8747))
+- **security:** raise the password minimum, validate auth redirects and gate file downloads ([314a0de](https://github.com/sdavisde/tres-dias-platform/commit/314a0defa029e247bd7da6480a819531609300d4))
+- **security:** require app permissions for every remaining authenticated write ([aa08676](https://github.com/sdavisde/tres-dias-platform/commit/aa08676e3c3b81bf575a5e5bd7c2bd8e100128f7))
+- **security:** require permissions for role, user and storage writes and revoke anon access ([98a1cba](https://github.com/sdavisde/tres-dias-platform/commit/98a1cba0b58c07a58cb82a6b382c5024186b4f7e))
+- **security:** sign the impersonation cookie and re-verify the admin on every read ([d891e41](https://github.com/sdavisde/tres-dias-platform/commit/d891e41cbc8c62d2e189333d795dfc8cb86a9a22))
+- **server:** raise the default listener limit past the per-request close listeners ([f937108](https://github.com/sdavisde/tres-dias-platform/commit/f937108049b780bb618e488661081733f2eb1b6e))
+
 ## [1.55.1](https://github.com/[secure]/dttd/compare/v1.55.0...v1.55.1) (2026-09-25)
 
 ### Bug Fixes
