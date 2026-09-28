@@ -88,6 +88,7 @@ describe('permission areas', () => {
     expect(byId.people.manage).toEqual([
       Permission.WRITE_USER_ROLES,
       Permission.WRITE_SETTINGS,
+      Permission.MANAGE_BILLING,
       Permission.WRITE_COMMUNITY_ENCOURAGEMENT,
     ])
   })

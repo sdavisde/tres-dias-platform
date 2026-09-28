@@ -107,11 +107,12 @@ export const PERMISSION_LADDERS: readonly PermissionLadder[] = [
     id: 'people',
     label: 'People, community & settings',
     helper:
-      'Who holds which role and their experience. Manage adds assigning roles, site settings, and the community encouragement note.',
+      'Who holds which role and their experience. Manage adds assigning roles, site settings, platform billing, and the community encouragement note.',
     view: [Permission.READ_USER_ROLES, Permission.READ_USER_EXPERIENCE],
     manage: [
       Permission.WRITE_USER_ROLES,
       Permission.WRITE_SETTINGS,
+      Permission.MANAGE_BILLING,
       Permission.WRITE_COMMUNITY_ENCOURAGEMENT,
     ],
     caution:
@@ -181,6 +182,7 @@ export const PERMISSION_LABELS: Readonly<Record<Permission, string>> = {
   [Permission.WRITE_COMMUNITY_ENCOURAGEMENT]:
     'Edit the community encouragement',
   [Permission.WRITE_SETTINGS]: 'Change site settings',
+  [Permission.MANAGE_BILLING]: 'Manage platform billing',
   [Permission.READ_CANDIDATE_CONTACT_INFO]: 'See candidate contact details',
   [Permission.READ_CANDIDATE_ADDRESS]: 'See candidate home address',
   [Permission.READ_CANDIDATE_SHIRT_SIZE]: 'See candidate shirt size',
@@ -227,6 +229,8 @@ export const PERMISSION_DESCRIPTIONS: Readonly<Record<Permission, string>> = {
   [Permission.WRITE_COMMUNITY_ENCOURAGEMENT]:
     'The note shown to the whole community',
   [Permission.WRITE_SETTINGS]: 'Site-wide settings',
+  [Permission.MANAGE_BILLING]:
+    "The community's platform subscription: card on file, invoices, and cancellation",
   [Permission.READ_CANDIDATE_CONTACT_INFO]: 'Phone and email',
   [Permission.READ_CANDIDATE_ADDRESS]: 'Where they live',
   [Permission.READ_CANDIDATE_SHIRT_SIZE]: 'For weekend supplies',

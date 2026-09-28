@@ -90,6 +90,8 @@ export enum Permission {
 
   // Settings
   WRITE_SETTINGS = 'WRITE_SETTINGS',
+  /** The community's platform subscription: card on file, invoices, cancellation. */
+  MANAGE_BILLING = 'MANAGE_BILLING',
 
   // Candidate-specific read permissions
   READ_CANDIDATE_CONTACT_INFO = 'READ_CANDIDATE_CONTACT_INFO',
