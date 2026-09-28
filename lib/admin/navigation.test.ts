@@ -43,6 +43,7 @@ describe('adminNavItems', () => {
       'Community',
       'Files',
       'Site settings',
+      'Billing',
       'Security',
       'Reports',
     ])
@@ -60,6 +61,7 @@ describe('adminNavItems', () => {
       Community: '/admin/community-board',
       Files: '/admin/files',
       'Site settings': '/admin/settings',
+      Billing: '/admin/billing',
       Security: '/admin/security',
       Reports: '/admin/reports',
     })
@@ -78,6 +80,7 @@ describe('adminNavItems', () => {
     expect(iconName('/admin/weekends')).toBe('Calendar')
     expect(iconName('/admin/events')).toBe('Clock')
     expect(iconName('/admin/payments')).toBe('CreditCard')
+    expect(iconName('/admin/billing')).toBe('Receipt')
   })
 
   it('has an icon for every item, exposed via getNavIcon', () => {
@@ -110,6 +113,19 @@ describe('filterNavByPermission', () => {
       )
     expect(titles([Permission.READ_WEEKENDS])).not.toContain('Site settings')
     expect(titles([Permission.FULL_ACCESS])).toContain('Site settings')
+  })
+
+  it('shows Billing only with MANAGE_BILLING or FULL_ACCESS', () => {
+    const titles = (permissions: Permission[]) =>
+      filterNavByPermission(adminNavItems, makeUser(permissions)).map(
+        (item) => item.title
+      )
+    expect(titles([])).not.toContain('Billing')
+    expect(
+      titles([Permission.READ_PAYMENTS, Permission.WRITE_SETTINGS])
+    ).not.toContain('Billing')
+    expect(titles([Permission.MANAGE_BILLING])).toContain('Billing')
+    expect(titles([Permission.FULL_ACCESS])).toContain('Billing')
   })
 
   it('shows gated items when the user holds the permission', () => {
