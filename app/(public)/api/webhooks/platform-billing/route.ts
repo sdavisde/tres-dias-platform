@@ -59,7 +59,9 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('stripe-signature')
 
     if (isNil(signature)) {
-      logger.error(
+      // Scanners and probes hit public URLs without a signature; that is
+      // expected noise, not a fault, so it must not become a Sentry event.
+      logger.warn(
         'Missing Stripe signature in platform billing webhook request'
       )
       return NextResponse.json(
@@ -76,10 +78,7 @@ export async function POST(request: NextRequest) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err) {
-      logger.error(
-        err,
-        'Platform billing webhook signature verification failed'
-      )
+      logger.warn(err, 'Platform billing webhook signature verification failed')
       return NextResponse.json(
         {
           error: 'Invalid signature',
