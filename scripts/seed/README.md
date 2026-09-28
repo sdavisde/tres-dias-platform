@@ -81,6 +81,7 @@ table. All passwords are `password`.
 | Candidate awaiting payment, partially paid    | Timothy Martinez (`timothy.martinez@example.com`): men's #45, $100 of $200 paid                          |
 | Member on no roster, no roles (negative case) | `steven.kim@example.com`                                                                                 |
 | Admin (Full Access, also a team member)       | `sdavisde@gmail.com`: men's Table Leader, 2/5 forms, fee unpaid; avoid for flows that need a clean slate |
+| Billing manager (Full Access)                 | `nick44fierro@gmail.com`: opens Admin → Billing and the dashboard (E2E S7)                               |
 
 Every auth user is email-confirmed. Candidates aren't users; reach them by the id in their forms or fee
 link. Tests that change these people (pay a fee, submit a form) should reseed first or clean up after

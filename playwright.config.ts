@@ -1,10 +1,14 @@
 import { config as loadEnv } from 'dotenv'
 import { defineConfig, devices } from '@playwright/test'
 
-// The fixtures talk to Supabase directly, and the Playwright process does not
-// get Next.js's automatic .env.local loading. In CI the env comes from the
-// workflow and there is no .env.local.
+// The fixtures talk to Supabase directly and sign synthetic webhooks with the
+// same secrets as the app, and the Playwright process does not get Next.js's
+// automatic env loading. Mirror Next's order: .env.local first, then .env as a
+// fallback (dotenv never overrides a value that is already set, so .env.local
+// and the shell still win). In CI the env comes from the workflow and neither
+// file exists.
 loadEnv({ path: '.env.local', quiet: true })
+loadEnv({ path: '.env', quiet: true })
 
 /**
  * End-to-end tests against a real local Supabase and the seed from

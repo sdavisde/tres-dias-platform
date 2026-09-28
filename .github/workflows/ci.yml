@@ -60,6 +60,12 @@ jobs:
       STRIPE_WEBHOOK_SECRET: whsec_e2e_dummy
       CANDIDATE_FEE_PRODUCT_ID: prod_e2e_dummy
       TEAM_FEE_PRODUCT_ID: prod_e2e_dummy
+      # Platform billing: all three set so the Billing page renders its configured state (Subscribe
+      # button); any real Stripe call fails and degrades. The webhook secret is shared with the E2E
+      # fixtures, which sign synthetic platform events with it (e2e/billing.spec.ts).
+      PLATFORM_STRIPE_SECRET_KEY: rk_test_e2e_dummy
+      PLATFORM_STRIPE_WEBHOOK_SECRET: whsec_platform_e2e_dummy
+      PLATFORM_STRIPE_PRICE_ID: price_e2e_dummy
       RESEND_API_KEY: re_e2e_dummy
       SITE_URL: http://localhost:3000
       E2E_BASE_URL: http://localhost:3000

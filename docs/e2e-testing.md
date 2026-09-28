@@ -18,11 +18,15 @@ starts or stops anything:
   skips it. Global setup refuses to run unless `NEXT_PUBLIC_SUPABASE_URL` points at `127.0.0.1` or
   `localhost`.
 - The dev server running on the suite's base URL (`bun run dev`, default `http://localhost:3000`).
-- `.env.local` with the three local Supabase values (`NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) plus `STRIPE_WEBHOOK_SECRET`, which
-  the payment fixtures share with the app to sign synthetic webhook events. Dummy Stripe and Resend
-  values (`sk_test_e2e_dummy`, `pk_test_e2e_dummy`, `re_e2e_dummy`, and so on) are fine for local
-  runs too — nothing in the suite talks to the real services.
+- `.env.local` (or `.env`; Playwright loads `.env.local` first and falls back to `.env`, the same
+  precedence Next.js uses) with the three local Supabase values (`NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`) plus `STRIPE_WEBHOOK_SECRET` and
+  `PLATFORM_STRIPE_WEBHOOK_SECRET`, which the payment and billing fixtures share with the app to sign
+  synthetic webhook events. The billing spec also needs `PLATFORM_STRIPE_SECRET_KEY` and
+  `PLATFORM_STRIPE_PRICE_ID` set on the dev server (any value) so the Billing page renders its
+  configured state. Dummy Stripe and Resend values (`sk_test_e2e_dummy`, `pk_test_e2e_dummy`,
+  `re_e2e_dummy`, and so on) are fine for local runs too — nothing in the default suite talks to
+  the real services.
 - `bunx playwright install chromium`, once.
 
 | Command          | What it does                                                                 |
@@ -45,8 +49,8 @@ its own server against a fresh build.
 
 Playwright global setup (`e2e/global-setup.ts`) runs once before the suite, also when the UI mode
 opens. It selects the run's cast by predicate (see Seed Invariants below), writes the chosen ids,
-emails and fee numbers to `e2e/.auth/personas.json`, then signs two of those personas in through the
-real `/login` form and saves their storage state to `e2e/.auth/<persona>.json`. The whole
+emails and fee numbers to `e2e/.auth/personas.json`, then signs three of those personas in through
+the real `/login` form and saves their storage state to `e2e/.auth/<persona>.json`. The whole
 `e2e/.auth/` directory is gitignored; it is regenerated every run.
 
 The personas:
@@ -57,6 +61,7 @@ The personas:
 | `teamFee`            | Roster member who owes the team fee, distinct from `teamForms` (S3).      |
 | `seededUser`         | Any confirmed seeded user, for the plain login case (S5).                 |
 | `nonRosterUser`      | Confirmed user on no roster of an active weekend, the negative case (S6). |
+| `billingManager`     | Admin who can open Admin → Billing and the dashboard (S7).                |
 | `candidates.full`    | Candidate awaiting payment with nothing paid (S4).                        |
 | `candidates.partial` | Candidate awaiting payment with a partial payment below the fee (S4).     |
 | `group`              | The one active weekend group's id, number and fee amounts (S1).           |
@@ -90,6 +95,7 @@ and fails loudly if nothing answers it. Each row below is checked by a selector 
 | S4  | At least one candidate on an `ACTIVE` weekend is `awaiting_payment` with no `payment_transaction` rows, and at least one other is `awaiting_payment` with a partial payment below the fee; both have a sponsorship `payment_owner` of `candidate` or `sponsor` | `pickAwaitingCandidate({ partial })`  | Unit 4, Unit 6                  |
 | S5  | Every seeded `auth.users` row is confirmed and shares one password, read from `E2E_SEED_PASSWORD`                                                                                                                                                              | `pickSeededUser()`, `seedPassword()`  | Unit 2 setup, login specs       |
 | S6  | At least one seeded user has no roster row on any `ACTIVE` weekend                                                                                                                                                                                             | `pickNonRosterUser()`                 | Unit 3 negative case            |
+| S7  | At least one seeded user's roles (`user_roles` → `roles.permissions`, following `roles.based_on_role_id`) grant `FULL_ACCESS`, or both `MANAGE_BILLING` and `READ_ADMIN_PORTAL`                                                                                | `pickBillingManager()`                | billing specs                   |
 
 The seed (`scripts/seed/`, `pre-weekend` phase) owns these invariants and pins one person per
 invariant in its own README (the "E2E fixtures" section). `scripts/seed/world.test.ts` asserts
@@ -100,10 +106,10 @@ global setup fails after a seed change.
 
 ## Rate limit budget
 
-Local GoTrue allows 30 sign-in/sign-up requests per IP per 5 minutes. A full run costs 2 sign-ins
-from global setup (`teamForms`, `teamFee`) plus 6 from the auth spec (login, wrong password, unknown
-email, register, duplicate email, mismatched passwords stops before any request) — about 8 requests,
-doubled to about 16 if one test retries. That leaves headroom, and it must stay that way:
+Local GoTrue allows 30 sign-in/sign-up requests per IP per 5 minutes. A full run costs 3 sign-ins
+from global setup (`teamForms`, `teamFee`, `billingManager`) plus 6 from the auth spec (login, wrong
+password, unknown email, register, duplicate email, mismatched passwords stops before any request) —
+about 9 requests, doubled to about 18 if one test retries. That leaves headroom, and it must stay that way:
 **`config.toml`'s `[auth]` rate limit is never raised** to buy more room, because `supabase config
 push` applies `[auth]` to production on every merge to `main`. If the budget ever gets tight, the
 fix is to sign personas in through the admin API (`auth.admin.generateLink`) instead of the real
@@ -129,9 +135,14 @@ The `e2e` job's placeholder environment variables (`STRIPE_SECRET_KEY=sk_test_e2
 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_e2e_dummy`, `STRIPE_WEBHOOK_SECRET=whsec_e2e_dummy`,
 `CANDIDATE_FEE_PRODUCT_ID`/`TEAM_FEE_PRODUCT_ID=prod_e2e_dummy`, `RESEND_API_KEY=re_e2e_dummy`) exist
 only to satisfy import-time checks in `lib/stripe.ts`, the checkout components and the Resend
-client; nothing in the PR run talks to Stripe or Resend for real. `STRIPE_WEBHOOK_SECRET` is the one
+client; nothing in the PR run talks to Stripe or Resend for real. `STRIPE_WEBHOOK_SECRET` is a
 placeholder the app and the E2E fixtures both read, since the payments specs sign synthetic webhook
-events with it. `NEXT_PUBLIC_SENTRY_ENABLED=false` keeps the CI production build from reporting to
+events with it. The three platform billing placeholders (`PLATFORM_STRIPE_SECRET_KEY=rk_test_e2e_dummy`,
+`PLATFORM_STRIPE_WEBHOOK_SECRET=whsec_platform_e2e_dummy`, `PLATFORM_STRIPE_PRICE_ID=price_e2e_dummy`)
+make the Billing page render its configured state (the Subscribe button) while every real Stripe call
+fails; the page degrades on its own (no payment method, "Invoices couldn't be loaded"), and
+`PLATFORM_STRIPE_WEBHOOK_SECRET` is shared with the billing spec, which signs synthetic platform events
+with it. `NEXT_PUBLIC_SENTRY_ENABLED=false` keeps the CI production build from reporting to
 the real Sentry project (`lib/sentry.ts` only enables Sentry when that flag is not explicitly
 `'false'`); it is never set on Vercel, so production reporting is unaffected.
 
@@ -161,8 +172,37 @@ and safe to remove by hand:
   delete from payment_transaction where payment_intent_id like 'pi_e2e_%';
   ```
 
+- **Platform billing**, `billing_webhook_events.stripe_event_id` starting with `evt_e2e_billing_` (the
+  next billing run sweeps them too), and a `billing_account` row carrying `sub_e2e_` / `cus_e2e_`
+  ids. The billing specs snapshot that row to `e2e/.auth/billing-account.snapshot.json` before
+  touching it; if a run dies before restoring, the next billing run writes the file back (only when
+  the row still holds test state), or you can copy the values back by hand.
+
 When in doubt, `bun run seed pre-weekend --yes` (destructive, owner's call) rebuilds a clean world from
 scratch rather than hunting for leftovers.
+
+## Billing
+
+Platform billing (`docs/platform-billing.md`) is covered in two layers, both as the `billingManager`
+persona. `billing_account` is migration-seeded and survives the reseed, and a developer's local row
+can hold a real sandbox subscription, so both specs snapshot the row in `beforeAll`, reset it to
+never-subscribed, and restore it column for column in `afterAll` (`e2e/fixtures/billing.ts`).
+
+- **`e2e/billing.spec.ts` (every run, no Stripe account).** Synthetic, signed
+  `customer.subscription.created/updated/deleted` and `invoice.payment_failed` events, basil-shaped,
+  POSTed to `/api/webhooks/platform-billing` and signed with `PLATFORM_STRIPE_WEBHOOK_SECRET`. In
+  order: the never-subscribed page offers Subscribe; a created subscription shows Active with its
+  renewal date; a replayed event is answered `processed: false` with one ledger row; a failed
+  renewal shows the Billing page banner and the dashboard alert; an older out-of-order update is
+  recorded as `skipped_stale` and changes nothing; cancellation brings Subscribe back; unsigned and
+  forged posts are rejected with 400. `checkout.session.completed` is not used here, because its
+  handler reads the subscription from Stripe live.
+- **`e2e/billing-live.spec.ts` (`@stripe-live`, only with `E2E_STRIPE_LIVE=1`).** Presses Subscribe
+  against a real Stripe sandbox and waits for `checkout.stripe.com`, which proves the platform key,
+  price id and customer creation work. Stripe's page is never filled in. It skips itself when
+  `PLATFORM_STRIPE_SECRET_KEY` or `PLATFORM_STRIPE_PRICE_ID` is missing; the dev server must hold the
+  same sandbox values. Each run leaves one Customer (and an expiring Checkout Session) in the sandbox.
+  Run it with `E2E_STRIPE_LIVE=1 bun run e2e --grep @stripe-live`.
 
 ## Adding a spec
 

@@ -52,6 +52,8 @@ export type Personas = {
   seededUser: PersonaUser
   /** S6: on no roster of an active weekend. */
   nonRosterUser: PersonaUser
+  /** S7: can open Admin → Billing and the admin dashboard. */
+  billingManager: PersonaUser
   /** S4 */
   candidates: {
     full: CandidatePersona
@@ -70,7 +72,7 @@ export type Personas = {
 
 export const PERSONAS_PATH = 'e2e/.auth/personas.json'
 
-export type SignedInPersona = 'teamForms' | 'teamFee'
+export type SignedInPersona = 'teamForms' | 'teamFee' | 'billingManager'
 
 /** Saved browser session for a persona signed in by the setup project. */
 export function storageStatePath(name: SignedInPersona): string {
@@ -139,6 +141,11 @@ export async function loadPersonas(): Promise<Personas> {
       field: 'nonRosterUser',
       userId: personas.nonRosterUser.userId,
       email: personas.nonRosterUser.email,
+    },
+    {
+      field: 'billingManager',
+      userId: personas.billingManager.userId,
+      email: personas.billingManager.email,
     },
   ]
   const { data: users, error: usersError } = await db

@@ -6,7 +6,9 @@ import {
   isFeeExemptRole,
   type GroupFees,
 } from '@/lib/payments/group-fees'
+import { Permission } from '@/lib/security'
 import { WeekendStatus } from '@/lib/weekend/types'
+import { getEffectivePermissions } from '@/services/identity/roles/inheritance'
 import { listAllAuthUsers } from './auth-users'
 import { adminClient } from './supabase'
 
@@ -21,7 +23,8 @@ import { adminClient } from './supabase'
  * invariant in the `pre-weekend` phase — at the time of writing David Cox
  * (no forms, no payments), David Harris (forms done, fee unpaid), Helen Kelly
  * (no forms, fee unpaid), Luke Thompson / Timothy Martinez (candidates, none
- * and partly paid) and Steven Kim (on no roster). The selectors do not rely
+ * and partly paid), Steven Kim (on no roster) and Nick Fierro (Full Access,
+ * the billing manager). The selectors do not rely
  * on those names; where several rows qualify they pick deterministically so a
  * run's cast is stable.
  */
@@ -444,6 +447,63 @@ export async function pickNonRosterUser(): Promise<UserPick> {
     throw invariant(
       6,
       'a confirmed seeded user with no weekend_roster row on any ACTIVE weekend'
+    )
+  }
+  return pick
+}
+
+// ---------------------------------------------------------------------------
+// S7
+// ---------------------------------------------------------------------------
+
+/**
+ * S7: a confirmed seeded user who can open Admin → Billing and the admin
+ * dashboard: their roles (through `user_roles`, following
+ * `roles.based_on_role_id` the way the app does) grant FULL_ACCESS, or both
+ * MANAGE_BILLING and READ_ADMIN_PORTAL. Full Access holders come first, then
+ * email order; someone not in `avoidUserIds` is preferred so the billing spec
+ * doesn't share a person with other scenarios.
+ */
+export async function pickBillingManager({
+  avoidUserIds = [],
+}: { avoidUserIds?: string[] } = {}): Promise<UserPick> {
+  const admin = adminClient()
+  const [roles, userRoles, users] = await Promise.all([
+    admin.from('roles').select('id, permissions, based_on_role_id'),
+    admin.from('user_roles').select('user_id, role_id'),
+    seededUsers(),
+  ])
+  const roleRows = unwrap(roles, 'roles')
+
+  const permissionsByUser = new Map<string, Set<Permission>>()
+  for (const { user_id, role_id } of unwrap(userRoles, 'user roles')) {
+    const granted = permissionsByUser.get(user_id) ?? new Set<Permission>()
+    for (const permission of getEffectivePermissions(role_id, roleRows)) {
+      granted.add(permission)
+    }
+    permissionsByUser.set(user_id, granted)
+  }
+
+  const fullAccess = (p: UserPick) =>
+    permissionsByUser.get(p.user.id)?.has(Permission.FULL_ACCESS) === true
+  const billingOnly = (p: UserPick) => {
+    const granted = permissionsByUser.get(p.user.id)
+    return (
+      granted?.has(Permission.MANAGE_BILLING) === true &&
+      granted.has(Permission.READ_ADMIN_PORTAL)
+    )
+  }
+  const eligible = [
+    ...users.filter(fullAccess),
+    ...users.filter((p) => !fullAccess(p) && billingOnly(p)),
+  ]
+
+  const avoid = new Set(avoidUserIds)
+  const pick = eligible.find((p) => !avoid.has(p.user.id)) ?? eligible.at(0)
+  if (isNil(pick)) {
+    throw invariant(
+      7,
+      'a confirmed seeded user whose roles grant FULL_ACCESS, or MANAGE_BILLING together with READ_ADMIN_PORTAL'
     )
   }
   return pick

@@ -16,6 +16,7 @@ import {
 import {
   activeGroup,
   pickAwaitingCandidate,
+  pickBillingManager,
   pickNonRosterUser,
   pickSeededUser,
   pickTeamFormsMember,
@@ -28,11 +29,11 @@ import {
 
 /**
  * Runs once before the whole suite (Playwright global setup). Chooses the
- * run's cast by predicate (Seed Invariants S1–S6), writes it to
+ * run's cast by predicate (Seed Invariants S1–S7), writes it to
  * e2e/.auth/personas.json, and signs in the personas that specs reuse through
  * `test.use({ storageState })`.
  *
- * Auth budget: 2 sign-ins (teamForms, teamFee) against GoTrue's local limit of
+ * Auth budget: 3 sign-ins (teamForms, teamFee, billingManager) against GoTrue's local limit of
  * 30 sign-in/sign-up requests per IP per 5 minutes.
  */
 
@@ -161,11 +162,19 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     excludingUserIds: [teamForms.member.user_id],
   })
   const nonRosterUser = await pickNonRosterUser()
+  const billingManager = await pickBillingManager({
+    avoidUserIds: [
+      teamForms.member.user_id,
+      teamFee.member.user_id,
+      nonRosterUser.user.id,
+    ],
+  })
   const seededUser = await pickSeededUser({
     avoidUserIds: [
       teamForms.member.user_id,
       teamFee.member.user_id,
       nonRosterUser.user.id,
+      billingManager.user.id,
     ],
   })
   const [full, partial] = await Promise.all([
@@ -178,6 +187,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     teamFee: toTeam(teamFee),
     seededUser: toUser(seededUser),
     nonRosterUser: toUser(nonRosterUser),
+    billingManager: toUser(billingManager),
     candidates: { full: toCandidate(full), partial: toCandidate(partial) },
     group: {
       id: group.id,
@@ -195,6 +205,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     personas.teamFee.userId,
     personas.seededUser.userId,
     personas.nonRosterUser.userId,
+    personas.billingManager.userId,
   ]
   expect(new Set(userIds).size, `persona user ids: ${userIds.join(', ')}`).toBe(
     userIds.length
@@ -206,6 +217,12 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   try {
     await signIn(browser, baseURL, 'teamForms', personas.teamForms.email)
     await signIn(browser, baseURL, 'teamFee', personas.teamFee.email)
+    await signIn(
+      browser,
+      baseURL,
+      'billingManager',
+      personas.billingManager.email
+    )
   } finally {
     await browser.close()
   }
