@@ -1,3 +1,9 @@
+## [1.58.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.57.0...v1.58.0) (2026-10-04)
+
+### Features
+
+- **auth:** split photo layout for sign-in, join and password pages ([7355402](https://github.com/sdavisde/tres-dias-platform/commit/735540250b2deca8b273624777a09969708a5beb))
+
 ## [1.57.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.56.0...v1.57.0) (2026-10-04)
 
 ### Features
