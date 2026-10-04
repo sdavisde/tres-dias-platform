@@ -30,8 +30,8 @@ import {
   paymentsColumns,
   paymentsGlobalFilterFn,
 } from '../config/columns'
+import { downloadCsv } from '@/lib/csv'
 import {
-  downloadCsv,
   generateLedgerCsv,
   generateLedgerCsvFilename,
 } from '../utils/csv-export'

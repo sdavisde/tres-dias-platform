@@ -6,6 +6,11 @@ import { DataTableColumnHeader } from '@/components/ui/data-table'
 import { Check, Star } from 'lucide-react'
 import { cn, formatPhoneNumber } from '@/lib/utils'
 import { isEmpty } from 'lodash'
+import {
+  memberDisplayName,
+  memberMatchesSearch,
+  memberRolesLabel,
+} from '../lib/people-csv'
 import '@/components/ui/data-table/types'
 import { UserAvatarWithPreview } from '@/components/user-avatar'
 import { SelectedRowMarker } from '../components/selected-member-context'
@@ -45,12 +50,7 @@ function RoleChip({ label }: { label: string }) {
 export const masterRosterColumns: ColumnDef<MasterRosterMember>[] = [
   {
     id: 'name',
-    accessorFn: (member) => {
-      const firstName = member.firstName ?? ''
-      const lastName = member.lastName ?? ''
-      const name = `${firstName} ${lastName}`.trim()
-      return name !== '' ? name : 'Unknown User'
-    },
+    accessorFn: memberDisplayName,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
@@ -100,10 +100,7 @@ export const masterRosterColumns: ColumnDef<MasterRosterMember>[] = [
   },
   {
     id: 'role',
-    accessorFn: (member) => {
-      if (isEmpty(member.roles)) return '-'
-      return member.roles.map((r) => r.label).join(', ')
-    },
+    accessorFn: memberRolesLabel,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Roles" />
     ),
@@ -210,21 +207,4 @@ export const masterRosterGlobalFilterFn: FilterFn<MasterRosterMember> = (
   row,
   _columnId,
   filterValue
-) => {
-  const query = (filterValue as string).toLowerCase().trim()
-  if (query === '') return true
-
-  const member = row.original
-  const name =
-    `${member.firstName ?? ''} ${member.lastName ?? ''}`.toLowerCase()
-  const email = (member.email ?? '').toLowerCase()
-  const phone = (member.phoneNumber ?? '').toLowerCase()
-  const roleLabels = member.roles.map((r) => r.label.toLowerCase())
-
-  return (
-    name.includes(query) ||
-    email.includes(query) ||
-    phone.includes(query) ||
-    roleLabels.some((label) => label.includes(query))
-  )
-}
+) => memberMatchesSearch(row.original, filterValue as string)
