@@ -1,3 +1,9 @@
+## [1.57.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.56.0...v1.57.0) (2026-10-04)
+
+### Features
+
+- **admin:** export the People roster as CSV ([fa59348](https://github.com/sdavisde/tres-dias-platform/commit/fa593480351bff11c9b42064a7f819a45caf2a36))
+
 ## [1.56.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.55.1...v1.56.0) (2026-09-28)
 
 ### Features
