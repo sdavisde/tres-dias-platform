@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card'
+import AuthShell from '@/components/auth/AuthShell'
 import ResetPasswordForm from '@/components/auth/ResetPasswordForm'
 
 interface ResetPasswordPageProps {
@@ -11,10 +11,8 @@ export default async function ResetPasswordPage({
   const params = await searchParams
 
   return (
-    <div className="container max-w-sm mx-auto py-8">
-      <Card className="shadow-lg">
-        <ResetPasswordForm searchParams={params} />
-      </Card>
-    </div>
+    <AuthShell>
+      <ResetPasswordForm searchParams={params} />
+    </AuthShell>
   )
 }

@@ -9,6 +9,7 @@ import { Loader2, ArrowLeft, Mail } from 'lucide-react'
 import { sendCustomPasswordResetEmail } from '@/actions/password-reset'
 import { isErr } from '@/lib/results'
 import Link from 'next/link'
+import AuthHeading from './AuthHeading'
 import { isNil } from 'lodash'
 
 interface ForgotPasswordFormProps {
@@ -51,19 +52,16 @@ export default function ForgotPasswordForm({
 
   if (emailSent) {
     return (
-      <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-6">
-        <div className="text-center mb-4">
-          <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <Mail className="w-6 h-6 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Check your email
-          </h2>
-          <p className="text-gray-600 text-sm">
-            If an account with that email exists, we&apos;ve sent you a password
-            reset link.
-          </p>
-        </div>
+      <div className="flex w-full flex-col gap-4">
+        <AuthHeading
+          icon={
+            <div className="flex size-12 items-center justify-center rounded-full bg-success/10">
+              <Mail className="size-6 text-success" />
+            </div>
+          }
+          title="Check your email"
+          description="If an account with that email exists, we've sent you a password reset link."
+        />
 
         <Alert variant="info">
           <AlertDescription>
@@ -72,7 +70,7 @@ export default function ForgotPasswordForm({
           </AlertDescription>
         </Alert>
 
-        <div className="space-y-3 mt-6">
+        <div className="mt-2 space-y-3">
           <Button
             variant="outline"
             onClick={() => {
@@ -105,19 +103,11 @@ export default function ForgotPasswordForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-md mx-auto p-6"
-    >
-      <div className="text-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Forgot your password?
-        </h2>
-        <p className="text-gray-600 text-sm">
-          Enter your email address and we&apos;ll send you a link to reset your
-          password.
-        </p>
-      </div>
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+      <AuthHeading
+        title="Forgot your password?"
+        description="Enter your email address and we'll send you a link to reset your password."
+      />
 
       {!isNil(error) && (
         <Alert variant="destructive">
@@ -140,7 +130,8 @@ export default function ForgotPasswordForm({
 
       <Button
         type="submit"
-        className="w-full mt-4"
+        size="lg"
+        className="mt-2 w-full"
         disabled={loading || email.trim() === ''}
       >
         {loading ? (

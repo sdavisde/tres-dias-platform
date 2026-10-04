@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { buildUrlWithRedirect } from '@/lib/url'
-import AuthModeToggle from './AuthModeToggle'
+import AuthHeading from './AuthHeading'
 import PasswordInput from './PasswordInput'
 import RegistrationFields from './RegistrationFields'
 import { AvatarCropperDialog } from '@/components/avatar/avatar-cropper-dialog'
@@ -191,11 +191,18 @@ export default function AuthForm({
   }
 
   return (
-    <form
-      onSubmit={handleEmailAuth}
-      className="flex flex-col gap-4 w-full max-w-md mx-auto p-6"
-    >
-      <AuthModeToggle mode={mode} onModeChange={setMode} />
+    <form onSubmit={handleEmailAuth} className="flex w-full flex-col gap-4">
+      {mode === 'login' ? (
+        <AuthHeading
+          title="Welcome back"
+          description="Sign in to the Dusty Trails community."
+        />
+      ) : (
+        <AuthHeading
+          title="Join the community"
+          description="Create an account to serve, sponsor and stay connected."
+        />
+      )}
 
       {!isNil(error) && (
         <Alert variant="destructive" data-testid="auth-error">
@@ -319,19 +326,24 @@ export default function AuthForm({
       )}
 
       {mode === 'login' && (
-        <div className="text-right">
+        <div className="-mt-2 text-right">
           <Button
             type="button"
             href={FORGOT_PASSWORD_PATH}
             variant="link"
-            className="p-0 h-auto text-sm text-blue-600"
+            className="h-auto p-0 text-sm"
           >
             Forgot your password?
           </Button>
         </div>
       )}
 
-      <Button type="submit" className="w-full mt-4" disabled={loading}>
+      <Button
+        type="submit"
+        size="lg"
+        className="mt-2 w-full"
+        disabled={loading}
+      >
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         {mode === 'login' ? 'Sign In' : 'Create Account'}
       </Button>
@@ -353,7 +365,7 @@ export default function AuthForm({
         Continue with Google
       </Button> */}
 
-      <p className="text-center text-sm text-gray-600 mt-4">
+      <p className="mt-2 text-center text-sm text-muted-foreground">
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}
