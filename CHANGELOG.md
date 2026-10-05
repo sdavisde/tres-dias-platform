@@ -1,3 +1,9 @@
+## [1.59.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.58.0...v1.59.0) (2026-10-05)
+
+### Features
+
+- **landing:** show the active weekend group and its secuela ([2e3fe54](https://github.com/sdavisde/tres-dias-platform/commit/2e3fe5474ad2b460ca167158466ccc0db8e560ea)), closes [#10](https://github.com/sdavisde/tres-dias-platform/issues/10)
+
 ## [1.58.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.57.0...v1.58.0) (2026-10-04)
 
 ### Features
