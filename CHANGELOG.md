@@ -1,3 +1,9 @@
+## [1.59.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.0...v1.59.1) (2026-10-05)
+
+### Bug Fixes
+
+- **layout:** set font variables on the html element ([484354a](https://github.com/sdavisde/tres-dias-platform/commit/484354a0a9bc4e8824333eeb1d23cdb8af9beac0))
+
 ## [1.59.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.58.0...v1.59.0) (2026-10-05)
 
 ### Features
