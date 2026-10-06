@@ -124,6 +124,7 @@ function initialCommunity(member: MasterRosterMember): CommunityFields {
       ? undefined
       : new Date(essentialsDate),
     skills: member.communityInformation.specialGiftsAndSkills ?? [],
+    isClergy: member.communityInformation.isClergy,
   }
 }
 
@@ -199,6 +200,7 @@ export function useUserEditForm({
         essentials_training_date: fields.essentialsDate,
         special_gifts_and_skills:
           fields.skills.length > 0 ? fields.skills : undefined,
+        is_clergy: fields.isClergy,
       }),
   })
 

@@ -123,6 +123,7 @@ export async function getRosterBuilderCommunityData(
       hasBeenSectionHead,
       hasGivenRollo,
       rectorReadyIsReady: rectorReadyStatus.isReady,
+      isClergy: user.is_clergy,
     })
 
     return {
@@ -133,6 +134,7 @@ export async function getRosterBuilderCommunityData(
       phoneNumber: user.phone_number,
       church: user.church_affiliation,
       gender: user.gender,
+      isClergy: user.is_clergy,
       experience,
       experienceLevel,
       weekendsServed,

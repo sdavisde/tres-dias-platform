@@ -196,6 +196,30 @@ export const masterRosterColumns: ColumnDef<MasterRosterMember>[] = [
       mobilePriority: 'detail',
     },
   },
+  {
+    id: 'clergy',
+    accessorFn: (member) =>
+      member.communityInformation.isClergy ? 'Clergy' : 'Lay',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Clergy" />
+    ),
+    cell: ({ row }) =>
+      row.original.communityInformation.isClergy ? (
+        <span className="inline-flex items-center gap-1.5 font-semibold">
+          <Check className="h-4 w-4" />
+          Clergy
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+    enableSorting: false,
+    meta: {
+      filterType: 'select',
+      showOnMobile: true,
+      mobileLabel: 'Clergy',
+      mobilePriority: 'detail',
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------

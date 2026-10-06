@@ -50,6 +50,7 @@ export default function AuthForm({
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [gender, setGender] = useState<'male' | 'female' | null>(null)
+  const [isClergy, setIsClergy] = useState(false)
   const [error, setError] = useState<AuthErrorDescription | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -113,6 +114,7 @@ export default function AuthForm({
               first_name: firstName,
               last_name: lastName,
               gender,
+              is_clergy: isClergy,
             },
           },
         })
@@ -237,6 +239,8 @@ export default function AuthForm({
           setLastName={setLastName}
           gender={gender}
           setGender={setGender}
+          isClergy={isClergy}
+          setIsClergy={setIsClergy}
         />
       )}
 

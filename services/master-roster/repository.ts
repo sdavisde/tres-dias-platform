@@ -18,6 +18,7 @@ const GetMasterRosterQuery = `
   weekend_attended,
   essentials_training_date,
   special_gifts_and_skills,
+  is_clergy,
   profile_photo_path,
   profile_photo_updated_at,
   user_roles:user_roles (

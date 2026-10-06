@@ -47,6 +47,7 @@ export type RosterBuilderCommunityMember = {
   phoneNumber: string | null
   church: string | null
   gender: string | null
+  isClergy: boolean
 
   // Experience data
   experience: UserExperience[]

@@ -88,6 +88,7 @@ export type RawCommunityUser = {
   phone_number: string | null
   church_affiliation: string | null
   gender: string | null
+  is_clergy: boolean
   users_experience: Array<Tables<'users_experience'>>
   profile_photo_path: string | null
   profile_photo_updated_at: string | null

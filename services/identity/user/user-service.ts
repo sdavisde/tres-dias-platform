@@ -131,6 +131,7 @@ function normalizeUser(
       weekendAttended: rawUser.weekend_attended,
       essentialsTrainingDate: rawUser.essentials_training_date,
       specialGiftsAndSkills: rawUser.special_gifts_and_skills,
+      isClergy: rawUser.is_clergy,
     },
     teamMemberInfo,
     originalUser: null,

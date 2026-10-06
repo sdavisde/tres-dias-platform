@@ -22,6 +22,7 @@ export const GetUserInfoQuery = `
   weekend_attended,
   essentials_training_date,
   special_gifts_and_skills,
+  is_clergy,
   profile_photo_path,
   profile_photo_updated_at
 `
@@ -223,6 +224,7 @@ export const updateUserBasicInfo = async (userId: string, data: BasicInfo) => {
         ? data.essentials_training_date.toISOString()
         : null,
       special_gifts_and_skills: data.special_gifts_and_skills ?? null,
+      is_clergy: data.is_clergy,
     })
     .eq('id', userId)
 

@@ -26,7 +26,6 @@ const SKILLS_OPTIONS: string[] = [
   'Computer (spreadsheets)',
   'Computer (powerpoint / creative design)',
   'Nurse / medical',
-  'Clergy (ordained)',
   'Plumber',
   'Electrician',
   'Photography',

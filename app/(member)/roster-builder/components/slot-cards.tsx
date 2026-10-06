@@ -13,6 +13,7 @@ import {
   Phone,
   Mail,
   Award,
+  Cross,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -191,6 +192,11 @@ export function FilledSlotCard({
             </span>
           )
         )}
+        {member.isClergy && (
+          <span title="Clergy" className="text-muted-foreground">
+            <Cross className="h-3.5 w-3.5" />
+          </span>
+        )}
       </div>
 
       {/* Contact info */}
@@ -359,6 +365,11 @@ export function EmptySlotCard({
                             Rector Ready
                           </span>
                         )
+                      )}
+                      {m.isClergy && (
+                        <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Cross className="h-3 w-3" /> Clergy
+                        </span>
                       )}
                     </div>
                     {warning !== null && (

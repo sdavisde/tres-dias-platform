@@ -55,6 +55,7 @@ export default async function TeamInfoPage() {
       : undefined,
     special_gifts_and_skills:
       user.communityInformation.specialGiftsAndSkills ?? [],
+    is_clergy: user.communityInformation.isClergy,
   }
 
   return (

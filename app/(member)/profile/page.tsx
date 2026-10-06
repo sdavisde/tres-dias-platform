@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { PageHeader } from '@/components/ui/page-header'
 import { Separator } from '@/components/ui/separator'
@@ -57,6 +58,7 @@ const profileFormSchema = z.object({
       (v) => v.replace(/\D/g, '').length === 10,
       'Please enter a valid 10-digit phone number'
     ),
+  isClergy: z.boolean(),
 })
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
@@ -115,6 +117,7 @@ export default function ProfilePage() {
       firstName: user?.firstName ?? '',
       lastName: user?.lastName ?? '',
       phoneNumber: user?.phoneNumber ?? '',
+      isClergy: user?.communityInformation.isClergy ?? false,
     },
   })
 
@@ -176,6 +179,7 @@ export default function ProfilePage() {
       form.setValue('firstName', user.firstName ?? '')
       form.setValue('lastName', user.lastName ?? '')
       form.setValue('phoneNumber', user.phoneNumber ?? '')
+      form.setValue('isClergy', user.communityInformation.isClergy)
     }
   }, [user, sessionLoading, isAuthenticated, router, form])
 
@@ -248,6 +252,7 @@ export default function ProfilePage() {
           first_name: values.firstName,
           last_name: values.lastName,
           phone_number: values.phoneNumber,
+          is_clergy: values.isClergy,
         })
         .eq('id', user.id)
 
@@ -391,6 +396,26 @@ export default function ProfilePage() {
                         <PhoneInput className="w-full" {...field} />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isClergy"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        I am ordained clergy
+                      </FormLabel>
                     </FormItem>
                   )}
                 />

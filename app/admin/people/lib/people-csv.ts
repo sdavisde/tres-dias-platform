@@ -124,6 +124,10 @@ export const PEOPLE_CSV_COLUMNS: CsvColumn[] = [
       (m.communityInformation.specialGiftsAndSkills ?? []).join(', '),
   },
   {
+    header: 'Clergy',
+    value: (m) => (m.communityInformation.isClergy ? 'Yes' : 'No'),
+  },
+  {
     header: 'Roles',
     value: (m) => m.roles.map((r) => r.label).join(', '),
   },

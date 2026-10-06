@@ -17,6 +17,7 @@ import {
   Phone,
   Mail,
   Award,
+  Cross,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -72,6 +73,7 @@ type SheetFilters = {
   hasGivenRollo: boolean
   hasBeenSectionHead: boolean
   isRectorReady: boolean
+  isClergy: boolean
   experienceLevel: 'all' | 'veteran' | 'experienced' | 'served'
 }
 
@@ -258,6 +260,12 @@ function CommunityMemberCard({
             <Badge variant="outline" className={INDICATOR_CHIP_CLASS}>
               <CheckCircle2 className="mr-1 h-3 w-3" />
               Section Head
+            </Badge>
+          )}
+          {member.isClergy && (
+            <Badge variant="outline" className={INDICATOR_CHIP_CLASS}>
+              <Cross className="mr-1 h-3 w-3" />
+              Clergy
             </Badge>
           )}
         </div>
@@ -460,6 +468,7 @@ export function CommunitySheet({
     hasGivenRollo: false,
     hasBeenSectionHead: false,
     isRectorReady: false,
+    isClergy: false,
     experienceLevel: 'all',
   }))
 
@@ -500,6 +509,7 @@ export function CommunitySheet({
       list = list.filter((m) => m.hasBeenSectionHead)
     if (filters.isRectorReady)
       list = list.filter((m) => m.rectorReadyStatus.isReady)
+    if (filters.isClergy) list = list.filter((m) => m.isClergy)
     if (filters.experienceLevel !== 'all') {
       list = list.filter((m) => {
         const { label } = getExperienceLabel(m.experienceLevel)
@@ -521,6 +531,7 @@ export function CommunitySheet({
     filters.hasGivenRollo ||
     filters.hasBeenSectionHead ||
     filters.isRectorReady ||
+    filters.isClergy ||
     filters.experienceLevel !== 'all' ||
     filters.gender !== defaultGender ||
     filters.search.length > 0
@@ -533,6 +544,7 @@ export function CommunitySheet({
       hasGivenRollo: false,
       hasBeenSectionHead: false,
       isRectorReady: false,
+      isClergy: false,
       experienceLevel: 'all',
     })
   }
@@ -540,7 +552,11 @@ export function CommunitySheet({
   function toggleBool(
     key: keyof Pick<
       SheetFilters,
-      'secuela' | 'hasGivenRollo' | 'hasBeenSectionHead' | 'isRectorReady'
+      | 'secuela'
+      | 'hasGivenRollo'
+      | 'hasBeenSectionHead'
+      | 'isRectorReady'
+      | 'isClergy'
     >
   ) {
     setFilters((f) => ({ ...f, [key]: !f[key] }))
@@ -614,6 +630,7 @@ export function CommunitySheet({
                   icon: CheckCircle2,
                 },
                 { key: 'isRectorReady', label: 'Rector Ready', icon: Star },
+                { key: 'isClergy', label: 'Clergy', icon: Cross },
               ] as const
             ).map(({ key, label, icon: Icon }) => {
               const active = filters[key]

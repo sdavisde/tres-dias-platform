@@ -10,6 +10,7 @@ export const BasicInfoSchema = z.object({
   }),
   essentials_training_date: z.date().optional(),
   special_gifts_and_skills: z.array(z.string()).optional(),
+  is_clergy: z.boolean(),
 })
 
 export type BasicInfo = z.infer<typeof BasicInfoSchema>
