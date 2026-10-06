@@ -21,7 +21,8 @@ permissions:
 
 jobs:
   # A red suite on main stops here: `ci` must pass before migrations run, so a
-  # failing `checks` or `e2e` job blocks the migration and the deploy below.
+  # failing `checks` job blocks the migration and the deploy below. E2E is not
+  # part of this gate; it runs nightly in e2e.yml.
   ci:
     name: CI
     uses: ./.github/workflows/ci.yml
