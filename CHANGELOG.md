@@ -1,3 +1,9 @@
+## [1.62.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.62.0...v1.62.1) (2026-10-06)
+
+### Bug Fixes
+
+- **home:** drop sign-in opening note from upcoming secuela banner ([b59b680](https://github.com/sdavisde/tres-dias-platform/commit/b59b6809a1b66d4685723702d3d77ef1d4c66db1))
+
 ## [1.62.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.61.0...v1.62.0) (2026-10-06)
 
 ### Features
