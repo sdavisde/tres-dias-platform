@@ -3,7 +3,16 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { isNil } from 'lodash'
-import { CalendarHeart, CalendarPlus, Clock, MapPin } from 'lucide-react'
+import {
+  CalendarHeart,
+  CalendarPlus,
+  CheckCircle2,
+  Clock,
+  HandHeart,
+  Lock,
+  MapPin,
+  type LucideIcon,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -100,6 +109,8 @@ export default function SecuelaClient({
       type: 'secuela',
       weekendGroupId: activeGroup.groupId,
       title: `${groupTitle} Secuela`,
+      // Secuelas usually start mid-morning
+      time: '10:00',
     })
   }
 
@@ -109,6 +120,8 @@ export default function SecuelaClient({
         title="Secuela"
         description="Members sign in by scanning the QR code at secuela. Sign-ins count as attendance from 30 minutes before the start until it ends."
       />
+
+      <HowSecuelaWorks secuela={active} />
 
       {isNil(activeGroup) ? (
         <Card>
@@ -226,6 +239,74 @@ function ActiveSecuela({
         />
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Plain-language rules for admins, filled in with the active secuela's times
+ * when there is one. Mirrors `lib/secuela/attendance-window.ts`.
+ */
+function HowSecuelaWorks({ secuela }: { secuela: SecuelaSummary | null }) {
+  // Generic wording until a secuela is scheduled
+  const openTime = isNil(secuela)
+    ? '30 minutes before it starts'
+    : `${formatTime(secuela.windowOpensAt)} (30 minutes before it starts)`
+  const closeTime = isNil(secuela)
+    ? 'it ends'
+    : formatTime(secuela.windowClosesAt)
+
+  const stages: Array<{ icon: LucideIcon; title: string; body: string }> = [
+    {
+      icon: Lock,
+      title: 'Before secuela',
+      body: `The QR code and sign-in link show "Registration hasn't started yet" with the start time. Nothing is recorded until ${openTime}.`,
+    },
+    {
+      icon: CheckCircle2,
+      title: 'During secuela',
+      body: `From ${openTime} until ${closeTime}, members who confirm are marked "Attended Secuela". The roster builder shows a badge and lists them first.`,
+    },
+    {
+      icon: HandHeart,
+      title: 'After secuela',
+      body: 'The link keeps working. Members who confirm later are marked "Wants to Serve" instead. Someone who already signed in at secuela stays "Attended" even if they use the link again.',
+    },
+  ]
+
+  return (
+    <section className="mb-8 space-y-4">
+      <h2 className="font-serif text-2xl font-semibold tracking-tight">
+        How secuela sign-in works
+      </h2>
+      <div className="grid gap-3 md:grid-cols-3">
+        {stages.map(({ icon: Icon, title, body }) => (
+          <div key={title} className="space-y-2 rounded-lg border bg-card p-4">
+            <p className="flex items-center gap-2 font-medium">
+              <Icon className="h-4 w-4 shrink-0 text-primary" />
+              {title}
+            </p>
+            <p className="text-sm text-muted-foreground">{body}</p>
+          </div>
+        ))}
+      </div>
+      <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+        <li>
+          Members sign in with their account, or create one, before confirming.
+        </li>
+        <li>
+          Sign-ins always go to the active weekend, so the same QR code works
+          for every secuela.
+        </li>
+        <li>
+          If a secuela has no end time, sign-ins count as attendance for 3 hours
+          after it starts.
+        </li>
+        <li>
+          The &ldquo;Sign Up to Serve&rdquo; card on the member home page uses
+          the same link and follows the same rules.
+        </li>
+      </ul>
+    </section>
   )
 }
 

@@ -76,6 +76,7 @@ function initialValues(
   return {
     ...DEFAULT_FORM_VALUES,
     title: prefill.title ?? '',
+    time: prefill.time ?? DEFAULT_FORM_VALUES.time,
     type: prefill.type ?? null,
     weekendGroupId: prefill.weekendGroupId ?? null,
     weekendId: prefill.weekendId ?? null,

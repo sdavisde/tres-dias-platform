@@ -402,7 +402,8 @@ export function RosterBuilderBoard({
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <p>
               There&apos;s no Secuela on the calendar for this weekend yet, so
-              you won&apos;t see who signed up to serve until one is added.
+              you won&apos;t see who attended or signed up to serve until an
+              admin schedules one on the Secuela page.
             </p>
           </div>
         </div>

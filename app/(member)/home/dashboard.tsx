@@ -108,7 +108,7 @@ function QuickActions({ prayerWheelUrl }: { prayerWheelUrl: string | null }) {
           href="/secuela-signin"
           icon={HandHeart}
           title="Sign Up to Serve"
-          description="Volunteer to serve on an upcoming weekend team"
+          description="Sign in at secuela, or afterwards to volunteer for the next team"
         />
         {!isNil(prayerWheelUrl) && (
           <QuickActionCard

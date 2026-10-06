@@ -51,6 +51,8 @@ export interface EventFormPrefill {
   weekendGroupId?: string | null
   weekendId?: string | null
   title?: string | null
+  /** Start time as "HH:mm"; defaults to the form's 09:00. */
+  time?: string
   hideWeekendFields?: boolean
 }
 
