@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils'
 /**
  * Labeled bottom tab bar for phones (Main board). Navigation never disappears
  * behind a hamburger: the five primary destinations are always on screen.
+ * The background runs past the bottom edge so Safari's collapsing toolbar
+ * never shows the page through the gap beneath the bar.
  */
 export function TabBar({ items }: { items: SerializableMemberNavItem[] }) {
   const pathname = usePathname()
@@ -20,7 +22,7 @@ export function TabBar({ items }: { items: SerializableMemberNavItem[] }) {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] after:absolute after:inset-x-0 after:top-full after:h-24 after:bg-card md:hidden"
     >
       <ul className="flex items-stretch px-1 pt-1.5 pb-2">
         {items.map((item) => {
