@@ -197,6 +197,27 @@ export async function insertEvent(
 }
 
 /**
+ * Inserts several events in one statement.
+ */
+export async function insertEvents(
+  data: EventCreateInput[]
+): Promise<Result<string, RawEventRecord[]>> {
+  if (data.length === 0) return ok([])
+  const supabase = await createClient()
+
+  const { data: events, error } = await supabase
+    .from('events')
+    .insert(data)
+    .select()
+
+  if (isSupabaseError(error)) {
+    return err(error.message)
+  }
+
+  return ok(events ?? [])
+}
+
+/**
  * Updates an event by ID.
  */
 export async function updateEventById(

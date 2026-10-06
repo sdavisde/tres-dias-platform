@@ -713,9 +713,9 @@ function groupEvents(group: Group): {
     'Secuela',
     'secuela',
     group.secuela,
-    '14:00',
+    '10:00',
     group.secuela,
-    '20:00',
+    '14:00',
     CAMP
   )
   const meetings: [string, number][] = [
@@ -746,27 +746,21 @@ function groupEvents(group: Group): {
     '20:30',
     'Community Chapel'
   )
-  const practice = addDays(T, -19)
-  event(
-    'Serenade Practice',
-    'other',
-    practice,
-    '15:00',
-    practice,
-    '17:00',
-    'Community Chapel'
-  )
 
+  // Each weekend's standard events at their usual times (see
+  // lib/weekend/standard-events): sendoff Thu 7–8 PM, weekend Thu 7 PM to
+  // Sun 5 PM, serenade practice Sat 4:30 PM, serenade Sat 7 PM, closing Sun 5 PM.
   for (const weekend of Object.values(group.weekends)) {
     const who = weekend.type === 'MENS' ? 'Men’s' : 'Women’s'
     const S = weekend.start
+    const saturday = addDays(S, 2)
     event(
       `${who} Sendoff`,
       'sendoff',
       S,
-      '17:00',
+      '19:00',
       S,
-      '18:30',
+      '20:00',
       'First Baptist Church',
       weekend.id
     )
@@ -776,18 +770,27 @@ function groupEvents(group: Group): {
       S,
       '19:00',
       weekend.end,
-      '16:00',
+      '17:00',
       CAMP,
       weekend.id
     )
-    const serenade = addDays(S, 2)
+    event(
+      `${who} Serenade Practice`,
+      'serenade_practice',
+      saturday,
+      '16:30',
+      saturday,
+      '18:00',
+      CAMP,
+      weekend.id
+    )
     event(
       `${who} Serenade`,
       'serenade',
-      serenade,
-      '20:00',
-      serenade,
-      '21:30',
+      saturday,
+      '19:00',
+      saturday,
+      '20:30',
       CAMP,
       weekend.id
     )
@@ -795,9 +798,9 @@ function groupEvents(group: Group): {
       `${who} Closing`,
       'closing',
       weekend.end,
-      '14:00',
+      '17:00',
       weekend.end,
-      '16:00',
+      '18:30',
       CAMP,
       weekend.id
     )

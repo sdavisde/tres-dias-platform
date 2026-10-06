@@ -160,7 +160,9 @@ function printSummary(summary: Summary, counts: Tables) {
     '  #45 calendar:',
     ...[...summary.activeEvents]
       .sort((a, b) => a.day.getTime() - b.day.getTime())
-      .filter((e) => !/(Sendoff|Serenade|Closing)$/.test(e.title))
+      .filter(
+        (e) => !/(Sendoff|Serenade|Serenade Practice|Closing)$/.test(e.title)
+      )
       .map((e) => `    ${iso(e.day)}  ${e.title} (${rel(e.day)})`),
     '',
     '  You (sdavisde@gmail.com / password):',

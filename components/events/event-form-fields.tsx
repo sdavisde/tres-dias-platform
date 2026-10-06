@@ -3,7 +3,8 @@
 import type { UseFormReturn } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { DatePicker } from '@/components/ui/date-picker'
+import { DateField } from '@/components/ui/date-field'
+import { TimeField } from '@/components/ui/time-field'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   FormControl,
@@ -88,14 +89,7 @@ export function EventFormFields({
           <FormItem>
             <FormLabel>Date</FormLabel>
             <FormControl>
-              <DatePicker
-                date={field.value}
-                onDateChange={field.onChange}
-                placeholder="Choose a date"
-                className="w-full"
-                startMonth={new Date(new Date().getFullYear() - 2, 0)}
-                endMonth={new Date(new Date().getFullYear() + 3, 11)}
-              />
+              <DateField date={field.value} onDateChange={field.onChange} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -109,12 +103,10 @@ export function EventFormFields({
           <FormItem>
             <FormLabel>Time (CT)</FormLabel>
             <FormControl>
-              <Input
-                type="time"
-                step="900"
-                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                required
-                {...field}
+              <TimeField
+                id={field.name}
+                value={field.value}
+                onChange={field.onChange}
               />
             </FormControl>
             <FormMessage />
@@ -260,13 +252,10 @@ export function EventFormFields({
               <FormItem>
                 <FormLabel>End date</FormLabel>
                 <FormControl>
-                  <DatePicker
+                  <DateField
                     date={field.value ?? undefined}
                     onDateChange={field.onChange}
-                    placeholder="Choose an end date"
-                    className="w-full"
-                    startMonth={new Date(new Date().getFullYear() - 2, 0)}
-                    endMonth={new Date(new Date().getFullYear() + 3, 11)}
+                    defaultMonth={form.getValues('date')}
                   />
                 </FormControl>
                 <FormMessage />
@@ -281,12 +270,12 @@ export function EventFormFields({
               <FormItem>
                 <FormLabel>End time (CT)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="time"
-                    step="900"
-                    className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                    {...field}
+                  <TimeField
+                    id={field.name}
                     value={field.value ?? ''}
+                    onChange={field.onChange}
+                    placeholder="Add end time"
+                    defaultScrollTime={form.getValues('time')}
                   />
                 </FormControl>
                 <FormMessage />

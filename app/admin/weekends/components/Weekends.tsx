@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { isNil } from 'lodash'
 import {
   ArrowUpRight,
+  CalendarDays,
   CalendarPlus,
+  ChevronDown,
   CircleDollarSign,
   Plus,
   Settings2,
@@ -14,7 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { Typography } from '@/components/ui/typography'
-import { formatDateRange } from '@/lib/utils'
+import { cn, formatDateRange } from '@/lib/utils'
 import {
   formatWeekendGender,
   formatWeekendGroupTitle,
@@ -36,6 +38,8 @@ import type { FeeDefaults } from '@/services/fees'
 import { WeekendSidebar } from './WeekendSidebar'
 import { SetActiveWeekendButton } from './SetActiveWeekendButton'
 import { GroupFeesDialog } from './GroupFeesDialog'
+import { GroupEventsStrip, WeekendEventsList } from './weekend-schedule'
+import type { Event } from '@/services/events'
 
 interface WeekendsProps {
   buckets: BoardGroupBuckets
@@ -49,6 +53,9 @@ interface WeekendsProps {
   feeDefaults?: FeeDefaults | null
   canManageFees?: boolean
   canReadPayments?: boolean
+  /** Events of the active and planning groups; a group missing here shows no schedule. */
+  eventsByGroupId?: Record<string, Event[]>
+  canEditEvents?: boolean
 }
 
 const groupNumber = (group: WeekendGroupWithId): number | null =>
@@ -88,9 +95,12 @@ function StatTile({
 function WeekendSubCard({
   weekend,
   stats,
+  schedule,
 }: {
   weekend: Weekend
   stats: WeekendStats | null
+  /** The weekend's events list, when its group's events loaded. */
+  schedule?: ReactNode
 }) {
   const genderTitle = formatWeekendGender(weekend.type, 'possessive')
   return (
@@ -123,6 +133,7 @@ function WeekendSubCard({
           )}
         </div>
       )}
+      {schedule}
       <div className="mt-auto flex flex-wrap items-center gap-2.5">
         <Button asChild variant="outline">
           <Link
@@ -195,12 +206,24 @@ export function Weekends({
   feeDefaults = null,
   canManageFees = false,
   canReadPayments = false,
+  eventsByGroupId = {},
+  canEditEvents = false,
 }: WeekendsProps) {
   const [selectedGroup, setSelectedGroup] = useState<WeekendGroupWithId | null>(
     null
   )
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [feesGroup, setFeesGroup] = useState<WeekendGroupWithId | null>(null)
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(
+    () => new Set()
+  )
+  const toggleSchedule = (groupId: string) =>
+    setExpandedGroupIds((current) => {
+      const next = new Set(current)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
 
   // Prices are visible to anyone here; the dialog (history, changes) is for
   // people who handle money. Unknown fees (a failed read) hide the button.
@@ -231,6 +254,22 @@ export function Weekends({
   }
 
   const activeGroup = buckets.active
+  const activeEvents = isNil(activeGroup)
+    ? null
+    : (eventsByGroupId[activeGroup.groupId] ?? null)
+
+  const weekendSchedule = (group: WeekendGroupWithId, weekend: Weekend) => {
+    const events = eventsByGroupId[group.groupId]
+    if (isNil(events)) return null
+    return (
+      <WeekendEventsList
+        weekend={weekend}
+        groupNumber={groupNumber(group)}
+        events={events}
+        canEdit={canEditEvents}
+      />
+    )
+  }
 
   return (
     <div className="space-y-8">
@@ -281,17 +320,35 @@ export function Weekends({
               )}
             </div>
           </div>
+          {!isNil(activeEvents) && (
+            <div className="mb-4">
+              <GroupEventsStrip
+                groupId={activeGroup.groupId}
+                groupNumber={groupNumber(activeGroup)}
+                events={activeEvents}
+                canEdit={canEditEvents}
+              />
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             {!isNil(activeGroup.weekends.MENS) && (
               <WeekendSubCard
                 weekend={activeGroup.weekends.MENS}
                 stats={activeStats?.MENS ?? null}
+                schedule={weekendSchedule(
+                  activeGroup,
+                  activeGroup.weekends.MENS
+                )}
               />
             )}
             {!isNil(activeGroup.weekends.WOMENS) && (
               <WeekendSubCard
                 weekend={activeGroup.weekends.WOMENS}
                 stats={activeStats?.WOMENS ?? null}
+                schedule={weekendSchedule(
+                  activeGroup,
+                  activeGroup.weekends.WOMENS
+                )}
               />
             )}
           </div>
@@ -301,28 +358,81 @@ export function Weekends({
       {buckets.upcoming.map((group) => (
         <section
           key={group.groupId}
-          className="flex flex-wrap items-center gap-x-3.5 gap-y-1 rounded-lg border bg-card px-6 py-4"
+          className="rounded-lg border bg-card px-6 py-4"
         >
-          <p className="text-[15px] font-semibold">
-            {formatWeekendGroupTitle(groupNumber(group))}
-          </p>
-          <p className="text-[13.5px] text-muted-foreground">
-            {groupDateRange(group)} · planning
-          </p>
-          <div className="ml-auto flex flex-wrap items-center gap-4">
-            <GroupLinks group={group} />
-            {feeButton(group)}
-            {canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openEdit(group)}
-              >
-                <Settings2 className="h-4 w-4" />
-                Group settings
-              </Button>
-            )}
+          <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+            <p className="text-[15px] font-semibold">
+              {formatWeekendGroupTitle(groupNumber(group))}
+            </p>
+            <p className="text-[13.5px] text-muted-foreground">
+              {groupDateRange(group)} · planning
+            </p>
+            <div className="ml-auto flex flex-wrap items-center gap-4">
+              <GroupLinks group={group} />
+              {feeButton(group)}
+              {!isNil(eventsByGroupId[group.groupId]) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => toggleSchedule(group.groupId)}
+                  aria-expanded={expandedGroupIds.has(group.groupId)}
+                >
+                  <CalendarDays className="h-4 w-4" />
+                  Schedule
+                  <ChevronDown
+                    className={cn(
+                      'h-4 w-4 transition-transform',
+                      expandedGroupIds.has(group.groupId) && 'rotate-180'
+                    )}
+                  />
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEdit(group)}
+                >
+                  <Settings2 className="h-4 w-4" />
+                  Group settings
+                </Button>
+              )}
+            </div>
           </div>
+          {expandedGroupIds.has(group.groupId) &&
+            !isNil(eventsByGroupId[group.groupId]) && (
+              <div className="mt-4 space-y-4">
+                <GroupEventsStrip
+                  groupId={group.groupId}
+                  groupNumber={groupNumber(group)}
+                  events={eventsByGroupId[group.groupId]}
+                  canEdit={canEditEvents}
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[group.weekends.MENS, group.weekends.WOMENS].map(
+                    (weekend) =>
+                      isNil(weekend) ? null : (
+                        <div
+                          key={weekend.id}
+                          className="space-y-2 rounded-lg border px-3 py-3"
+                        >
+                          <p className="px-2 text-sm font-semibold">
+                            {formatWeekendGender(weekend.type, 'possessive')}{' '}
+                            Weekend{' '}
+                            <span className="font-normal text-muted-foreground">
+                              {formatDateRange(
+                                weekend.start_date,
+                                weekend.end_date
+                              )}
+                            </span>
+                          </p>
+                          {weekendSchedule(group, weekend)}
+                        </div>
+                      )
+                  )}
+                </div>
+              </div>
+            )}
         </section>
       ))}
 

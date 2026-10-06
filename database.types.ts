@@ -1238,6 +1238,7 @@ export type Database = {
         | 'closing'
         | 'other'
         | 'secuela'
+        | 'serenade_practice'
       permissions: 'READ_MEDICAL_HISTORY'
       role_type: 'INDIVIDUAL' | 'COMMITTEE'
       weekend_type: 'MENS' | 'WOMENS'
@@ -1384,6 +1385,7 @@ export const Constants = {
         'closing',
         'other',
         'secuela',
+        'serenade_practice',
       ],
       permissions: ['READ_MEDICAL_HISTORY'],
       role_type: ['INDIVIDUAL', 'COMMITTEE'],

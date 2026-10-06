@@ -37,7 +37,8 @@ interface UseEventFormProps {
 }
 
 /** Fields you type into wait for the debounce; everything else saves at once. */
-const TYPED_FIELDS = new Set<string>(['title', 'location', 'time', 'endTime'])
+// The time fields only report a finished time, so they save right away too
+const TYPED_FIELDS = new Set<string>(['title', 'location'])
 
 function initialValues(
   event: Event | null | undefined,

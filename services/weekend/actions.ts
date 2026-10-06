@@ -4,7 +4,9 @@ import { updateTag } from 'next/cache'
 import { isNil } from 'lodash'
 import { authorizedAction } from '@/lib/actions/authorized-action'
 import { TAGS } from '@/lib/cache/tags'
-import { Permission } from '@/lib/security'
+import { Permission, userHasPermission } from '@/lib/security'
+import { logger } from '@/lib/logger'
+import * as EventsService from '@/services/events/events-service'
 import type {
   WeekendStatusValue,
   WeekendGroupWithId,
@@ -169,12 +171,31 @@ export const deleteWeekendGroup = authorizedAction<
 export const saveWeekendGroupFromSidebar = authorizedAction<
   [WeekendSidebarPayload],
   WeekendGroupWithId
->(Permission.WRITE_WEEKENDS, async (_user, payload) => {
+>(Permission.WRITE_WEEKENDS, async (user, payload) => {
   const result = await WeekendService.saveWeekendGroupFromSidebar(payload)
   if (!isErr(result)) {
     invalidateWeekends(result.data.groupId)
     // A new group starts with fees, which the sidebar sets alongside it.
     if (!isNil(payload.fees)) updateTag(TAGS.groupFees)
+
+    // A new group starts with each weekend's standard events at their usual
+    // times. Event writes need WRITE_EVENTS; without it (or if the insert
+    // fails) the group still saves and the events can be added later.
+    const isNewGroup = isNil(payload.groupId)
+    if (isNewGroup && userHasPermission(user, [Permission.WRITE_EVENTS])) {
+      const eventsResult = await EventsService.createStandardEventsForGroup(
+        result.data
+      )
+      if (isErr(eventsResult)) {
+        logger.error(
+          { error: eventsResult.error, groupId: result.data.groupId },
+          'Failed to create standard events for new weekend group'
+        )
+      } else {
+        updateTag(TAGS.events)
+        updateTag(TAGS.eventsForGroup(result.data.groupId))
+      }
+    }
   }
   return result
 })

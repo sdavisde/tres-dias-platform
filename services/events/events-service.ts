@@ -10,6 +10,8 @@ import type {
   EventUpdateInput,
 } from './types'
 import * as EventsRepository from './repository'
+import { buildStandardWeekendEvents } from '@/lib/weekend/standard-events'
+import type { WeekendGroupWithId } from '@/lib/weekend/types'
 import type { ReadOptions } from '@/lib/supabase/server'
 
 // ============================================================================
@@ -141,6 +143,45 @@ export async function createEvent(
   }
 
   return ok(normalizeEvent(result.data))
+}
+
+/**
+ * Creates every standard event (sendoff, weekend, serenade practice, serenade,
+ * closing) for both weekends of a group, at their usual times.
+ */
+export async function createStandardEventsForGroup(
+  group: WeekendGroupWithId
+): Promise<Result<string, Event[]>> {
+  const weekends = Object.values(group.weekends)
+  const groupNumber = weekends.find((w) => !isNil(w.number))?.number ?? null
+  const drafts = weekends.flatMap((weekend) =>
+    buildStandardWeekendEvents(
+      {
+        id: weekend.id,
+        type: weekend.type,
+        startDate: weekend.start_date,
+        groupId: group.groupId,
+      },
+      groupNumber
+    )
+  )
+
+  const result = await EventsRepository.insertEvents(
+    drafts.map((draft) => ({
+      title: draft.title,
+      type: draft.type,
+      datetime: draft.datetime,
+      end_datetime: draft.endDatetime,
+      weekend_id: draft.weekendId,
+      weekend_group_id: draft.weekendGroupId,
+    }))
+  )
+
+  if (isErr(result)) {
+    return err(`Failed to create standard events: ${result.error}`)
+  }
+
+  return ok(result.data.map(normalizeEvent))
 }
 
 /**

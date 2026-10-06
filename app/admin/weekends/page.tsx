@@ -23,6 +23,8 @@ import {
   getTrackedGroups as getTrackedGroupFees,
 } from '@/services/fees/fees-service'
 import type { GroupFees } from '@/lib/payments/group-fees'
+import { getEventsForWeekendGroup } from '@/services/events/events-service'
+import type { Event } from '@/services/events'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
 import { Weekends } from './components/Weekends'
 
@@ -122,6 +124,25 @@ export default async function WeekendsPage() {
     }
   }
 
+  // Schedules for the groups still being planned or run. Each group's events
+  // load on their own; a failed read hides that group's schedule.
+  const canReadEvents = userHasPermission(user, [Permission.READ_EVENTS])
+  const scheduledGroups = [
+    ...(isNil(buckets.active) ? [] : [buckets.active]),
+    ...buckets.upcoming,
+  ]
+  const eventsByGroupId: Record<string, Event[]> = {}
+  if (canReadEvents) {
+    const eventsResults = await Promise.all(
+      scheduledGroups.map((group) => getEventsForWeekendGroup(group.groupId))
+    )
+    Results.logFailures(...eventsResults)
+    scheduledGroups.forEach((group, i) => {
+      const events = Results.toNullable(eventsResults[i])
+      if (!isNil(events)) eventsByGroupId[group.groupId] = events
+    })
+  }
+
   const pastCountsResult = await pastCountsPromise
   Results.logFailures(pastCountsResult)
   const pastCandidateCounts = Results.toNullable(pastCountsResult)
@@ -151,6 +172,8 @@ export default async function WeekendsPage() {
           feeDefaults={Results.toNullable(feeDefaultsResult)}
           canManageFees={userHasPermission(user, [Permission.MANAGE_FEES])}
           canReadPayments={userHasPermission(user, [Permission.READ_PAYMENTS])}
+          eventsByGroupId={eventsByGroupId}
+          canEditEvents={userHasPermission(user, [Permission.WRITE_EVENTS])}
         />
       </div>
     </>
