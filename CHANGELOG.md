@@ -1,3 +1,13 @@
+## [1.61.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.60.0...v1.61.0) (2026-10-06)
+
+### Features
+
+- **users:** track ordained clergy on user profiles ([bc5aa4a](https://github.com/sdavisde/tres-dias-platform/commit/bc5aa4a30175cf66ed065839e99666b0527b334f))
+
+### Bug Fixes
+
+- **roster-builder:** don't count early secuela sign-ups as attendance ([3c15274](https://github.com/sdavisde/tres-dias-platform/commit/3c15274aad9b6a3e6ec2e142dafe4305ce437240))
+
 ## [1.60.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.1...v1.60.0) (2026-10-06)
 
 ### Features
