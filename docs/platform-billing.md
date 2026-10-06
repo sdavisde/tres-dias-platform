@@ -70,8 +70,11 @@ dunning for v1; the app sends none of its own.
 
 **Developers → Webhooks → Add endpoint**.
 
-- Endpoint URL: `https://www.dustytrailstresdias.org/api/webhooks/platform-billing`
-  (for a Vercel preview, the preview's URL with the same path)
+- Endpoint URL: `https://tresdiasplatform.org/api/webhooks/platform-billing`
+  (for a Vercel preview, the preview's URL with the same path). Until the platform domain is attached
+  to the Vercel project it is `https://www.dustytrailstresdias.org/api/webhooks/platform-billing`.
+  One endpoint serves every community: the handler finds the tenant from the event payload, never from
+  the host (see "Domains and routing" in `docs/platform-roadmap-status.md`).
 - Events (exactly these six):
   - `checkout.session.completed`
   - `customer.subscription.created`
