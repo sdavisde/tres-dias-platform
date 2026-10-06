@@ -1,3 +1,9 @@
+## [1.63.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.62.1...v1.63.0) (2026-10-06)
+
+### Features
+
+- improve the time and date fields ([9cfc3d5](https://github.com/sdavisde/tres-dias-platform/commit/9cfc3d5c5b8ff107ee2783e2a9f0bc9e2e34a3ed))
+
 ## [1.62.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.62.0...v1.62.1) (2026-10-06)
 
 ### Bug Fixes
