@@ -1,3 +1,10 @@
+## [1.62.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.61.0...v1.62.0) (2026-10-06)
+
+### Features
+
+- **home:** advertise the active group's secuela on the member home page ([a49b6c6](https://github.com/sdavisde/tres-dias-platform/commit/a49b6c68f4478cb6149d4f47ce1732bc9570c490))
+- **secuela:** admin Secuela page and event-window attendance ([f1e5181](https://github.com/sdavisde/tres-dias-platform/commit/f1e5181355e25132559aecfc84cff4c5919f9065))
+
 ## [1.61.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.60.0...v1.61.0) (2026-10-06)
 
 ### Features
