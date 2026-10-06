@@ -7,6 +7,7 @@ export type CommunityInformation = {
   weekendAttended: string | null
   essentialsTrainingDate: string | null
   specialGiftsAndSkills: string[] | null
+  isClergy: boolean
 }
 
 export type User = {

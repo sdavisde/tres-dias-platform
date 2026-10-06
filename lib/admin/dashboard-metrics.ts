@@ -69,7 +69,7 @@ export type ActionItem =
       key: 'schedule-secuela'
       /** The active group's DTTD number, or null when it isn't known. */
       groupNumber: number | null
-      href: '/admin/events'
+      href: '/admin/secuela'
     }
   | { key: 'start-planning'; href: '/admin/weekends' }
 
@@ -168,7 +168,7 @@ export function deriveActionItems({
     items.push({
       key: 'schedule-secuela',
       groupNumber: activeGroupSecuela.groupNumber,
-      href: '/admin/events',
+      href: '/admin/secuela',
     })
   }
   if (!isNil(weekendGroups) && needsPlanning(weekendGroups, now)) {

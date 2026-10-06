@@ -23,6 +23,7 @@ import { TeamMemberTodo, TeamMemberTodoLoading } from '@/components/team-todos'
 import { CommunityEncouragement } from '@/components/community-encouragement/CommunityEncouragement'
 import { CHARole, WeekendType } from '@/lib/weekend/types'
 import { ProfilePhotoAlert } from './profile-photo-alert'
+import { SecuelaBanner } from './secuela-banner'
 import {
   CurrentWeekendHero,
   CurrentWeekendHeroSkeleton,
@@ -59,6 +60,11 @@ export function Dashboard({ user, prayerWheelUrl }: DashboardProps) {
               </Typography>
             </div>
           </div>
+
+          {/* Renders nothing unless the active group's secuela is ahead */}
+          <Suspense fallback={null}>
+            <SecuelaBanner user={user} />
+          </Suspense>
 
           <Suspense fallback={<CurrentWeekendHeroSkeleton />}>
             <CurrentWeekendHero user={user} />
@@ -108,7 +114,7 @@ function QuickActions({ prayerWheelUrl }: { prayerWheelUrl: string | null }) {
           href="/secuela-signin"
           icon={HandHeart}
           title="Sign Up to Serve"
-          description="Volunteer to serve on an upcoming weekend team"
+          description="Sign in at secuela, or afterwards to volunteer for the next team"
         />
         {!isNil(prayerWheelUrl) && (
           <QuickActionCard

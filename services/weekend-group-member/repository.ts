@@ -494,52 +494,95 @@ export async function getUserMedicalProfiles(
 }
 
 /**
- * Finds or creates a weekend_group_members row for the active weekend group,
- * then sets attended_secuela_at = true.
+ * The active weekend group: the one secuela sign-ins are recorded against.
  */
-export async function markSecuelaAttendance(
-  userId: string
-): Promise<
-  Result<string, { groupMemberId: string; groupNumber: number | null }>
+export async function findActiveGroup(): Promise<
+  Result<string, { groupId: string; groupNumber: number | null }>
 > {
   const supabase = await createClient()
 
-  // Find the active weekend group
-  const { data: activeWeekend, error: weekendError } = await supabase
+  const { data: activeWeekend, error } = await supabase
     .from('weekends')
     .select('group_id, weekend_groups(number)')
     .eq('status', 'ACTIVE')
     .limit(1)
     .maybeSingle()
 
-  if (isSupabaseError(weekendError) || isNil(activeWeekend?.group_id)) {
+  if (isSupabaseError(error) || isNil(activeWeekend?.group_id)) {
     return err('No active weekend found')
-  }
-
-  const groupId = activeWeekend.group_id
-
-  // Upsert the group member row
-  const upsertResult = await upsertGroupMember(groupId, userId)
-  if (isErr(upsertResult)) {
-    return err(upsertResult.error)
-  }
-
-  const groupMemberId = upsertResult.data
-
-  const { error: updateError } = await supabase
-    .from('weekend_group_members')
-    .update({ attended_secuela_at: new Date().toISOString() })
-    .eq('id', groupMemberId)
-
-  if (isSupabaseError(updateError)) {
-    return err('Failed to mark secuela attendance')
   }
 
   const groupNumber =
     (activeWeekend.weekend_groups as { number: number | null } | null)
       ?.number ?? null
 
-  return ok({ groupMemberId, groupNumber })
+  return ok({ groupId: activeWeekend.group_id, groupNumber })
+}
+
+/**
+ * When the group member last signed in through the secuela link (null if never).
+ */
+export async function findSecuelaSignIn(
+  groupMemberId: string
+): Promise<Result<string, string | null>> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('weekend_group_members')
+    .select('attended_secuela_at')
+    .eq('id', groupMemberId)
+    .single()
+
+  if (isSupabaseError(error)) {
+    return err(`Failed to fetch secuela sign-in: ${error.message}`)
+  }
+
+  return ok(data?.attended_secuela_at ?? null)
+}
+
+/**
+ * When the user signed in through the secuela link for a group (null if never,
+ * including when they have no membership row in that group).
+ */
+export async function findSecuelaSignInForUser(
+  groupId: string,
+  userId: string
+): Promise<Result<string, string | null>> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('weekend_group_members')
+    .select('attended_secuela_at')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (isSupabaseError(error)) {
+    return err(`Failed to fetch secuela sign-in: ${error.message}`)
+  }
+
+  return ok(data?.attended_secuela_at ?? null)
+}
+
+/**
+ * Records the group member's secuela sign-in time.
+ */
+export async function setSecuelaSignIn(
+  groupMemberId: string,
+  signedInAt: string
+): Promise<Result<string, null>> {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('weekend_group_members')
+    .update({ attended_secuela_at: signedInAt })
+    .eq('id', groupMemberId)
+
+  if (isSupabaseError(error)) {
+    return err('Failed to mark secuela attendance')
+  }
+
+  return ok(null)
 }
 
 /**

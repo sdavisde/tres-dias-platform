@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card'
+import AuthShell from '@/components/auth/AuthShell'
 import AuthForm from '@/components/auth/AuthForm'
 
 interface JoinPageProps {
@@ -8,10 +8,8 @@ interface JoinPageProps {
 export default async function JoinPage({ searchParams }: JoinPageProps) {
   const { redirectTo } = await searchParams
   return (
-    <div className="container max-w-sm mx-auto py-8">
-      <Card className="shadow-lg">
-        <AuthForm redirectTo={redirectTo} defaultMode="register" />
-      </Card>
-    </div>
+    <AuthShell>
+      <AuthForm redirectTo={redirectTo} defaultMode="register" />
+    </AuthShell>
   )
 }

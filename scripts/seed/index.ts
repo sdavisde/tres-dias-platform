@@ -76,7 +76,7 @@ function renderSql(tables: Tables, dryRun: boolean): string {
   const profileValues = tables.people
     .map(
       (p) =>
-        `  ('${p.id}'::uuid, '${p.phone}', '${p.church.replaceAll("'", "''")}', '${p.attended}')`
+        `  ('${p.id}'::uuid, '${p.phone}', '${p.church.replaceAll("'", "''")}', '${p.attended}', ${p.tier === 'clergy'})`
     )
     .join(',\n')
 
@@ -99,10 +99,11 @@ FROM auth.users;
 
 -- public.users rows come from the sync trigger; fill in the profile details.
 UPDATE public.users u
-SET phone_number = v.phone, church_affiliation = v.church, weekend_attended = v.attended
+SET phone_number = v.phone, church_affiliation = v.church, weekend_attended = v.attended,
+  is_clergy = v.clergy
 FROM (VALUES
 ${profileValues}
-) AS v(id, phone, church, attended)
+) AS v(id, phone, church, attended, clergy)
 WHERE u.id = v.id;
 
 ${insert('public.user_roles', tables.userRoles)}

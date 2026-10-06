@@ -1,15 +1,10 @@
-import {
-  Calendar,
-  Mail,
-  Heart,
-  BookOpen,
-  Users,
-  ArrowRight,
-} from 'lucide-react'
+import { Suspense } from 'react'
+import { Mail, Heart, BookOpen, Users, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Separator } from '@/components/ui/separator'
+import { UpcomingWeekends, UpcomingWeekendsSkeleton } from './upcoming-weekends'
 
 export default function Home() {
   return (
@@ -131,39 +126,9 @@ export default function Home() {
             our upcoming weekend events.
           </p>
 
-          <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div className="bg-card rounded-xl border p-6 text-left shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-secondary-foreground" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    DTTD #10 Men&apos;s
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    September 4 &ndash; 7, 2025
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl border p-6 text-left shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                  <Calendar className="w-5 h-5 text-secondary-foreground" />
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">
-                    DTTD #10 Women&apos;s
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    September 11 &ndash; 14, 2025
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Suspense fallback={<UpcomingWeekendsSkeleton />}>
+            <UpcomingWeekends />
+          </Suspense>
 
           <Button
             href="mailto:admin@dustytrailstresdias.org"

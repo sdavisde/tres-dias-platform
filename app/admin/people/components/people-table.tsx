@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { isNil } from 'lodash'
+import { Download } from 'lucide-react'
+import { CopyJoinLinkButton } from './copy-join-link-button'
 import { PersonEditor } from './person-editor'
 import { SelectedMemberProvider } from './selected-member-context'
+import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import { DataTable, useDataTableUrlState } from '@/components/ui/data-table'
+import { downloadCsv } from '@/lib/csv'
 import type {
   MasterRoster as MasterRosterType,
   MasterRosterMember,
@@ -14,12 +19,19 @@ import {
   masterRosterColumns,
   masterRosterGlobalFilterFn,
 } from '../config/columns'
+import {
+  filterPeopleForExport,
+  generatePeopleCsv,
+  generatePeopleCsvFilename,
+} from '../lib/people-csv'
 
 interface PeopleTableProps {
   masterRoster: MasterRosterType
   roles: Array<{ id: string; label: string; permissions: string[] }>
   canViewExperience: boolean
   canEdit: boolean
+  /** Built server-side so preview deploys copy their own host, not prod's. */
+  joinUrl: string
 }
 
 /**
@@ -40,12 +52,33 @@ export default function PeopleTable({
   roles,
   canViewExperience,
   canEdit,
+  joinUrl,
 }: PeopleTableProps) {
   const [selectedMember, setSelectedMember] =
     useState<MasterRosterMember | null>(null)
   const [isEditorOpen, setIsEditorOpen] = useState(false)
 
   const urlState = useDataTableUrlState({ defaultPageSize: 25 })
+
+  // Exactly the people on screen (across all pages) — drives the CSV export.
+  const { globalFilter, columnFilters } = urlState
+  const filteredMembers = useMemo(
+    () =>
+      filterPeopleForExport(masterRoster.members, {
+        search: globalFilter ?? '',
+        columnFilters,
+      }),
+    [masterRoster.members, globalFilter, columnFilters]
+  )
+
+  const handleExportCsv = () => {
+    downloadCsv(
+      generatePeopleCsv(filteredMembers, {
+        includeExperience: canViewExperience,
+      }),
+      generatePeopleCsvFilename()
+    )
+  }
 
   const handleMemberClick = (member: MasterRosterMember) => {
     setSelectedMember(member)
@@ -62,6 +95,20 @@ export default function PeopleTable({
 
   return (
     <SelectedMemberProvider value={selectedMemberId}>
+      <PageHeader
+        title="People"
+        description="Everyone with an account — contact details, experience, and roles."
+      >
+        <Button
+          variant="outline"
+          onClick={handleExportCsv}
+          disabled={filteredMembers.length === 0}
+        >
+          <Download className="size-4" />
+          Export CSV
+        </Button>
+        <CopyJoinLinkButton joinUrl={joinUrl} />
+      </PageHeader>
       <div className="my-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
           <DataTable

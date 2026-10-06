@@ -17,6 +17,11 @@ A **weekend group** represents one DTTD number — e.g., "DTTD #11". It contains
 | Team fee payment | `payment_transaction`   | `target_type = 'weekend_group_member'`                  |
 | Medical info     | `user_medical_profiles` | Keyed by `user_id`, shared globally across all weekends |
 
+Secuela sign-ins also live on the group membership: `weekend_group_members.attended_secuela_at` holds
+when the member confirmed through `/secuela-signin` (null = never). Whether that counts as attending or
+as wanting to serve is derived from the group's secuela event — see "Secuela" in
+[`docs/domain.md`](domain.md).
+
 ### Weekend-Level (specific to one MENS or WOMENS weekend)
 
 Each `weekend_roster` row represents a volunteer's assignment to one specific weekend. A volunteer serving on both Men's and Women's weekends in the same group will have **two** roster rows.
@@ -39,7 +44,7 @@ weekends
   └── id, type (MENS|WOMENS), status (ACTIVE|PLANNING|FINISHED), group_id → weekend_groups
 
 weekend_group_members          ← the hub
-  └── id, group_id → weekend_groups, user_id → users
+  └── id, group_id → weekend_groups, user_id → users, attended_secuela_at
 
 team_form_completions
   └── weekend_group_member_id → weekend_group_members, form_type, completed_at

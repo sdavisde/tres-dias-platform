@@ -20,6 +20,7 @@ export type CommunityFields = {
   weekendNumber: string
   essentialsDate: Date | undefined
   skills: string[]
+  isClergy: boolean
 }
 
 export type NewExperienceEntry = {

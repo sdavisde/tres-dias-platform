@@ -11,9 +11,21 @@ describe('computeVolunteerStatus', () => {
       expect(computeVolunteerStatus(null, secuelaEvent)).toBe('none')
     })
 
-    it('returns "attended_secuela" when sign-in is before the event starts (generous)', () => {
-      expect(computeVolunteerStatus('2026-04-11T10:00:00Z', secuelaEvent)).toBe(
+    it('returns "attended_secuela" when sign-in is 30 minutes before the start', () => {
+      expect(computeVolunteerStatus('2026-04-11T13:30:00Z', secuelaEvent)).toBe(
         'attended_secuela'
+      )
+    })
+
+    it('returns "wants_to_serve" when sign-in is earlier than 30 minutes before the start', () => {
+      expect(computeVolunteerStatus('2026-04-11T13:29:59Z', secuelaEvent)).toBe(
+        'wants_to_serve'
+      )
+    })
+
+    it('returns "wants_to_serve" when sign-in is days before the event', () => {
+      expect(computeVolunteerStatus('2026-04-01T16:00:00Z', secuelaEvent)).toBe(
+        'wants_to_serve'
       )
     })
 
@@ -34,40 +46,28 @@ describe('computeVolunteerStatus', () => {
         'wants_to_serve'
       )
     })
-
-    it('returns "wants_to_serve" when sign-in is on a later day', () => {
-      expect(computeVolunteerStatus('2026-04-15T12:00:00Z', secuelaEvent)).toBe(
-        'wants_to_serve'
-      )
-    })
   })
 
-  describe('given a secuela event with start date only (no end datetime)', () => {
+  describe('given a secuela event with no end datetime', () => {
     const secuelaEvent: SecuelaEvent = {
       startDate: '2026-04-11T14:00:00Z',
       endDate: null,
     }
 
-    it('returns "attended_secuela" when sign-in is early in the day', () => {
-      expect(computeVolunteerStatus('2026-04-11T08:00:00Z', secuelaEvent)).toBe(
+    it('returns "attended_secuela" up to 3 hours after the start', () => {
+      expect(computeVolunteerStatus('2026-04-11T17:00:00Z', secuelaEvent)).toBe(
         'attended_secuela'
       )
     })
 
-    it('returns "attended_secuela" when sign-in is at 11:59pm on the same day', () => {
-      expect(computeVolunteerStatus('2026-04-11T23:59:59Z', secuelaEvent)).toBe(
-        'attended_secuela'
+    it('returns "wants_to_serve" more than 3 hours after the start', () => {
+      expect(computeVolunteerStatus('2026-04-11T17:00:01Z', secuelaEvent)).toBe(
+        'wants_to_serve'
       )
     })
 
-    it('returns "attended_secuela" when sign-in is before the event day', () => {
-      expect(computeVolunteerStatus('2026-04-10T12:00:00Z', secuelaEvent)).toBe(
-        'attended_secuela'
-      )
-    })
-
-    it('returns "wants_to_serve" when sign-in is the next day', () => {
-      expect(computeVolunteerStatus('2026-04-12T00:00:01Z', secuelaEvent)).toBe(
+    it('returns "wants_to_serve" when sign-in is the day before', () => {
+      expect(computeVolunteerStatus('2026-04-10T14:00:00Z', secuelaEvent)).toBe(
         'wants_to_serve'
       )
     })

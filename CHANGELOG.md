@@ -1,3 +1,57 @@
+## [1.62.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.62.0...v1.62.1) (2026-10-06)
+
+### Bug Fixes
+
+- **home:** drop sign-in opening note from upcoming secuela banner ([b59b680](https://github.com/sdavisde/tres-dias-platform/commit/b59b6809a1b66d4685723702d3d77ef1d4c66db1))
+
+## [1.62.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.61.0...v1.62.0) (2026-10-06)
+
+### Features
+
+- **home:** advertise the active group's secuela on the member home page ([a49b6c6](https://github.com/sdavisde/tres-dias-platform/commit/a49b6c68f4478cb6149d4f47ce1732bc9570c490))
+- **secuela:** admin Secuela page and event-window attendance ([f1e5181](https://github.com/sdavisde/tres-dias-platform/commit/f1e5181355e25132559aecfc84cff4c5919f9065))
+
+## [1.61.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.60.0...v1.61.0) (2026-10-06)
+
+### Features
+
+- **users:** track ordained clergy on user profiles ([bc5aa4a](https://github.com/sdavisde/tres-dias-platform/commit/bc5aa4a30175cf66ed065839e99666b0527b334f))
+
+### Bug Fixes
+
+- **roster-builder:** don't count early secuela sign-ups as attendance ([3c15274](https://github.com/sdavisde/tres-dias-platform/commit/3c15274aad9b6a3e6ec2e142dafe4305ce437240))
+
+## [1.60.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.1...v1.60.0) (2026-10-06)
+
+### Features
+
+- **secuela:** show which group and secuela the sign-in page is for ([74a1b86](https://github.com/sdavisde/tres-dias-platform/commit/74a1b8635553fcc29c758ce03a8f3cb127482f50))
+- **shell:** admin link in the mobile top bar, fill gap below tab bar ([6fb06a6](https://github.com/sdavisde/tres-dias-platform/commit/6fb06a6f323d2e694b831a14947a0711abb9c4c7))
+
+## [1.59.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.0...v1.59.1) (2026-10-05)
+
+### Bug Fixes
+
+- **layout:** set font variables on the html element ([484354a](https://github.com/sdavisde/tres-dias-platform/commit/484354a0a9bc4e8824333eeb1d23cdb8af9beac0))
+
+## [1.59.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.58.0...v1.59.0) (2026-10-05)
+
+### Features
+
+- **landing:** show the active weekend group and its secuela ([2e3fe54](https://github.com/sdavisde/tres-dias-platform/commit/2e3fe5474ad2b460ca167158466ccc0db8e560ea)), closes [#10](https://github.com/sdavisde/tres-dias-platform/issues/10)
+
+## [1.58.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.57.0...v1.58.0) (2026-10-04)
+
+### Features
+
+- **auth:** split photo layout for sign-in, join and password pages ([7355402](https://github.com/sdavisde/tres-dias-platform/commit/735540250b2deca8b273624777a09969708a5beb))
+
+## [1.57.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.56.0...v1.57.0) (2026-10-04)
+
+### Features
+
+- **admin:** export the People roster as CSV ([fa59348](https://github.com/sdavisde/tres-dias-platform/commit/fa593480351bff11c9b42064a7f819a45caf2a36))
+
 ## [1.56.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.55.1...v1.56.0) (2026-09-28)
 
 ### Features

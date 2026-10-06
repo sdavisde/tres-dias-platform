@@ -2,8 +2,8 @@
 
 A Playwright suite covering the three flows the owner most needs protected: accounts (login,
 register, error messages), team forms, and fee payments. It runs against a production build
-(`next build && next start`) in CI and against your own running dev server locally; it is not part
-of `bun run test` and never runs under Jest.
+(`next build && next start`) in a nightly GitHub Actions run and against your own running dev server
+locally; it is not part of `bun run test`, never runs under Jest, and does not gate PRs or deploys.
 
 ## Running locally
 
@@ -117,19 +117,22 @@ form, not to raise the limit.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every pull request and on `workflow_dispatch`, with two jobs:
+`.github/workflows/ci.yml` runs on every pull request, on `workflow_dispatch`, and as the first job of
+`release.yml`, with a single **`checks`** job: checkout, Node via `.nvmrc`, `bun install
+--frozen-lockfile`, `bun run lint`, `bunx tsc --noEmit`, `bun run test`.
 
-- **`checks`** — checkout, Node via `.nvmrc` with the Yarn cache, `bun install --frozen-lockfile`,
-  `bun run lint`, `bunx tsc --noEmit`, `bun run test`.
-- **`e2e`** — checkout and install, then `supabase/setup-cli@v1` and `supabase start` with the
+The Playwright suite lives in `.github/workflows/e2e.yml`, which runs nightly (08:00 UTC) against
+`main` and on `workflow_dispatch` (Actions tab → E2E → Run workflow, on any branch). It was moved out
+of `ci.yml` because it made every PR and push to `main` too slow. Its one job, **`e2e`**:
+
+- checkout and install, then `supabase/setup-cli@v1` and `supabase start` with the
   unneeded containers excluded (Studio, Postgres Meta, imgproxy, Mailpit, Logflare, Vector, Edge
-  Runtime, Realtime, Supavisor — the app needs only auth, REST, storage and the gateway). Next,
-  `bun run seed pre-weekend --yes` builds the same world described above inside the runner's
-  `supabase_db_<project_id>` container. A step then reads `supabase status -o env` and exports the
-  real local Supabase URL and keys to `$GITHUB_ENV`, replacing the placeholder values used earlier.
-  `bun run build` runs next (with `.next/cache` restored from a lockfile-and-source-hash key), followed
-  by a cached `bunx playwright install --with-deps chromium` and finally `bun run e2e`. On failure,
-  `playwright-report/` and `test-results/` are uploaded as a build artifact.
+  Runtime, Realtime, Supavisor — the app needs only auth, REST, storage and the gateway). A step then
+  reads `supabase status -o env` and exports the real local Supabase URL and keys to `$GITHUB_ENV`,
+  replacing the placeholder values used earlier. `bun run build` runs next (with `.next/cache`
+  restored from a lockfile-and-source-hash key), followed by a cached `bunx playwright install
+--with-deps chromium` and finally `bun run e2e`, whose global setup reseeds `pre-weekend`. On
+  failure, `playwright-report/` and `test-results/` are uploaded as a build artifact.
 
 The `e2e` job's placeholder environment variables (`STRIPE_SECRET_KEY=sk_test_e2e_dummy`,
 `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_e2e_dummy`, `STRIPE_WEBHOOK_SECRET=whsec_e2e_dummy`,
@@ -149,8 +152,7 @@ the real Sentry project (`lib/sentry.ts` only enables Sentry when that flag is n
 Wall-time expectations: install with cache about 30 seconds; `supabase start` with the exclusion
 list 60–120 seconds (image pulls dominate); `next build` 90–180 seconds cold, less with `.next/cache`
 restored; the Playwright browser install about 20 seconds cached; the tests themselves under a
-minute. `checks` runs in parallel with `e2e`, so the critical path is the `e2e` job, targeted at
-under about seven minutes end to end on a cold cache.
+minute — about seven minutes end to end on a cold cache, which is why it no longer gates PRs.
 
 ## Cleanup rules
 
@@ -226,10 +228,13 @@ The owner pushes to `main` directly, so there is no branch protection gating mer
 deliberate decision, not an oversight. The real gate is `release.yml`: its `ci` job calls the
 reusable `ci.yml` workflow (`uses: ./.github/workflows/ci.yml`) as the first thing that runs on
 every push to `main`, and `migrate`, `release`, and `deploy` all wait on it (`migrate: needs: ci`,
-chained through to `deploy`). If either the `checks` or `e2e` job inside that call fails, nothing
-downstream runs — no migration, no release, no deploy — so a red suite on `main` never touches
-production.
+chained through to `deploy`). If the `checks` job inside that call fails, nothing downstream runs —
+no migration, no release, no deploy.
 
-`ci.yml`'s `pull_request` trigger also runs the same suite on any PR opened against `main`, which
-gives early signal before a push, but that run is informational only: it is not required by branch
+The E2E suite is **not** part of that gate: a regression it would catch can reach production and
+shows up as a red nightly `E2E` run the next morning. Run `bun run e2e` locally (or dispatch the
+workflow on your branch) before pushing changes to the flows it covers.
+
+`ci.yml`'s `pull_request` trigger also runs `checks` on any PR opened against `main`, which gives
+early signal before a push, but that run is informational only: it is not required by branch
 protection, and merging is not blocked on it.

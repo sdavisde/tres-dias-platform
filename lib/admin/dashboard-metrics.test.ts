@@ -269,7 +269,7 @@ describe('deriveActionItems', () => {
         outstandingTotal: 925,
         href: '/admin/payments?status=outstanding',
       },
-      { key: 'schedule-secuela', groupNumber: 12, href: '/admin/events' },
+      { key: 'schedule-secuela', groupNumber: 12, href: '/admin/secuela' },
       { key: 'start-planning', href: '/admin/weekends' },
     ])
   })
@@ -318,7 +318,7 @@ describe('deriveActionItems', () => {
         now: NOW,
       })
     ).toEqual([
-      { key: 'schedule-secuela', groupNumber: 12, href: '/admin/events' },
+      { key: 'schedule-secuela', groupNumber: 12, href: '/admin/secuela' },
     ])
   })
 
@@ -386,7 +386,7 @@ describe('deriveActionItems', () => {
         now: NOW,
       })
     ).toEqual([
-      { key: 'schedule-secuela', groupNumber: null, href: '/admin/events' },
+      { key: 'schedule-secuela', groupNumber: null, href: '/admin/secuela' },
     ])
   })
 })

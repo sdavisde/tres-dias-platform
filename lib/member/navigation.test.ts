@@ -34,6 +34,7 @@ function makeUser(
       weekendAttended: null,
       essentialsTrainingDate: null,
       specialGiftsAndSkills: null,
+      isClergy: false,
     },
     teamMemberInfo,
     originalUser: null,

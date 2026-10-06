@@ -58,13 +58,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sourceSans.variable} ${fraunces.variable}`}>
       <Head>
         <meta name="apple-mobile-web-app-title" content="DTTD" />
       </Head>
-      <body
-        className={`font-sans antialiased ${sourceSans.variable} ${fraunces.variable}`}
-      >
+      <body className="font-sans antialiased">
         <QueryProvider>
           <SessionProvider>
             <Analytics />

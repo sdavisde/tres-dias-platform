@@ -4,9 +4,7 @@ import { getRoles } from '@/services/identity/roles/role-service'
 import { getMasterRoster } from '@/services/master-roster'
 import { isErr } from '@/lib/results'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
-import { PageHeader } from '@/components/ui/page-header'
 import { getUrl } from '@/lib/url'
-import { CopyJoinLinkButton } from './components/copy-join-link-button'
 import PeopleTable from './components/people-table'
 
 export default async function PeoplePage() {
@@ -40,18 +38,12 @@ export default async function PeoplePage() {
         breadcrumbs={[{ label: 'Admin', href: '/admin' }]}
       />
       <div className="container mx-auto px-4 sm:px-8 py-6">
-        <PageHeader
-          title="People"
-          description="Everyone with an account — contact details, experience, and roles."
-        >
-          {/* Built server-side so preview deploys copy their own host, not prod's. */}
-          <CopyJoinLinkButton joinUrl={getUrl('/join')} />
-        </PageHeader>
         <PeopleTable
           masterRoster={masterRosterResult.data}
           roles={rolesResult.data}
           canViewExperience={canViewExperience}
           canEdit={canEdit}
+          joinUrl={getUrl('/join')}
         />
       </div>
     </>

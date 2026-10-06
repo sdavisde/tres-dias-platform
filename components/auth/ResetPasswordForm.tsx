@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { logger } from '@/lib/logger'
 import PasswordInput from './PasswordInput'
 import Link from 'next/link'
+import AuthHeading from './AuthHeading'
 import { isNil } from 'lodash'
 import {
   MIN_PASSWORD_LENGTH,
@@ -134,24 +135,20 @@ export default function ResetPasswordForm({
 
   if (sessionLoading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 w-full max-w-md mx-auto p-6">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <p className="text-gray-600">Validating reset link...</p>
+      <div className="flex w-full flex-col items-center justify-center gap-4 py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground">Validating reset link...</p>
       </div>
     )
   }
 
   if (!hasValidSession) {
     return (
-      <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-6">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Invalid Reset Link
-          </h2>
-          <p className="text-gray-600 text-sm">
-            This password reset link is invalid or has expired.
-          </p>
-        </div>
+      <div className="flex w-full flex-col gap-4">
+        <AuthHeading
+          title="Invalid reset link"
+          description="This password reset link is invalid or has expired."
+        />
 
         <Alert variant="destructive">
           <AlertDescription>
@@ -159,7 +156,7 @@ export default function ResetPasswordForm({
           </AlertDescription>
         </Alert>
 
-        <Button asChild className="w-full mt-4">
+        <Button asChild size="lg" className="mt-2 w-full">
           <Link href="/forgot-password">Request New Reset Link</Link>
         </Button>
 
@@ -172,19 +169,16 @@ export default function ResetPasswordForm({
 
   if (passwordReset) {
     return (
-      <div className="flex flex-col gap-4 w-full max-w-md mx-auto p-6">
-        <div className="text-center mb-4">
-          <div className="mx-auto mb-4 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Password Reset Successfully
-          </h2>
-          <p className="text-gray-600 text-sm">
-            Your password has been updated. You will be redirected to the login
-            page shortly.
-          </p>
-        </div>
+      <div className="flex w-full flex-col gap-4">
+        <AuthHeading
+          icon={
+            <div className="flex size-12 items-center justify-center rounded-full bg-success/10">
+              <CheckCircle className="size-6 text-success" />
+            </div>
+          }
+          title="Password reset"
+          description="Your password has been updated. You will be redirected to the login page shortly."
+        />
 
         <Alert variant="success">
           <AlertDescription>
@@ -192,7 +186,7 @@ export default function ResetPasswordForm({
           </AlertDescription>
         </Alert>
 
-        <Button asChild className="w-full mt-4">
+        <Button asChild size="lg" className="mt-2 w-full">
           <Link href="/login">Go to Login Now</Link>
         </Button>
       </div>
@@ -200,16 +194,11 @@ export default function ResetPasswordForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-md mx-auto p-6"
-    >
-      <div className="text-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Reset your password
-        </h2>
-        <p className="text-gray-600 text-sm">Enter your new password below.</p>
-      </div>
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
+      <AuthHeading
+        title="Reset your password"
+        description="Enter your new password below."
+      />
 
       {!isNil(error) && (
         <Alert variant="destructive">
@@ -238,7 +227,8 @@ export default function ResetPasswordForm({
 
       <Button
         type="submit"
-        className="w-full mt-4"
+        size="lg"
+        className="mt-2 w-full"
         disabled={loading || password === '' || confirmPassword === ''}
       >
         {loading ? (

@@ -49,6 +49,7 @@ export async function getMasterRoster(): Promise<Result<string, MasterRoster>> {
         weekendAttended: member.weekend_attended,
         essentialsTrainingDate: member.essentials_training_date,
         specialGiftsAndSkills: member.special_gifts_and_skills,
+        isClergy: member.is_clergy,
       },
       permissions: getPermissionsFromUserRoles(member.user_roles),
       roles: member.user_roles?.map((role) => role.roles) ?? [],

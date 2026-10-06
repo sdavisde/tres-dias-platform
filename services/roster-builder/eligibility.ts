@@ -9,6 +9,7 @@ type EligibilityContext = {
   hasBeenSectionHead: boolean
   hasGivenRollo: boolean
   rectorReadyIsReady: boolean
+  isClergy: boolean
 }
 
 /**
@@ -18,11 +19,11 @@ type EligibilityContext = {
 type EligibilityCheck = (context: EligibilityContext) => EligibilityResult
 
 /**
- * Extendable registry of eligibility checks per CHA role.
+ * Experience requirements per CHA role.
  * Only roles with special requirements need entries here.
  * To add a new eligibility rule, add a new entry to this map.
  */
-const ELIGIBILITY_CHECKS: Partial<Record<CHARole, EligibilityCheck>> = {
+const EXPERIENCE_CHECKS: Partial<Record<CHARole, EligibilityCheck>> = {
   [CHARole.HEAD]: (ctx) => {
     if (!ctx.hasBeenSectionHead || !ctx.hasGivenRollo) {
       const missing: string[] = []
@@ -58,6 +59,50 @@ const ELIGIBILITY_CHECKS: Partial<Record<CHARole, EligibilityCheck>> = {
     }
     return { eligible: true }
   },
+}
+
+/**
+ * Clergy serve as spiritual directors and cannot hold any head position
+ * (Head, Assistant Head, section heads) or be a Table Leader.
+ */
+const CLERGY_EXCLUDED_ROLES: CHARole[] = [
+  CHARole.HEAD,
+  CHARole.ASSISTANT_HEAD,
+  CHARole.HEAD_TECH,
+  CHARole.HEAD_ROLLISTA,
+  CHARole.TABLE_LEADER,
+  CHARole.HEAD_PRAYER,
+  CHARole.HEAD_CHAPEL,
+  CHARole.HEAD_CHAPEL_TECH,
+  CHARole.HEAD_MUSIC,
+  CHARole.HEAD_PALANCA,
+  CHARole.HEAD_TABLE,
+  CHARole.HEAD_DORM,
+  CHARole.HEAD_DINING,
+  CHARole.HEAD_MOBILE,
+]
+
+function withClergyRestriction(check?: EligibilityCheck): EligibilityCheck {
+  return (ctx) => {
+    if (ctx.isClergy) {
+      return { eligible: false, reason: 'Clergy cannot serve in this role' }
+    }
+    return isNil(check) ? { eligible: true } : check(ctx)
+  }
+}
+
+/**
+ * Registry of eligibility checks per CHA role: experience requirements plus
+ * the clergy restriction.
+ */
+const ELIGIBILITY_CHECKS: Partial<Record<CHARole, EligibilityCheck>> = {
+  ...EXPERIENCE_CHECKS,
+  ...Object.fromEntries(
+    CLERGY_EXCLUDED_ROLES.map((role) => [
+      role,
+      withClergyRestriction(EXPERIENCE_CHECKS[role]),
+    ])
+  ),
 }
 
 /**

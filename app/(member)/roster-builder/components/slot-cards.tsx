@@ -13,6 +13,7 @@ import {
   Phone,
   Mail,
   Award,
+  Cross,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -175,8 +176,8 @@ export function FilledSlotCard({
             </TooltipTrigger>
             <TooltipContent>
               {member.volunteerStatus === 'attended_secuela'
-                ? 'Signed in at the secuela event'
-                : 'Signed up to serve after secuela'}
+                ? 'Signed in at secuela, from 30 minutes before it started until it ended'
+                : 'Signed up to serve after secuela ended'}
             </TooltipContent>
           </Tooltip>
         )}
@@ -190,6 +191,11 @@ export function FilledSlotCard({
               <Star className="h-3.5 w-3.5 fill-amber-500" />
             </span>
           )
+        )}
+        {member.isClergy && (
+          <span title="Clergy" className="text-muted-foreground">
+            <Cross className="h-3.5 w-3.5" />
+          </span>
         )}
       </div>
 
@@ -359,6 +365,11 @@ export function EmptySlotCard({
                             Rector Ready
                           </span>
                         )
+                      )}
+                      {m.isClergy && (
+                        <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Cross className="h-3 w-3" /> Clergy
+                        </span>
                       )}
                     </div>
                     {warning !== null && (

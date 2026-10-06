@@ -34,6 +34,7 @@ function makeUser(permissions: Permission[]): User {
       weekendAttended: null,
       essentialsTrainingDate: null,
       specialGiftsAndSkills: null,
+      isClergy: false,
     },
     teamMemberInfo: null,
     originalUser: null,

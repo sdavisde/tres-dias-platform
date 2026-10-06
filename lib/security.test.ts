@@ -23,6 +23,7 @@ function makeUser(permissions: Iterable<string>): User {
       weekendAttended: null,
       essentialsTrainingDate: null,
       specialGiftsAndSkills: null,
+      isClergy: false,
     },
     teamMemberInfo: null,
     originalUser: null,

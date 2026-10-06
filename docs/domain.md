@@ -78,6 +78,24 @@ The Pre-Weekend Couple is the primary administrative leadership for a given week
 
 In the portal, PWC members typically have admin-level access.
 
+### Secuela
+
+Secuela is the community gathering where members sign up to serve on the active weekend group's team,
+usually starting around 10 AM. Rectors lean on who attended when building their rosters. Each weekend group has one secuela event (`events.type =
+'secuela'`, linked by `weekend_group_id`), managed from `/admin/secuela`.
+
+Members sign in by scanning a QR code that opens `/secuela-signin` (one code works every time; sign-ins
+always go to the active weekend group). The rules live in `lib/secuela/attendance-window.ts`:
+
+- **Before secuela:** until 30 minutes before the start, the page says "Registration hasn't started
+  yet" and nothing is recorded.
+- **During secuela:** from 30 minutes before the start until the end time (start + 3 hours when no
+  end time is set), confirming marks the member **Attended Secuela**.
+- **After secuela:** the link keeps working; confirming marks the member **Wants to Serve**. A sign-in
+  made during secuela is never overwritten by a later one.
+
+The roster builder shows these as badges and lists attendees first.
+
 ---
 
 ## Weekend Numbering & Data Model

@@ -100,6 +100,8 @@ export function getEligibilityWarning(
 export function getEligibleRoleSummary(
   member: RosterBuilderCommunityMember
 ): string {
+  if (member.isClergy)
+    return 'Eligible for: Spiritual Director and non-head positions'
   if (member.rectorReadyStatus.criteria.hasServedAsRector)
     return 'Eligible for: All roles (Past Rector)'
   if (member.rectorReadyStatus.isReady)

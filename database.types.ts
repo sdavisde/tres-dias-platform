@@ -892,6 +892,7 @@ export type Database = {
           first_name: string | null
           gender: string | null
           id: string
+          is_clergy: boolean
           last_name: string | null
           phone_number: string | null
           profile_photo_path: string | null
@@ -907,6 +908,7 @@ export type Database = {
           first_name?: string | null
           gender?: string | null
           id: string
+          is_clergy?: boolean
           last_name?: string | null
           phone_number?: string | null
           profile_photo_path?: string | null
@@ -922,6 +924,7 @@ export type Database = {
           first_name?: string | null
           gender?: string | null
           id?: string
+          is_clergy?: boolean
           last_name?: string | null
           phone_number?: string | null
           profile_photo_path?: string | null

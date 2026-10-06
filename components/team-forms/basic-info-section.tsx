@@ -161,6 +161,37 @@ export function BasicInfoSection() {
               />
             )}
           </div>
+
+          <FormField
+            control={control}
+            name="basicInfo.is_clergy"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel>Are you ordained clergy?</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value ? 'yes' : 'no'}
+                    onValueChange={(val) => field.onChange(val === 'yes')}
+                    className="flex items-center space-x-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="clergy-yes" />
+                      <Label htmlFor="clergy-yes" className="font-normal">
+                        Yes
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="clergy-no" />
+                      <Label htmlFor="clergy-no" className="font-normal">
+                        No
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
     </div>
