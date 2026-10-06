@@ -1,3 +1,10 @@
+## [1.60.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.1...v1.60.0) (2026-10-06)
+
+### Features
+
+- **secuela:** show which group and secuela the sign-in page is for ([74a1b86](https://github.com/sdavisde/tres-dias-platform/commit/74a1b8635553fcc29c758ce03a8f3cb127482f50))
+- **shell:** admin link in the mobile top bar, fill gap below tab bar ([6fb06a6](https://github.com/sdavisde/tres-dias-platform/commit/6fb06a6f323d2e694b831a14947a0711abb9c4c7))
+
 ## [1.59.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.59.0...v1.59.1) (2026-10-05)
 
 ### Bug Fixes
