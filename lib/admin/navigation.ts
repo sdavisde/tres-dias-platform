@@ -6,6 +6,7 @@ import {
   Clock,
   CreditCard,
   Folder,
+  HandHeart,
   Landmark,
   LayoutGrid,
   Receipt,
@@ -46,6 +47,12 @@ export const adminNavItems: AdminNavItem[] = [
     title: 'Events',
     href: '/admin/events',
     icon: Clock,
+    permissionsNeeded: [Permission.READ_EVENTS],
+  },
+  {
+    title: 'Secuela',
+    href: '/admin/secuela',
+    icon: HandHeart,
     permissionsNeeded: [Permission.READ_EVENTS],
   },
   {
