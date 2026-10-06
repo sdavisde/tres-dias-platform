@@ -23,13 +23,6 @@ interface SecuelaBannerData {
   groupTitle: string
   when: string
   location: string | null
-  /** "9:30 AM CT": when sign-ins open. */
-  opensAt: string
-}
-
-function formatTime(datetime: string): string {
-  const formatted = formatDateTime(datetime)
-  return typeof formatted === 'string' ? formatted : formatted.timeStr
 }
 
 /**
@@ -85,7 +78,6 @@ async function getSecuelaBannerData(
       isNil(secuela.location) || secuela.location === ''
         ? null
         : secuela.location,
-    opensAt: formatTime(opensAt.toISOString()),
   }
 }
 
@@ -98,7 +90,7 @@ export async function SecuelaBanner({ user }: { user: User }) {
   const data = await getSecuelaBannerData(user)
   if (isNil(data)) return null
 
-  const { state, groupTitle, when, location, opensAt } = data
+  const { state, groupTitle, when, location } = data
   const heading =
     state.kind === 'upcoming'
       ? `${groupTitle} Secuela is coming up`
@@ -125,14 +117,13 @@ export async function SecuelaBanner({ user }: { user: User }) {
               {location}
             </p>
           )}
-          <p className="text-sm opacity-80">
-            {state.kind === 'upcoming' &&
-              `Bring your phone: sign-ins open at ${opensAt}, 30 minutes before it starts.`}
-            {state.kind === 'open' &&
-              'Sign in so the team knows you came and want to serve.'}
-            {state.kind === 'signed_in' &&
-              'Thank you! The rectors can see you were there.'}
-          </p>
+          {state.kind !== 'upcoming' && (
+            <p className="text-sm opacity-80">
+              {state.kind === 'open'
+                ? 'Sign in so the team knows you came and want to serve.'
+                : 'Thank you! The rectors can see you were there.'}
+            </p>
+          )}
         </div>
 
         {state.kind === 'open' && (
