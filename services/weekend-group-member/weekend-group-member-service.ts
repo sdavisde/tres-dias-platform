@@ -90,6 +90,13 @@ export async function getUserMedicalProfile(userId: string) {
   return Repository.getUserMedicalProfile(userId)
 }
 
+/**
+ * When the user signed in through the secuela link for a group, or null.
+ */
+export async function getSecuelaSignInForUser(groupId: string, userId: string) {
+  return Repository.findSecuelaSignInForUser(groupId, userId)
+}
+
 export type SecuelaSignInOutcome =
   /** Registration opens at `opensAt` (30 minutes before the secuela). */
   | {

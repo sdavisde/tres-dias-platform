@@ -541,6 +541,30 @@ export async function findSecuelaSignIn(
 }
 
 /**
+ * When the user signed in through the secuela link for a group (null if never,
+ * including when they have no membership row in that group).
+ */
+export async function findSecuelaSignInForUser(
+  groupId: string,
+  userId: string
+): Promise<Result<string, string | null>> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('weekend_group_members')
+    .select('attended_secuela_at')
+    .eq('group_id', groupId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (isSupabaseError(error)) {
+    return err(`Failed to fetch secuela sign-in: ${error.message}`)
+  }
+
+  return ok(data?.attended_secuela_at ?? null)
+}
+
+/**
  * Records the group member's secuela sign-in time.
  */
 export async function setSecuelaSignIn(

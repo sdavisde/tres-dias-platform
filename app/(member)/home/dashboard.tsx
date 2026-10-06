@@ -23,6 +23,7 @@ import { TeamMemberTodo, TeamMemberTodoLoading } from '@/components/team-todos'
 import { CommunityEncouragement } from '@/components/community-encouragement/CommunityEncouragement'
 import { CHARole, WeekendType } from '@/lib/weekend/types'
 import { ProfilePhotoAlert } from './profile-photo-alert'
+import { SecuelaBanner } from './secuela-banner'
 import {
   CurrentWeekendHero,
   CurrentWeekendHeroSkeleton,
@@ -59,6 +60,11 @@ export function Dashboard({ user, prayerWheelUrl }: DashboardProps) {
               </Typography>
             </div>
           </div>
+
+          {/* Renders nothing unless the active group's secuela is ahead */}
+          <Suspense fallback={null}>
+            <SecuelaBanner user={user} />
+          </Suspense>
 
           <Suspense fallback={<CurrentWeekendHeroSkeleton />}>
             <CurrentWeekendHero user={user} />
