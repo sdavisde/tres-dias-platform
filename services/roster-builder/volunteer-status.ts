@@ -1,3 +1,4 @@
+import { communityDayKey } from '@/lib/weekend/hub'
 import type { VolunteerStatus } from './types'
 
 /**
@@ -6,9 +7,9 @@ import type { VolunteerStatus } from './types'
  * - `startDate`: when the secuela event begins (ISO 8601 string)
  * - `endDate`: when the secuela event ends (ISO 8601 string, optional)
  *
- * If `endDate` is provided, a user who signed in on or before `endDate`
- * is considered to have attended. If `endDate` is null, any sign-in on
- * the same calendar day (UTC) as `startDate` counts as attendance.
+ * A sign-in counts as attendance when it falls on the secuela's day (in the
+ * community's timezone) and no later than `endDate`, or the end of that day
+ * when `endDate` is null.
  */
 export type SecuelaEvent = {
   startDate: string
@@ -23,13 +24,13 @@ export type SecuelaEvent = {
  * 1. If there is no secuela event defined, return `'none'` — we can't
  *    determine attendance without a reference event.
  * 2. If the user has no sign-in timestamp, return `'none'`.
- * 3. If the event has an end datetime:
- *    - Sign-in on or before the end datetime → `'attended_secuela'`
- *      (generous: early sign-ins before the event starts still count)
- *    - Sign-in after the end datetime → `'wants_to_serve'`
- * 4. If the event has no end datetime (start only):
- *    - Sign-in on the same calendar day (UTC) as the start → `'attended_secuela'`
- *    - Sign-in on a later day → `'wants_to_serve'`
+ * 3. Sign-in before the secuela's day → `'wants_to_serve'` (they signed up
+ *    ahead of time but haven't been to secuela yet).
+ * 4. Sign-in on the secuela's day (community timezone):
+ *    - With an end datetime: on or before it → `'attended_secuela'`
+ *      (generous: early arrivals that morning still count)
+ *    - Without one: any time that day → `'attended_secuela'`
+ * 5. Anything later → `'wants_to_serve'`
  */
 export function computeVolunteerStatus(
   signInTimestamp: string | null,
@@ -38,15 +39,17 @@ export function computeVolunteerStatus(
   if (secuelaEvent === null) return 'none'
   if (signInTimestamp === null) return 'none'
 
+  const signIn = new Date(signInTimestamp)
+  const eventDay = communityDayKey(new Date(secuelaEvent.startDate))
+  const signInDay = communityDayKey(signIn)
+
+  if (signInDay < eventDay) return 'wants_to_serve'
+
   if (secuelaEvent.endDate !== null) {
-    return signInTimestamp <= secuelaEvent.endDate
+    return signIn <= new Date(secuelaEvent.endDate)
       ? 'attended_secuela'
       : 'wants_to_serve'
   }
 
-  // No end date — give credit for the entire calendar day (UTC)
-  const eventDay = secuelaEvent.startDate.slice(0, 10)
-  const signInDay = signInTimestamp.slice(0, 10)
-
-  return signInDay <= eventDay ? 'attended_secuela' : 'wants_to_serve'
+  return signInDay === eventDay ? 'attended_secuela' : 'wants_to_serve'
 }
