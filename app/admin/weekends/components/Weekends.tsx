@@ -3,15 +3,7 @@
 import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { isNil } from 'lodash'
-import {
-  ArrowUpRight,
-  CalendarDays,
-  CalendarPlus,
-  ChevronDown,
-  CircleDollarSign,
-  Plus,
-  Settings2,
-} from 'lucide-react'
+import { ArrowUpRight, CalendarPlus, ChevronDown, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
@@ -149,9 +141,6 @@ function WeekendSubCard({
             <span className="sr-only">(leaves Admin)</span>
           </Link>
         </Button>
-        <p className="text-[13px] text-muted-foreground">
-          Candidates, roster, and schedule live there
-        </p>
       </div>
     </div>
   )
@@ -167,7 +156,6 @@ function FeeButton({
 }) {
   return (
     <Button variant="outline" size="sm" onClick={onClick}>
-      <CircleDollarSign className="h-4 w-4" />
       {isNil(fees) ? 'No fees set' : `Fee ${formatFee(fees.teamFee)}`}
     </Button>
   )
@@ -314,7 +302,6 @@ export function Weekends({
                   size="sm"
                   onClick={() => openEdit(activeGroup)}
                 >
-                  <Settings2 className="h-4 w-4" />
                   Group settings
                 </Button>
               )}
@@ -377,7 +364,6 @@ export function Weekends({
                   onClick={() => toggleSchedule(group.groupId)}
                   aria-expanded={expandedGroupIds.has(group.groupId)}
                 >
-                  <CalendarDays className="h-4 w-4" />
                   Schedule
                   <ChevronDown
                     className={cn(
@@ -393,7 +379,6 @@ export function Weekends({
                   size="sm"
                   onClick={() => openEdit(group)}
                 >
-                  <Settings2 className="h-4 w-4" />
                   Group settings
                 </Button>
               )}

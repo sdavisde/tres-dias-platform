@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
 import { isNil } from 'lodash'
-import { Pencil, Plus } from 'lucide-react'
+import { ChevronDown, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatEventWhen } from '@/lib/weekend/event-times'
 import {
@@ -12,7 +12,12 @@ import {
 } from '@/lib/weekend/standard-events'
 import type { Weekend } from '@/lib/weekend/types'
 import type { Event } from '@/services/events'
-import { EVENT_TYPE_LABELS, EventType } from '@/services/events/types'
+import {
+  EVENT_TYPE_COLORS,
+  EVENT_TYPE_LABELS,
+  EventType,
+  type EventTypeValue,
+} from '@/services/events/types'
 import { EventQuickEditPopover, type QuickEditTarget } from './event-quick-edit'
 
 /** Earliest first; events with no date go last. */
@@ -21,6 +26,8 @@ const byStart = (a: Event, b: Event) =>
 
 interface ScheduleRowProps {
   label: string
+  /** Colors the row's dot to match the Events page calendar. */
+  type: EventTypeValue
   /** The event on the calendar, or null when this slot is still open. */
   event: Event | null
   /** What a click creates when the slot is open. */
@@ -28,9 +35,33 @@ interface ScheduleRowProps {
   canEdit: boolean
 }
 
-/** One line of the schedule: label, when (or "Add"), and the editor. */
+/** Small colored dot for an event type; faded while the slot is empty. */
+export function EventTypeDot({
+  type,
+  muted = false,
+}: {
+  type: EventTypeValue
+  muted?: boolean
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'h-2 w-2 shrink-0 rounded-full',
+        EVENT_TYPE_COLORS[type],
+        muted && 'opacity-30'
+      )}
+    />
+  )
+}
+
+// 44px touch targets on phones, denser rows on desktop
+const ROW_CLASSES = 'flex min-h-11 items-center gap-2 px-2 text-sm md:min-h-9'
+
+/** One line of the schedule: label, when (or "Not scheduled"), and the editor. */
 function ScheduleRow({
   label,
+  type,
   event,
   createTarget,
   canEdit,
@@ -42,25 +73,23 @@ function ScheduleRow({
 
   const content = (
     <>
-      <span className="w-32 shrink-0 font-medium">{label}</span>
-      {isNil(event) ? (
-        <span
-          className={cn(
-            'flex items-center gap-1',
-            canEdit ? 'font-semibold text-primary' : 'text-muted-foreground'
-          )}
-        >
-          {canEdit && <Plus className="h-3.5 w-3.5" />}
-          {canEdit ? 'Add' : 'Not scheduled'}
-        </span>
-      ) : (
-        <span className="min-w-0 flex-1 truncate text-muted-foreground">
-          {when ?? 'No date'}
-        </span>
-      )}
-      {canEdit && !isNil(event) && (
-        <Pencil className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      )}
+      <EventTypeDot type={type} muted={isNil(event)} />
+      <span className="w-32 shrink-0 truncate font-medium" title={label}>
+        {label}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">
+        {isNil(event) ? 'Not scheduled' : (when ?? 'No date')}
+      </span>
+      {/* Hover-only on desktop; always shown on touch, where there's no hover */}
+      {canEdit &&
+        (isNil(event) ? (
+          <span className="flex shrink-0 items-center gap-0.5 font-semibold text-primary transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100">
+            <Plus className="h-3.5 w-3.5" />
+            Add
+          </span>
+        ) : (
+          <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100 md:group-focus-visible:opacity-100" />
+        ))}
     </>
   )
 
@@ -69,18 +98,17 @@ function ScheduleRow({
     : { mode: 'edit', event }
 
   if (!canEdit || isNil(target)) {
-    return (
-      <div className="flex min-h-11 items-center gap-2 px-2 text-sm">
-        {content}
-      </div>
-    )
+    return <div className={ROW_CLASSES}>{content}</div>
   }
 
   return (
     <EventQuickEditPopover target={target}>
       <button
         type="button"
-        className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-muted"
+        className={cn(
+          ROW_CLASSES,
+          'group w-full cursor-pointer rounded-md text-left hover:bg-muted'
+        )}
       >
         {content}
       </button>
@@ -127,6 +155,7 @@ export function WeekendEventsList({
             <ScheduleRow
               key={standard.type}
               label={EVENT_TYPE_LABELS[standard.type]}
+              type={standard.type}
               event={event}
               canEdit={canEdit}
               createTarget={{
@@ -175,11 +204,13 @@ export function GroupEventsStrip({
   const meetings = events
     .filter((e) => e.type === EventType.MEETING)
     .sort(byStart)
+  const [showMeetings, setShowMeetings] = useState(false)
 
   return (
-    <div className="grid gap-x-6 gap-y-1 rounded-lg border bg-card px-3 py-2 md:grid-cols-2">
+    <div className="grid items-start gap-x-6 gap-y-1 rounded-lg border bg-card px-3 py-2 md:grid-cols-2">
       <ScheduleRow
         label="Secuela"
+        type={EventType.SECUELA}
         event={secuela}
         canEdit={canEdit}
         createTarget={{
@@ -196,41 +227,73 @@ export function GroupEventsStrip({
           },
         }}
       />
-      <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 px-2 text-sm">
-        <span className="w-32 shrink-0 font-medium">Team meetings</span>
-        <span className="text-muted-foreground">
-          {meetings.length === 0 ? 'None yet' : `${meetings.length} scheduled`}
-        </span>
-        {meetings.length > 0 && (
-          <Link
-            href="/admin/events"
-            className="text-xs text-muted-foreground underline underline-offset-4"
-          >
-            View
-          </Link>
-        )}
-        {canEdit && (
-          <EventQuickEditPopover
-            target={{
-              mode: 'create',
-              draft: {
-                title: `Team Meeting ${meetings.length + 1}${suffix}`,
-                type: EventType.MEETING,
-                weekendGroupId: groupId,
-                weekendId: null,
-                datetime: null,
-                endDatetime: null,
-              },
-            }}
-          >
+      {/* Meetings keep to the right column, list included, so the space
+          under secuela stays empty on desktop */}
+      <div>
+        <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 px-2 text-sm md:min-h-9">
+          <EventTypeDot
+            type={EventType.MEETING}
+            muted={meetings.length === 0}
+          />
+          <span className="w-32 shrink-0 font-medium">Team meetings</span>
+          <span className="text-muted-foreground">
+            {meetings.length === 0
+              ? 'None yet'
+              : `${meetings.length} scheduled`}
+          </span>
+          {meetings.length > 0 && (
             <button
               type="button"
-              className="ml-auto flex min-h-11 cursor-pointer items-center gap-1 rounded-md px-2 font-semibold text-primary hover:bg-muted"
+              onClick={() => setShowMeetings((shown) => !shown)}
+              aria-expanded={showMeetings}
+              className="flex min-h-11 cursor-pointer items-center gap-0.5 rounded-md px-1 text-xs md:min-h-9 font-semibold text-primary hover:text-primary-hover"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Meeting
+              {showMeetings ? 'Hide' : 'Show'}
+              <ChevronDown
+                className={cn(
+                  'h-3.5 w-3.5 transition-transform',
+                  showMeetings && 'rotate-180'
+                )}
+              />
             </button>
-          </EventQuickEditPopover>
+          )}
+          {canEdit && (
+            <EventQuickEditPopover
+              target={{
+                mode: 'create',
+                draft: {
+                  title: `Team Meeting ${meetings.length + 1}${suffix}`,
+                  type: EventType.MEETING,
+                  weekendGroupId: groupId,
+                  weekendId: null,
+                  datetime: null,
+                  endDatetime: null,
+                },
+              }}
+            >
+              <button
+                type="button"
+                className="ml-auto flex min-h-11 cursor-pointer items-center gap-1 rounded-md px-2 font-semibold md:min-h-9 text-primary hover:bg-muted"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Meeting
+              </button>
+            </EventQuickEditPopover>
+          )}
+        </div>
+        {showMeetings && meetings.length > 0 && (
+          <div className="divide-y divide-divider border-t border-divider">
+            {meetings.map((meeting) => (
+              <ScheduleRow
+                key={meeting.id}
+                label={meeting.title ?? 'Team meeting'}
+                type={EventType.MEETING}
+                event={meeting}
+                createTarget={null}
+                canEdit={canEdit}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
