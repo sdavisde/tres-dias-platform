@@ -40,6 +40,9 @@ jobs:
       SITE_URL: http://localhost:3000
       E2E_BASE_URL: http://localhost:3000
       NEXT_PUBLIC_SENTRY_ENABLED: 'false'
+      # Reads skip the shared server cache, since specs rearrange cached rows (events, weekends) straight
+      # in the database. Locally the dev server does the same per request via a cookie (lib/cache/cached-read.ts).
+      E2E_DISABLE_SERVER_CACHE: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

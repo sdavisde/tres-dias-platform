@@ -221,6 +221,11 @@ never-subscribed, and restore it column for column in `afterAll` (`e2e/fixtures/
   test; the negative-case pattern of signing in mid-test is the deliberate exception, and it is
   counted against the rate-limit budget above when added.
 - Add cleanup for anything the spec writes, following the identifiable-rows convention above.
+- Rows read through the shared server cache (`lib/cache/cached-read.ts`: weekends, events, fees,
+  settings, roles) don't refresh when a fixture changes them directly, since no `updateTag` runs. A
+  spec that rearranges them calls `bypassServerCache(context, baseURL)` (`e2e/fixtures/secuela.ts`),
+  which sets a cookie the dev server honours; the nightly CI build sets `E2E_DISABLE_SERVER_CACHE=1`
+  instead. `e2e/secuela-banner.spec.ts` is the example.
 
 ## Where the merge gate lives
 

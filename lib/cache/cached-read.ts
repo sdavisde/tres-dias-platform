@@ -1,6 +1,8 @@
 import 'server-only'
 
 import { unstable_cache } from 'next/cache'
+import { cookies } from 'next/headers'
+import { E2E_NO_CACHE_COOKIE } from '@/lib/cache/e2e-bypass'
 import {
   createAdminClient,
   currentAuditScope,
@@ -36,6 +38,23 @@ import {
 
 type CacheKeyArg = string | number | boolean | null
 
+/**
+ * E2E specs that rearrange cached rows straight in the database (no write
+ * path, so no `updateTag`) read around the cache: on the dev server when the
+ * request carries {@link E2E_NO_CACHE_COOKIE}, and on the CI production build
+ * when `E2E_DISABLE_SERVER_CACHE=1` (set only by .github/workflows/e2e.yml).
+ */
+async function shouldBypassCache(): Promise<boolean> {
+  if (process.env.E2E_DISABLE_SERVER_CACHE === '1') return true
+  if (process.env.NODE_ENV !== 'development') return false
+  try {
+    return (await cookies()).get(E2E_NO_CACHE_COOKIE)?.value === '1'
+  } catch {
+    // Outside a request (nothing to opt in with)
+    return false
+  }
+}
+
 type CachedReadOptions<Args extends CacheKeyArg[]> = {
   /** Every tag whose `updateTag` must drop this entry. */
   tags: (...args: NoInfer<Args>) => string[]
@@ -52,6 +71,9 @@ export function defineCachedRead<Args extends CacheKeyArg[], T>(
     // Audit-only request correlation, resolved outside the cache scope
     // (request APIs are forbidden inside it).
     const audit = await currentAuditScope()
+    if (await shouldBypassCache()) {
+      return read(createAdminClient({ audit }), ...args)
+    }
     const cached = unstable_cache(
       async () => read(createAdminClient({ audit }), ...args),
       [name, ...args.map(String)],
