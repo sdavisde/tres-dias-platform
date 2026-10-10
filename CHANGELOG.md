@@ -1,3 +1,9 @@
+## [1.64.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.63.1...v1.64.0) (2026-10-10)
+
+### Features
+
+- **secuela:** invite members to volunteer after secuela ([caec27b](https://github.com/sdavisde/tres-dias-platform/commit/caec27b4257bf6e1a6d24163b81c037e95cedd27))
+
 ## [1.63.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.63.0...v1.63.1) (2026-10-10)
 
 ### Bug Fixes
