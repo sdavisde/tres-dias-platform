@@ -223,10 +223,7 @@ function CommunityMemberCard({
                   Attended Secuela
                 </Badge>
               </TooltipTrigger>
-              <TooltipContent>
-                Signed in at secuela, from 30 minutes before it started until it
-                ended
-              </TooltipContent>
+              <TooltipContent>Signed in during secuela</TooltipContent>
             </Tooltip>
           )}
           {member.volunteerStatus === 'wants_to_serve' && (

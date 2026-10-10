@@ -11,14 +11,14 @@ describe('computeVolunteerStatus', () => {
       expect(computeVolunteerStatus(null, secuelaEvent)).toBe('none')
     })
 
-    it('returns "attended_secuela" when sign-in is 30 minutes before the start', () => {
-      expect(computeVolunteerStatus('2026-04-11T13:30:00Z', secuelaEvent)).toBe(
+    it('returns "attended_secuela" when sign-in is exactly at the start time', () => {
+      expect(computeVolunteerStatus('2026-04-11T14:00:00Z', secuelaEvent)).toBe(
         'attended_secuela'
       )
     })
 
-    it('returns "wants_to_serve" when sign-in is earlier than 30 minutes before the start', () => {
-      expect(computeVolunteerStatus('2026-04-11T13:29:59Z', secuelaEvent)).toBe(
+    it('returns "wants_to_serve" when sign-in is before the start time', () => {
+      expect(computeVolunteerStatus('2026-04-11T13:59:59Z', secuelaEvent)).toBe(
         'wants_to_serve'
       )
     })

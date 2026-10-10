@@ -38,8 +38,7 @@ export default async function SecuelaSignInPage() {
               Registration hasn&apos;t started yet
             </h1>
             <p className="text-muted-foreground">
-              Secuela starts at {startTime}. Sign-ins open 30 minutes before it
-              begins.
+              Secuela starts at {startTime}. Come back once it begins.
             </p>
           </div>
         </div>

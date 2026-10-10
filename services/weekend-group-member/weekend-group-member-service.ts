@@ -98,7 +98,7 @@ export async function getSecuelaSignInForUser(groupId: string, userId: string) {
 }
 
 export type SecuelaSignInOutcome =
-  /** Registration opens at `opensAt` (30 minutes before the secuela). */
+  /** Registration opens at `opensAt` (when the secuela starts). */
   | {
       status: 'not_open'
       opensAt: string

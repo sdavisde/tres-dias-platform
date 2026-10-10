@@ -4,12 +4,12 @@ import {
 } from './attendance-window'
 
 describe('getSecuelaAttendanceWindow', () => {
-  it('opens 30 minutes early and closes at the end time', () => {
+  it('opens at the start time and closes at the end time', () => {
     const window = getSecuelaAttendanceWindow({
       startDate: '2026-04-11T14:00:00Z',
       endDate: '2026-04-11T20:00:00Z',
     })
-    expect(window.opensAt.toISOString()).toBe('2026-04-11T13:30:00.000Z')
+    expect(window.opensAt.toISOString()).toBe('2026-04-11T14:00:00.000Z')
     expect(window.closesAt.toISOString()).toBe('2026-04-11T20:00:00.000Z')
   })
 
@@ -30,10 +30,10 @@ describe('decideSecuelaSignIn', () => {
 
   it('refuses sign-ins before the window opens', () => {
     expect(
-      decideSecuelaSignIn(new Date('2026-04-11T13:00:00Z'), secuelaEvent, null)
+      decideSecuelaSignIn(new Date('2026-04-11T13:59:59Z'), secuelaEvent, null)
     ).toEqual({
       kind: 'not_open',
-      opensAt: new Date('2026-04-11T13:30:00Z'),
+      opensAt: new Date('2026-04-11T14:00:00Z'),
     })
   })
 

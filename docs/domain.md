@@ -87,9 +87,9 @@ usually starting around 10 AM. Rectors lean on who attended when building their 
 Members sign in by scanning a QR code that opens `/secuela-signin` (one code works every time; sign-ins
 always go to the active weekend group). The rules live in `lib/secuela/attendance-window.ts`:
 
-- **Before secuela:** until 30 minutes before the start, the page says "Registration hasn't started
-  yet" and nothing is recorded.
-- **During secuela:** from 30 minutes before the start until the end time (start + 3 hours when no
+- **Before secuela:** until the start time, the page says "Registration hasn't started yet" and
+  nothing is recorded.
+- **During secuela:** from the start time until the end time (start + 3 hours when no
   end time is set), confirming marks the member **Attended Secuela**.
 - **After secuela:** the link keeps working; confirming marks the member **Wants to Serve**. A sign-in
   made during secuela is never overwritten by a later one.

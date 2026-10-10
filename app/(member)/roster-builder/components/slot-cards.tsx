@@ -176,7 +176,7 @@ export function FilledSlotCard({
             </TooltipTrigger>
             <TooltipContent>
               {member.volunteerStatus === 'attended_secuela'
-                ? 'Signed in at secuela, from 30 minutes before it started until it ended'
+                ? 'Signed in during secuela'
                 : 'Signed up to serve after secuela ended'}
             </TooltipContent>
           </Tooltip>

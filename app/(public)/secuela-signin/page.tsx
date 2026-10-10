@@ -32,7 +32,7 @@ interface SecuelaDetails {
   /** "9:00 AM CT"; null when no secuela is scheduled. */
   startTime: string | null
   location: string | null
-  /** False until 30 minutes before the start; true when unscheduled. */
+  /** False until the start time; true when unscheduled. */
   isRegistrationOpen: boolean
 }
 
@@ -108,7 +108,7 @@ export default async function SecuelaSignInPage() {
     )
   }
 
-  // Sign-ins only open 30 minutes before the secuela starts
+  // Sign-ins only open once the secuela starts
   if (!secuela.isRegistrationOpen) {
     return <RegistrationNotOpen secuela={secuela} />
   }
@@ -171,9 +171,8 @@ function RegistrationNotOpen({ secuela }: { secuela: SecuelaDetails }) {
             Registration Hasn&apos;t Started Yet
           </CardTitle>
           <CardDescription className="text-base">
-            {secuela.groupTitle} Secuela starts at {secuela.startTime}. Sign-ins
-            open 30 minutes before it begins, so come back once you&apos;ve
-            arrived.
+            {secuela.groupTitle} Secuela starts at {secuela.startTime}. Come
+            back once it begins.
           </CardDescription>
           <SecuelaSummary secuela={secuela} />
         </CardHeader>

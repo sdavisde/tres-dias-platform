@@ -7,7 +7,7 @@ export type SecuelaSummary = {
   startsAt: string
   endsAt: string | null
   location: string | null
-  /** When sign-ins start counting as attendance (30 minutes early). */
+  /** When sign-ins start counting as attendance (the start time). */
   windowOpensAt: string
   /** When sign-ins stop counting as attendance. */
   windowClosesAt: string

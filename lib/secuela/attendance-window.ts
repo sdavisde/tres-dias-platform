@@ -12,15 +12,12 @@ export type SecuelaEvent = {
   endDate: string | null
 }
 
-/** Sign-ins this long before the start still count — people scan on arrival. */
-export const SECUELA_EARLY_SIGN_IN_MS = 30 * 60 * 1000
-
 /** Assumed length of a secuela that has no end time set. */
 export const SECUELA_DEFAULT_DURATION_MS = 3 * 60 * 60 * 1000
 
 /**
- * The window during which a sign-in counts as attending: 30 minutes before
- * the start through the end time (or start + 3 hours when there is none).
+ * The window during which a sign-in counts as attending: the start time
+ * through the end time (or start + 3 hours when there is none).
  */
 export function getSecuelaAttendanceWindow(secuelaEvent: SecuelaEvent): {
   opensAt: Date
@@ -33,7 +30,7 @@ export function getSecuelaAttendanceWindow(secuelaEvent: SecuelaEvent): {
       : start + SECUELA_DEFAULT_DURATION_MS
 
   return {
-    opensAt: new Date(start - SECUELA_EARLY_SIGN_IN_MS),
+    opensAt: new Date(start),
     closesAt: new Date(end),
   }
 }

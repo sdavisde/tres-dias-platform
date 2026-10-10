@@ -7,7 +7,6 @@ import {
   CalendarHeart,
   CalendarPlus,
   CheckCircle2,
-  Clock,
   HandHeart,
   Lock,
   MapPin,
@@ -118,7 +117,7 @@ export default function SecuelaClient({
     <div>
       <PageHeader
         title="Secuela"
-        description="Members sign in by scanning the QR code at secuela. Sign-ins count as attendance from 30 minutes before the start until it ends."
+        description="Members sign in by scanning the QR code at secuela. Sign-ins count as attendance from the start until it ends."
       />
 
       <HowSecuelaWorks secuela={active} />
@@ -212,11 +211,6 @@ function ActiveSecuela({
                 {secuela.location}
               </p>
             )}
-            <p className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4 shrink-0" />
-              Sign-ins count from {formatTime(secuela.windowOpensAt)} to{' '}
-              {formatTime(secuela.windowClosesAt)}
-            </p>
             {isNil(secuela.endsAt) && (
               <p className="text-muted-foreground">
                 No end time is set, so attendance closes 3 hours after the
@@ -249,8 +243,8 @@ function ActiveSecuela({
 function HowSecuelaWorks({ secuela }: { secuela: SecuelaSummary | null }) {
   // Generic wording until a secuela is scheduled
   const openTime = isNil(secuela)
-    ? '30 minutes before it starts'
-    : `${formatTime(secuela.windowOpensAt)} (30 minutes before it starts)`
+    ? 'the start'
+    : formatTime(secuela.windowOpensAt)
   const closeTime = isNil(secuela)
     ? 'it ends'
     : formatTime(secuela.windowClosesAt)
