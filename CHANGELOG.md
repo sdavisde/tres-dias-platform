@@ -1,3 +1,9 @@
+## [1.63.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.63.0...v1.63.1) (2026-10-10)
+
+### Bug Fixes
+
+- **secuela:** open sign-in at the start time instead of 30 minutes early ([d8392b6](https://github.com/sdavisde/tres-dias-platform/commit/d8392b66ad9a037e19e2c070a0702c20d48519fd))
+
 ## [1.63.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.62.1...v1.63.0) (2026-10-06)
 
 ### Features
