@@ -105,4 +105,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) e
 - [ ] Next, need to show some indicator on the payments page that a payment was deposited
 - [ ] Create delete user action
 - [ ] Add user account actions dropdown menu
+- [ ] Decide whether to bring back the "Volunteer to Serve" quick action on the member home page (commented out in
+      `app/(member)/home/dashboard.tsx`). The secuela banner now covers it: before secuela, during it, and for 30
+      days after (`SECUELA_SERVE_PROMPT_DURATION_MS`), so outside that window there is no way in from the home page
 - [ ] Help rectors choose people: create master roster page that can be arbitrarily filtered, or maybe where users can build their own queries? With templates / examples

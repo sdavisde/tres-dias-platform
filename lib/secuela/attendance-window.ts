@@ -16,6 +16,12 @@ export type SecuelaEvent = {
 export const SECUELA_DEFAULT_DURATION_MS = 3 * 60 * 60 * 1000
 
 /**
+ * How long after a secuela ends the member home page keeps inviting people
+ * who didn't come to say they're interested in serving.
+ */
+export const SECUELA_SERVE_PROMPT_DURATION_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
  * The window during which a sign-in counts as attending: the start time
  * through the end time (or start + 3 hours when there is none).
  */

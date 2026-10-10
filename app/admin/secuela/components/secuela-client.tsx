@@ -296,8 +296,8 @@ function HowSecuelaWorks({ secuela }: { secuela: SecuelaSummary | null }) {
           after it starts.
         </li>
         <li>
-          The &ldquo;Sign Up to Serve&rdquo; card on the member home page uses
-          the same link and follows the same rules.
+          The secuela banner on the member home page uses the same link and
+          follows the same rules.
         </li>
       </ul>
     </section>

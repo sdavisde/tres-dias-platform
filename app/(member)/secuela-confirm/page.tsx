@@ -63,7 +63,7 @@ export default async function SecuelaSignInPage() {
 
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Thank you for signing up to serve on {weekendLabel}!
+            Thank you for volunteering to serve on {weekendLabel}!
           </h1>
           <p className="text-muted-foreground">
             We are so grateful for your willingness to serve. You will receive

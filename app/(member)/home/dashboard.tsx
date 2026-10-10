@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 import {
   ArrowRight,
   File,
-  HandHeart,
   UserPlus,
   Shield,
   type LucideIcon,
@@ -110,12 +109,16 @@ function QuickActions({ prayerWheelUrl }: { prayerWheelUrl: string | null }) {
           title="Sponsor a Candidate"
           description="Nominate someone you know for an upcoming weekend"
         />
+        {/*
+          todo: hidden while the secuela banner above covers signing up to serve; decide whether to bring it
+          back (see the README TODOs). Restoring it needs `HandHeart` re-imported from lucide-react.
         <QuickActionCard
           href="/secuela-signin"
           icon={HandHeart}
-          title="Sign Up to Serve"
+          title="Volunteer to Serve"
           description="Sign in at secuela, or afterwards to volunteer for the next team"
         />
+        */}
         {!isNil(prayerWheelUrl) && (
           <QuickActionCard
             href={prayerWheelUrl}

@@ -34,6 +34,10 @@ interface SecuelaDetails {
   location: string | null
   /** False until the start time; true when unscheduled. */
   isRegistrationOpen: boolean
+  /** True once the secuela has ended. */
+  hasEnded: boolean
+  /** True only while the secuela is underway (sign-ins count as attendance). */
+  isHappening: boolean
 }
 
 /**
@@ -52,12 +56,13 @@ async function getActiveSecuela(): Promise<SecuelaDetails | null> {
   const events = Results.unwrapOr(await getCachedEventsForGroup(groupId), [])
   const secuela = events.find((event) => event.type === EventType.SECUELA)
   const datetime = formatDateTime(secuela?.datetime ?? null)
-  const opensAt = isNil(secuela?.datetime)
+  const attendanceWindow = isNil(secuela?.datetime)
     ? null
     : getSecuelaAttendanceWindow({
         startDate: secuela.datetime,
         endDate: secuela.endDatetime,
-      }).opensAt
+      })
+  const now = Date.now()
 
   return {
     groupTitle: formatWeekendGroupTitle(
@@ -68,7 +73,14 @@ async function getActiveSecuela(): Promise<SecuelaDetails | null> {
         ? datetime
         : `${datetime.dateStr} at ${datetime.timeStr}`,
     startTime: typeof datetime === 'string' ? null : datetime.timeStr,
-    isRegistrationOpen: isNil(opensAt) || Date.now() >= opensAt.getTime(),
+    isRegistrationOpen:
+      isNil(attendanceWindow) || now >= attendanceWindow.opensAt.getTime(),
+    hasEnded:
+      !isNil(attendanceWindow) && now > attendanceWindow.closesAt.getTime(),
+    isHappening:
+      !isNil(attendanceWindow) &&
+      now >= attendanceWindow.opensAt.getTime() &&
+      now <= attendanceWindow.closesAt.getTime(),
     location:
       isNil(secuela?.location) || secuela.location === ''
         ? null
@@ -120,21 +132,32 @@ export default async function SecuelaSignInPage() {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
             <Heart className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Sign Up to Serve</CardTitle>
+          <CardTitle className="text-2xl">Volunteer to Serve</CardTitle>
           <CardDescription className="text-base">
             Thank you for your willingness to serve on {secuela.groupTitle}!
-            {isLoggedIn
-              ? ' Tap the button below to sign up to serve.'
-              : ' Sign in or create an account to sign up.'}
+            {isLoggedIn ? (
+              <>
+                {' '}
+                Tap the button below to tell our leadership team you are
+                interested in serving.
+                <br />
+                This does not guarantee a spot on the team. We appreciate your
+                willing heart and understanding!
+              </>
+            ) : (
+              ' Sign in or create an account to sign up.'
+            )}
           </CardDescription>
-          <SecuelaSummary secuela={secuela} />
+          {!secuela.hasEnded && <SecuelaSummary secuela={secuela} />}
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {isLoggedIn ? (
             <Button asChild size="lg" className="w-full">
               <a href="/secuela-confirm">
                 <ArrowRight className="mr-2 h-4 w-4" />
-                Confirm Attendance
+                {secuela.isHappening
+                  ? 'Confirm Attendance'
+                  : 'Volunteer to Serve'}
               </a>
             </Button>
           ) : (
