@@ -8,12 +8,23 @@ import { computeVolunteerStatus } from '@/services/roster-builder/volunteer-stat
 import { getActiveWeekends } from '@/services/weekend/weekend-service'
 import { WeekendType } from '@/services/weekend'
 import * as Repository from './repository'
-import type { RawSecuelaEvent } from './repository'
-import type { SecuelaOverview, SecuelaSummary } from './types'
+import type { RawSecuelaEvent, RawSecuelaSignIn } from './repository'
+import type { SecuelaOverview, SecuelaSignIn, SecuelaSummary } from './types'
+
+function toSignIn(signIn: RawSecuelaSignIn): SecuelaSignIn {
+  const name = [signIn.users?.first_name, signIn.users?.last_name]
+    .filter((part) => !isNil(part) && part.trim() !== '')
+    .join(' ')
+  return {
+    userId: signIn.user_id,
+    name: name === '' ? 'Unnamed member' : name,
+    signedInAt: signIn.attended_secuela_at,
+  }
+}
 
 function summarize(
   event: RawSecuelaEvent & { datetime: string; weekend_group_id: string },
-  signIns: string[]
+  signIns: RawSecuelaSignIn[]
 ): SecuelaSummary {
   const secuelaEvent = {
     startDate: event.datetime,
@@ -21,12 +32,19 @@ function summarize(
   }
   const { opensAt, closesAt } = getSecuelaAttendanceWindow(secuelaEvent)
 
-  let attendedCount = 0
-  let wantsToServeCount = 0
-  for (const signIn of signIns) {
-    const status = computeVolunteerStatus(signIn, secuelaEvent)
-    if (status === 'attended_secuela') attendedCount++
-    else if (status === 'wants_to_serve') wantsToServeCount++
+  const attended: SecuelaSignIn[] = []
+  const wantsToServe: SecuelaSignIn[] = []
+  const sorted = [...signIns].sort((a, b) =>
+    a.attended_secuela_at.localeCompare(b.attended_secuela_at)
+  )
+  for (const signIn of sorted) {
+    const person = toSignIn(signIn)
+    const status = computeVolunteerStatus(
+      signIn.attended_secuela_at,
+      secuelaEvent
+    )
+    if (status === 'attended_secuela') attended.push(person)
+    else if (status === 'wants_to_serve') wantsToServe.push(person)
   }
 
   return {
@@ -39,14 +57,16 @@ function summarize(
     location: event.location,
     windowOpensAt: opensAt.toISOString(),
     windowClosesAt: closesAt.toISOString(),
-    attendedCount,
-    wantsToServeCount,
+    attendedCount: attended.length,
+    wantsToServeCount: wantsToServe.length,
+    attended,
+    wantsToServe,
   }
 }
 
 /**
- * The active group's secuela and every earlier one, each with how many
- * members attended versus signed up to serve outside the event.
+ * The active group's secuela and every earlier one, each with who attended
+ * versus signed up to serve outside the event.
  */
 export async function getSecuelaOverview(
   now: Date = new Date()
@@ -84,10 +104,10 @@ export async function getSecuelaOverview(
   const signInsResult = await Repository.findSecuelaSignIns([...byGroup.keys()])
   if (isErr(signInsResult)) return signInsResult
 
-  const signInsByGroup = new Map<string, string[]>()
+  const signInsByGroup = new Map<string, RawSecuelaSignIn[]>()
   for (const row of signInsResult.data) {
     const list = signInsByGroup.get(row.group_id) ?? []
-    list.push(row.attended_secuela_at)
+    list.push(row)
     signInsByGroup.set(row.group_id, list)
   }
 

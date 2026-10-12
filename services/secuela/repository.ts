@@ -40,20 +40,28 @@ export async function findAllSecuelaEvents(): Promise<
   return ok((data ?? []) as RawSecuelaEvent[])
 }
 
+export type RawSecuelaSignIn = {
+  group_id: string
+  user_id: string
+  attended_secuela_at: string
+  users: { first_name: string | null; last_name: string | null } | null
+}
+
 /**
- * Secuela sign-in times for members of the given groups (signed-in rows only).
+ * Secuela sign-ins for members of the given groups (signed-in rows only),
+ * with each member's name.
  */
 export async function findSecuelaSignIns(
   groupIds: string[]
-): Promise<
-  Result<string, Array<{ group_id: string; attended_secuela_at: string }>>
-> {
+): Promise<Result<string, RawSecuelaSignIn[]>> {
   if (groupIds.length === 0) return ok([])
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('weekend_group_members')
-    .select('group_id, attended_secuela_at')
+    .select(
+      'group_id, user_id, attended_secuela_at, users(first_name, last_name)'
+    )
     .in('group_id', groupIds)
     .not('attended_secuela_at', 'is', null)
 
@@ -61,7 +69,5 @@ export async function findSecuelaSignIns(
     return err(`Failed to fetch secuela sign-ins: ${error.message}`)
   }
 
-  return ok(
-    (data ?? []) as Array<{ group_id: string; attended_secuela_at: string }>
-  )
+  return ok((data ?? []) as RawSecuelaSignIn[])
 }

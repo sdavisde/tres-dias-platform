@@ -22,7 +22,6 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
-import { StatTile } from '@/components/ui/stat-tile'
 import {
   Table,
   TableBody,
@@ -40,6 +39,7 @@ import { formatDateTime } from '@/lib/utils'
 import { formatWeekendGroupTitle } from '@/lib/weekend'
 import type { SecuelaOverview, SecuelaSummary } from '@/services/secuela'
 import { SecuelaQrCode } from './secuela-qr-code'
+import { SignInsTile } from './sign-ins-tile'
 
 interface SecuelaClientProps {
   /** Null when the overview failed to load. */
@@ -220,8 +220,16 @@ function ActiveSecuela({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatTile value={secuela.attendedCount} label="Attended" />
-            <StatTile value={secuela.wantsToServeCount} label="Want to serve" />
+            <SignInsTile
+              label="Attended"
+              signIns={secuela.attended}
+              show="time"
+            />
+            <SignInsTile
+              label="Want to serve"
+              signIns={secuela.wantsToServe}
+              show="day"
+            />
           </div>
         </div>
 

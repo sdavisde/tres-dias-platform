@@ -5,4 +5,4 @@
  * the group member service (`markSecuelaAttendance`).
  */
 export { getSecuelaOverview } from './secuela-service'
-export type { SecuelaOverview, SecuelaSummary } from './types'
+export type { SecuelaOverview, SecuelaSignIn, SecuelaSummary } from './types'
