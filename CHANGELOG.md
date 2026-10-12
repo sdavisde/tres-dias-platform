@@ -1,3 +1,10 @@
+## [1.66.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.65.0...v1.66.0) (2026-10-12)
+
+### Features
+
+- **admin:** reorder sidebar with member-site link up top ([a2aafe0](https://github.com/sdavisde/tres-dias-platform/commit/a2aafe0f9fd4b6c1191c3c28d7863f081d883e98))
+- **secuela:** show who signed in behind the admin stat tiles ([7234961](https://github.com/sdavisde/tres-dias-platform/commit/723496129cc5983b9679eb00ecbf3c09c218fe3d))
+
 ## [1.65.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.64.0...v1.65.0) (2026-10-12)
 
 ### Features
