@@ -44,10 +44,10 @@ describe('adminNavItems', () => {
       'People',
       'Community',
       'Files',
-      'Site settings',
-      'Billing',
       'Security',
       'Reports',
+      'Billing',
+      'Site settings',
     ])
   })
 
@@ -68,6 +68,14 @@ describe('adminNavItems', () => {
       Security: '/admin/security',
       Reports: '/admin/reports',
     })
+  })
+
+  it('pins Billing and Site settings to the footer', () => {
+    expect(
+      adminNavItems
+        .filter((item) => item.footer === true)
+        .map((item) => item.title)
+    ).toEqual(['Billing', 'Site settings'])
   })
 
   it('marks only Reports as SOON', () => {
@@ -154,7 +162,12 @@ describe('getVisibleNavItems', () => {
   it('returns serializable items without icon components', () => {
     const user = makeUser([Permission.FULL_ACCESS])
     for (const item of getVisibleNavItems(user)) {
-      expect(Object.keys(item).sort()).toEqual(['href', 'soon', 'title'])
+      expect(Object.keys(item).sort()).toEqual([
+        'footer',
+        'href',
+        'soon',
+        'title',
+      ])
       expect(typeof item.title).toBe('string')
       expect(typeof item.href).toBe('string')
     }

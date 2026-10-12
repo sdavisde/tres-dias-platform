@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { House, type LucideIcon } from 'lucide-react'
 import { isNil } from 'lodash'
 import { NavUser } from '@/components/admin/sidebar/nav-user'
 import {
@@ -30,6 +30,8 @@ type AdminSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AdminSidebar({ items, ...props }: AdminSidebarProps) {
   const pathname = usePathname()
+  const mainItems = items.filter((item) => item.footer !== true)
+  const footerItems = items.filter((item) => item.footer === true)
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -55,67 +57,90 @@ export function AdminSidebar({ items, ...props }: AdminSidebarProps) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {items.map((item) => {
-              const Icon = getNavIcon(item.href)
-              const isActive = isNavItemActive(item.href, pathname)
-              if (item.soon === true) {
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      aria-disabled
-                      className="text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground/70 active:bg-transparent"
-                      tooltip={`${item.title} — coming soon`}
-                    >
-                      {!isNil(Icon) && <Icon />}
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                    <SidebarMenuBadge className="text-[10px] font-bold tracking-wider text-muted-foreground/70">
-                      SOON
-                    </SidebarMenuBadge>
-                  </SidebarMenuItem>
-                )
-              }
-              return (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    tooltip={item.title}
-                    // Resting nav text is quieter than the sidebar's own
-                    // foreground; the active item carries the weight instead.
-                    className={
-                      isActive ? 'font-semibold' : 'text-nav-foreground'
-                    }
-                  >
-                    <Link href={item.href}>
-                      {!isNil(Icon) && <Icon />}
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )
-            })}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Back to member site">
+                <Link href="/home">
+                  <House />
+                  <span>Back to member site</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarMenu>
+            {mainItems.map((item) => (
+              <AdminNavMenuItem
+                key={item.href}
+                item={item}
+                icon={getNavIcon(item.href)}
+                isActive={isNavItemActive(item.href, pathname)}
+              />
+            ))}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Back to member site"
-              className="text-nav-foreground"
-            >
-              <Link href="/home">
-                <ArrowLeft />
-                <span>Back to member site</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {footerItems.length > 0 && (
+          <SidebarMenu>
+            {footerItems.map((item) => (
+              <AdminNavMenuItem
+                key={item.href}
+                item={item}
+                icon={getNavIcon(item.href)}
+                isActive={isNavItemActive(item.href, pathname)}
+              />
+            ))}
+          </SidebarMenu>
+        )}
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+function AdminNavMenuItem({
+  item,
+  icon: Icon,
+  isActive,
+}: {
+  item: SerializableNavItem
+  icon: LucideIcon | undefined
+  isActive: boolean
+}) {
+  if (item.soon === true) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          aria-disabled
+          className="text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground/70 active:bg-transparent"
+          tooltip={`${item.title} — coming soon`}
+        >
+          {!isNil(Icon) && <Icon />}
+          <span>{item.title}</span>
+        </SidebarMenuButton>
+        <SidebarMenuBadge className="text-[10px] font-bold tracking-wider text-muted-foreground/70">
+          SOON
+        </SidebarMenuBadge>
+      </SidebarMenuItem>
+    )
+  }
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        tooltip={item.title}
+        // Resting nav text is quieter than the sidebar's own
+        // foreground; the active item carries the weight instead.
+        className={isActive ? 'font-semibold' : 'text-nav-foreground'}
+      >
+        <Link href={item.href}>
+          {!isNil(Icon) && <Icon />}
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   )
 }

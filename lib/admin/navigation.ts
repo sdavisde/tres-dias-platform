@@ -24,6 +24,8 @@ export type AdminNavItem = {
   permissionsNeeded: Permission[]
   /** Marked "SOON" in the sidebar and rendered as a non-link. */
   soon?: boolean
+  /** Rendered at the bottom of the sidebar, just above the user row. */
+  footer?: boolean
 }
 
 /**
@@ -80,18 +82,6 @@ export const adminNavItems: AdminNavItem[] = [
     permissionsNeeded: [],
   },
   {
-    title: 'Site settings',
-    href: '/admin/settings',
-    icon: Settings2,
-    permissionsNeeded: [Permission.FULL_ACCESS],
-  },
-  {
-    title: 'Billing',
-    href: '/admin/billing',
-    icon: Receipt,
-    permissionsNeeded: [Permission.MANAGE_BILLING],
-  },
-  {
     title: 'Security',
     href: '/admin/security',
     icon: ShieldCheck,
@@ -103,6 +93,20 @@ export const adminNavItems: AdminNavItem[] = [
     icon: BarChart3,
     permissionsNeeded: [],
     soon: true,
+  },
+  {
+    title: 'Billing',
+    href: '/admin/billing',
+    icon: Receipt,
+    permissionsNeeded: [Permission.MANAGE_BILLING],
+    footer: true,
+  },
+  {
+    title: 'Site settings',
+    href: '/admin/settings',
+    icon: Settings2,
+    permissionsNeeded: [Permission.FULL_ACCESS],
+    footer: true,
   },
 ]
 
@@ -128,11 +132,12 @@ export type SerializableNavItem = {
   title: string
   href: string
   soon?: boolean
+  footer?: boolean
 }
 
 export function getVisibleNavItems(user: User): SerializableNavItem[] {
   return filterNavByPermission(adminNavItems, user).map(
-    ({ title, href, soon }) => ({ title, href, soon })
+    ({ title, href, soon, footer }) => ({ title, href, soon, footer })
   )
 }
 
