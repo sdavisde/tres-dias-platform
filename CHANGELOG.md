@@ -1,3 +1,13 @@
+## [1.65.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.64.0...v1.65.0) (2026-10-12)
+
+### Features
+
+- **roster-builder:** show full person profiles and richer community filters ([9844b73](https://github.com/sdavisde/tres-dias-platform/commit/9844b738bf875d4ca0f9891f92785cce90e8156c))
+
+### Bug Fixes
+
+- **roster-builder:** exclude past rectors from the Rector Ready filter ([6ded767](https://github.com/sdavisde/tres-dias-platform/commit/6ded767b85a5124103767aae5f36fc3285361ff3))
+
 ## [1.64.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.63.1...v1.64.0) (2026-10-10)
 
 ### Features
