@@ -510,7 +510,11 @@ export function CommunitySheet({
     if (filters.hasBeenSectionHead)
       list = list.filter((m) => m.hasBeenSectionHead)
     if (filters.isRectorReady)
-      list = list.filter((m) => m.rectorReadyStatus.isReady)
+      list = list.filter(
+        (m) =>
+          m.rectorReadyStatus.isReady &&
+          !m.rectorReadyStatus.criteria.hasServedAsRector
+      )
     if (filters.isClergy) list = list.filter((m) => m.isClergy)
     if (filters.experienceLevel !== 'all') {
       list = list.filter((m) => {
