@@ -25,10 +25,12 @@ import type {
 import {
   buildInitialCategories,
   generateSlotId,
+  getMemberAssignments,
 } from './components/roster-builder-types'
 import { StatsHeader } from './components/stats-header'
 import { KanbanColumn } from './components/kanban-column'
 import { Toolbar } from './components/toolbar'
+import { PersonProfileSheet } from './components/person-profile-sheet'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
@@ -45,6 +47,18 @@ export function RosterBuilderBoard({
   )
   const [search, setSearch] = useState('')
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
+  // The id outlives `profileOpen` so the sheet keeps its content while it
+  // animates closed.
+  const [profileMemberId, setProfileMemberId] = useState<string | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
+
+  const memberAssignments = useMemo(
+    () => getMemberAssignments(categories),
+    [categories]
+  )
+  const profileMember = isNil(profileMemberId)
+    ? null
+    : (communityMembers.find((m) => m.id === profileMemberId) ?? null)
 
   // Derived: unassigned community members
   const availableMembers = useMemo(() => {
@@ -465,6 +479,10 @@ export function RosterBuilderBoard({
                     onFinalize={handleFinalize}
                     onDrop={handleDrop}
                     onAddSlot={handleAddSlot}
+                    onViewMember={(memberId) => {
+                      setProfileMemberId(memberId)
+                      setProfileOpen(true)
+                    }}
                   />
                 ))
               )}
@@ -473,6 +491,17 @@ export function RosterBuilderBoard({
           </ScrollArea>
         </div>
       </div>
+
+      <PersonProfileSheet
+        open={profileOpen}
+        member={profileMember}
+        assignment={
+          isNil(profileMemberId)
+            ? undefined
+            : memberAssignments.get(profileMemberId)
+        }
+        onClose={() => setProfileOpen(false)}
+      />
     </div>
   )
 }

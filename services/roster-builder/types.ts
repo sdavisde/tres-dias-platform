@@ -48,6 +48,10 @@ export type RosterBuilderCommunityMember = {
   church: string | null
   gender: string | null
   isClergy: boolean
+  /** The weekend they walked, in the stored `DTTD#11` form. */
+  weekendAttended: string | null
+  essentialsTrainingDate: string | null
+  skills: string[]
 
   // Experience data
   experience: UserExperience[]

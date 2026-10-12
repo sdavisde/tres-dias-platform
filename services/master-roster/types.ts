@@ -89,6 +89,9 @@ export type RawCommunityUser = {
   church_affiliation: string | null
   gender: string | null
   is_clergy: boolean
+  weekend_attended: string | null
+  essentials_training_date: string | null
+  special_gifts_and_skills: string[] | null
   users_experience: Array<Tables<'users_experience'>>
   profile_photo_path: string | null
   profile_photo_updated_at: string | null

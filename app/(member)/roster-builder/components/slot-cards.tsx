@@ -14,6 +14,7 @@ import {
   Mail,
   Award,
   Cross,
+  Info,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -73,11 +74,13 @@ export function FilledSlotCard({
   onRemove,
   onFinalize,
   onDrop,
+  onViewDetails,
 }: {
   slot: RosterSlot
   onRemove: () => void
   onFinalize?: () => void
   onDrop?: () => void
+  onViewDetails: () => void
 }) {
   const assignment = slot.assignment
   if (assignment.type === 'empty') return null
@@ -88,6 +91,16 @@ export function FilledSlotCard({
     <div className="relative rounded-md border bg-card p-4">
       {/* Top-right actions */}
       <div className="absolute right-1 top-1 flex items-center">
+        <button
+          onClick={onViewDetails}
+          className={cn(
+            SLOT_ACTION_CLASS,
+            'hover:bg-muted hover:text-foreground'
+          )}
+          aria-label={`View details for ${fullName(member)}`}
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
         {isDraft ? (
           <button
             onClick={onRemove}
@@ -127,7 +140,7 @@ export function FilledSlotCard({
       </div>
 
       {/* Role label + draft badge */}
-      <div className="mb-2 flex items-start gap-2 pr-9 md:pr-7">
+      <div className="mb-2 flex items-start gap-2 pr-[5.5rem] md:pr-[3.75rem]">
         <p className="text-xs font-semibold text-muted-foreground leading-snug">
           {slotLabel(slot)}
         </p>

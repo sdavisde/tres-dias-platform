@@ -33,6 +33,7 @@ export function KanbanColumn({
   onFinalize,
   onDrop,
   onAddSlot,
+  onViewMember,
 }: {
   category: RoleCategory
   availableMembers: RosterBuilderCommunityMember[]
@@ -43,6 +44,7 @@ export function KanbanColumn({
   onFinalize: (slotId: string) => void
   onDrop: (slotId: string) => void
   onAddSlot: (categoryName: string, role: CHARole) => void
+  onViewMember: (memberId: string) => void
 }) {
   const [addOpen, setAddOpen] = useState(false)
   // Phones stack the columns, so they start collapsed to a list of
@@ -134,6 +136,11 @@ export function KanbanColumn({
                   onRemove={() => onRemove(slot.id)}
                   onFinalize={() => onFinalize(slot.id)}
                   onDrop={() => onDrop(slot.id)}
+                  onViewDetails={() => {
+                    if (slot.assignment.type !== 'empty') {
+                      onViewMember(slot.assignment.member.id)
+                    }
+                  }}
                 />
               ) : (
                 <EmptySlotCard

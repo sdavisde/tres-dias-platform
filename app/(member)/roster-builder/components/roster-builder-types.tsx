@@ -44,6 +44,12 @@ export type RosterBuilderBoardProps = {
 
 export type FilterMode = 'all' | 'filled' | 'empty'
 
+/** Where a community member sits on the roster being built. */
+export type MemberAssignment = {
+  type: 'draft' | 'finalized'
+  slotLabel: string
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 export function fullName(m: RosterBuilderCommunityMember): string {
@@ -54,6 +60,27 @@ export function slotLabel(slot: RosterSlot): string {
   if (slot.rollo != null) return `${slot.role} — ${slot.rollo}`
   if (slot.role === CHARole.TABLE_LEADER) return `${slot.role} — Silent`
   return slot.role
+}
+
+/**
+ * Maps each member on the board to their slot. Read from the live categories
+ * rather than the member's server-side status, which goes stale as soon as
+ * someone is assigned or removed here.
+ */
+export function getMemberAssignments(
+  categories: RoleCategory[]
+): Map<string, MemberAssignment> {
+  const assignments = new Map<string, MemberAssignment>()
+  for (const cat of categories) {
+    for (const slot of cat.slots) {
+      if (slot.assignment.type === 'empty') continue
+      assignments.set(slot.assignment.member.id, {
+        type: slot.assignment.type,
+        slotLabel: slotLabel(slot),
+      })
+    }
+  }
+  return assignments
 }
 
 export function getExperienceLabel(level: 1 | 2 | 3): {
