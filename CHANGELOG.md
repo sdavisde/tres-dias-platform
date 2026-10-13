@@ -1,3 +1,9 @@
+## [1.68.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.67.0...v1.68.0) (2026-10-13)
+
+### Features
+
+- **community:** add member Community page with roster and board tabs ([99724f5](https://github.com/sdavisde/tres-dias-platform/commit/99724f5ed04a435bcd84e5fb290f67821a538336))
+
 ## [1.67.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.66.0...v1.67.0) (2026-10-13)
 
 ### Features
