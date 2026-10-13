@@ -25,8 +25,10 @@ import {
 import type { GroupFees } from '@/lib/payments/group-fees'
 import { getEventsForWeekendGroup } from '@/services/events/events-service'
 import type { Event } from '@/services/events'
+import { getSecuelaOverview } from '@/services/secuela'
 import { AdminBreadcrumbs } from '@/components/admin/breadcrumbs'
 import { Weekends } from './components/Weekends'
+import type { SecuelaCounts } from './components/weekend-schedule'
 
 export default async function WeekendsPage() {
   const { user, canEdit } = await guardAdminPage({
@@ -132,11 +134,26 @@ export default async function WeekendsPage() {
     ...buckets.upcoming,
   ]
   const eventsByGroupId: Record<string, Event[]> = {}
+  let activeSecuelaCounts: SecuelaCounts | null = null
   if (canReadEvents) {
-    const eventsResults = await Promise.all(
-      scheduledGroups.map((group) => getEventsForWeekendGroup(group.groupId))
-    )
-    Results.logFailures(...eventsResults)
+    const [secuelaResult, ...eventsResults] = await Promise.all([
+      getSecuelaOverview(),
+      ...scheduledGroups.map((group) =>
+        getEventsForWeekendGroup(group.groupId)
+      ),
+    ])
+    Results.logFailures(secuelaResult, ...eventsResults)
+    // The secuela line only belongs on the active group's schedule
+    const activeSecuela = Results.toNullable(secuelaResult)?.active
+    if (
+      !isNil(activeSecuela) &&
+      activeSecuela.groupId === buckets.active?.groupId
+    ) {
+      activeSecuelaCounts = {
+        attended: activeSecuela.attendedCount,
+        wantsToServe: activeSecuela.wantsToServeCount,
+      }
+    }
     scheduledGroups.forEach((group, i) => {
       const events = Results.toNullable(eventsResults[i])
       if (!isNil(events)) eventsByGroupId[group.groupId] = events
@@ -174,6 +191,7 @@ export default async function WeekendsPage() {
           canReadPayments={userHasPermission(user, [Permission.READ_PAYMENTS])}
           eventsByGroupId={eventsByGroupId}
           canEditEvents={userHasPermission(user, [Permission.WRITE_EVENTS])}
+          activeSecuelaCounts={activeSecuelaCounts}
         />
       </div>
     </>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { isNil } from 'lodash'
 import { ChevronDown, Pencil, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -180,11 +181,16 @@ export function WeekendEventsList({
   )
 }
 
+/** How many members signed in for a group's secuela, split by status. */
+export type SecuelaCounts = { attended: number; wantsToServe: number }
+
 interface GroupEventsStripProps {
   groupId: string
   groupNumber: number | null
   events: Event[]
   canEdit: boolean
+  /** Shown under the secuela once it has started; null hides the line. */
+  secuelaCounts?: SecuelaCounts | null
 }
 
 /**
@@ -196,6 +202,7 @@ export function GroupEventsStrip({
   groupNumber,
   events,
   canEdit,
+  secuelaCounts = null,
 }: GroupEventsStripProps) {
   const suffix = isNil(groupNumber) ? '' : ` #${groupNumber}`
   const groupPrefix = isNil(groupNumber) ? '' : `DTTD #${groupNumber} `
@@ -205,30 +212,55 @@ export function GroupEventsStrip({
     .filter((e) => e.type === EventType.MEETING)
     .sort(byStart)
   const [showMeetings, setShowMeetings] = useState(false)
+  // Captured once so the line doesn't appear mid-session
+  const [now] = useState(() => Date.now())
+  const secuelaStarted =
+    !isNil(secuela?.datetime) && new Date(secuela.datetime).getTime() <= now
 
   return (
     <div className="grid items-start gap-x-6 gap-y-1 rounded-lg border bg-card px-3 py-2 md:grid-cols-2">
-      <ScheduleRow
-        label="Secuela"
-        type={EventType.SECUELA}
-        event={secuela}
-        canEdit={canEdit}
-        createTarget={{
-          mode: 'create',
-          draft: {
-            title: `${groupPrefix}Secuela`,
-            type: EventType.SECUELA,
-            weekendGroupId: groupId,
-            weekendId: null,
-            datetime: null,
-            endDatetime: null,
-            // Secuelas usually start mid-morning
-            defaultTime: '10:00',
-          },
-        }}
-      />
+      <div>
+        <ScheduleRow
+          label="Secuela"
+          type={EventType.SECUELA}
+          event={secuela}
+          canEdit={canEdit}
+          createTarget={{
+            mode: 'create',
+            draft: {
+              title: `${groupPrefix}Secuela`,
+              type: EventType.SECUELA,
+              weekendGroupId: groupId,
+              weekendId: null,
+              datetime: null,
+              endDatetime: null,
+              // Secuelas usually start mid-morning
+              defaultTime: '10:00',
+            },
+          }}
+        />
+        {secuelaStarted && !isNil(secuelaCounts) && (
+          <Link
+            href="/admin/secuela"
+            className="flex min-h-11 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-muted md:min-h-8"
+          >
+            {/* Lines up with the row's label, past the dot */}
+            <span aria-hidden className="w-2 shrink-0" />
+            <span>
+              <span className="font-semibold text-foreground tabular-nums">
+                {secuelaCounts.attended}
+              </span>{' '}
+              attended ·{' '}
+              <span className="font-semibold text-foreground tabular-nums">
+                {secuelaCounts.wantsToServe}
+              </span>{' '}
+              want to serve
+            </span>
+          </Link>
+        )}
+      </div>
       {/* Meetings keep to the right column, list included, so the space
-          under secuela stays empty on desktop */}
+          under secuela is left for its sign-in counts on desktop */}
       <div>
         <div className="flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 px-2 text-sm md:min-h-9">
           <EventTypeDot

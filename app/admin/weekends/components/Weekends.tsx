@@ -30,7 +30,11 @@ import type { FeeDefaults } from '@/services/fees'
 import { WeekendSidebar } from './WeekendSidebar'
 import { SetActiveWeekendButton } from './SetActiveWeekendButton'
 import { GroupFeesDialog } from './GroupFeesDialog'
-import { GroupEventsStrip, WeekendEventsList } from './weekend-schedule'
+import {
+  GroupEventsStrip,
+  WeekendEventsList,
+  type SecuelaCounts,
+} from './weekend-schedule'
 import type { Event } from '@/services/events'
 
 interface WeekendsProps {
@@ -48,6 +52,8 @@ interface WeekendsProps {
   /** Events of the active and planning groups; a group missing here shows no schedule. */
   eventsByGroupId?: Record<string, Event[]>
   canEditEvents?: boolean
+  /** Sign-in counts for the active group's secuela; null when unknown. */
+  activeSecuelaCounts?: SecuelaCounts | null
 }
 
 const groupNumber = (group: WeekendGroupWithId): number | null =>
@@ -196,6 +202,7 @@ export function Weekends({
   canReadPayments = false,
   eventsByGroupId = {},
   canEditEvents = false,
+  activeSecuelaCounts = null,
 }: WeekendsProps) {
   const [selectedGroup, setSelectedGroup] = useState<WeekendGroupWithId | null>(
     null
@@ -314,6 +321,7 @@ export function Weekends({
                 groupNumber={groupNumber(activeGroup)}
                 events={activeEvents}
                 canEdit={canEditEvents}
+                secuelaCounts={activeSecuelaCounts}
               />
             </div>
           )}
