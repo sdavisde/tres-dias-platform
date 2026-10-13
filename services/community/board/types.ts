@@ -13,7 +13,6 @@ export const BOARD_ROLE_SORT_ORDER = [
   'Recording Secretary',
   'Treasurer',
   'Community Spiritual Director',
-  'Pre Weekend Couple',
   'At-Large Members',
 ]
 
@@ -22,9 +21,10 @@ export const BOARD_ROLE_SORT_ORDER = [
  * hardcoded list, so a new committee shows up without a code change. Two
  * carve-outs keep that honest:
  *
- * - `BOARD_ROLE_SORT_ORDER` members are excluded. `Pre Weekend Couple` and
- *   `At-Large Members` are COMMITTEE-typed (they take multiple assignees) but
- *   they are board positions and already have their own card.
+ * - `BOARD_ROLE_SORT_ORDER` members are excluded. `At-Large Members` is
+ *   COMMITTEE-typed (it takes multiple assignees) but it is a board position
+ *   and already has its own card. `Pre Weekend Couple` is not on the board,
+ *   so it lands here with the other committees.
  * - {@link NON_COMMITTEE_ROLE_LABELS} are excluded. `Full Access` is
  *   COMMITTEE-typed purely so several people can hold it; it is an access
  *   level, not a group the community would recognise.

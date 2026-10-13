@@ -212,16 +212,6 @@ export function RoleAssignments({
                 assigned={roleAssignment.membersByRoleId[role.id] ?? []}
                 canEdit={canEdit}
                 onAssignClick={() => roleAssignment.openDialog(role)}
-                subtitle={
-                  role.label === 'Pre Weekend Couple'
-                    ? 'Gets sponsorship notifications'
-                    : undefined
-                }
-                detail={
-                  role.label === 'Pre Weekend Couple'
-                    ? preWeekendDetail
-                    : undefined
-                }
               />
             ))}
           </CardContent>
@@ -236,6 +226,13 @@ export function RoleAssignments({
                 </h2>
                 {committeeRoles.map((role) => {
                   const assigned = roleAssignment.membersByRoleId[role.id] ?? []
+                  const isPreWeekendCouple = role.label === 'Pre Weekend Couple'
+                  // An empty committee already reads "Open · No one holds
+                  // this yet", so "0 members" would only repeat it.
+                  const memberCount =
+                    assigned.length > 0
+                      ? `${assigned.length} member${assigned.length === 1 ? '' : 's'}`
+                      : undefined
 
                   return (
                     <PositionRow
@@ -244,13 +241,12 @@ export function RoleAssignments({
                       assigned={assigned}
                       canEdit={canEdit}
                       onAssignClick={() => roleAssignment.openDialog(role)}
-                      // An empty committee already reads "Open · No one holds
-                      // this yet", so "0 members" would only repeat it.
                       subtitle={
-                        assigned.length > 0
-                          ? `${assigned.length} member${assigned.length === 1 ? '' : 's'}`
-                          : undefined
+                        isPreWeekendCouple
+                          ? 'Gets sponsorship notifications'
+                          : memberCount
                       }
+                      detail={isPreWeekendCouple ? preWeekendDetail : undefined}
                     />
                   )
                 })}
