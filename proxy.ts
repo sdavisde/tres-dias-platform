@@ -31,6 +31,8 @@ export const PUBLIC_REGEX_ROUTES = [
   /^\/auth\/callback$/,
   /^\/auth\/confirm$/,
   /^\/secuela-signin$/,
+  // Community email unsubscribe links work without signing in.
+  /^\/unsubscribe$/,
   /^\/$/,
 ]
 

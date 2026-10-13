@@ -20,6 +20,7 @@ export type LadderId =
   | 'payments'
   | 'fees'
   | 'files'
+  | 'email'
   | 'people'
 
 export type PermissionLadder = {
@@ -104,6 +105,14 @@ export const PERMISSION_LADDERS: readonly PermissionLadder[] = [
     implicitView: true,
   },
   {
+    id: 'email',
+    label: 'Community email',
+    helper:
+      'Emails sent to the community and who received them. Manage adds writing and sending them.',
+    view: [Permission.READ_COMMUNITY_EMAIL],
+    manage: [Permission.SEND_COMMUNITY_EMAIL],
+  },
+  {
     id: 'people',
     label: 'People, community & settings',
     helper:
@@ -183,6 +192,8 @@ export const PERMISSION_LABELS: Readonly<Record<Permission, string>> = {
     'Edit the community encouragement',
   [Permission.WRITE_SETTINGS]: 'Change site settings',
   [Permission.MANAGE_BILLING]: 'Manage platform billing',
+  [Permission.READ_COMMUNITY_EMAIL]: 'See sent community emails',
+  [Permission.SEND_COMMUNITY_EMAIL]: 'Write and send community emails',
   [Permission.READ_CANDIDATE_CONTACT_INFO]: 'See candidate contact details',
   [Permission.READ_CANDIDATE_ADDRESS]: 'See candidate home address',
   [Permission.READ_CANDIDATE_SHIRT_SIZE]: 'See candidate shirt size',
@@ -231,6 +242,10 @@ export const PERMISSION_DESCRIPTIONS: Readonly<Record<Permission, string>> = {
   [Permission.WRITE_SETTINGS]: 'Site-wide settings',
   [Permission.MANAGE_BILLING]:
     "The community's platform subscription: card on file, invoices, and cancellation",
+  [Permission.READ_COMMUNITY_EMAIL]:
+    'What was sent, to whom, and who unsubscribed',
+  [Permission.SEND_COMMUNITY_EMAIL]:
+    'Email the whole community, a weekend team, candidates or sponsors',
   [Permission.READ_CANDIDATE_CONTACT_INFO]: 'Phone and email',
   [Permission.READ_CANDIDATE_ADDRESS]: 'Where they live',
   [Permission.READ_CANDIDATE_SHIRT_SIZE]: 'For weekend supplies',

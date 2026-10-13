@@ -87,6 +87,10 @@ export enum Permission {
 
   // Community
   WRITE_COMMUNITY_ENCOURAGEMENT = 'WRITE_COMMUNITY_ENCOURAGEMENT',
+  /** See community emails that were sent (Admin → Email). */
+  READ_COMMUNITY_EMAIL = 'READ_COMMUNITY_EMAIL',
+  /** Write and send email to groups of people in the community. */
+  SEND_COMMUNITY_EMAIL = 'SEND_COMMUNITY_EMAIL',
 
   // Settings
   WRITE_SETTINGS = 'WRITE_SETTINGS',

@@ -95,7 +95,7 @@ and fails loudly if nothing answers it. Each row below is checked by a selector 
 | S4  | At least one candidate on an `ACTIVE` weekend is `awaiting_payment` with no `payment_transaction` rows, and at least one other is `awaiting_payment` with a partial payment below the fee; both have a sponsorship `payment_owner` of `candidate` or `sponsor` | `pickAwaitingCandidate({ partial })`  | Unit 4, Unit 6                  |
 | S5  | Every seeded `auth.users` row is confirmed and shares one password, read from `E2E_SEED_PASSWORD`                                                                                                                                                              | `pickSeededUser()`, `seedPassword()`  | Unit 2 setup, login specs       |
 | S6  | At least one seeded user has no roster row on any `ACTIVE` weekend                                                                                                                                                                                             | `pickNonRosterUser()`                 | Unit 3 negative case            |
-| S7  | At least one seeded user's roles (`user_roles` → `roles.permissions`, following `roles.based_on_role_id`) grant `FULL_ACCESS`, or both `MANAGE_BILLING` and `READ_ADMIN_PORTAL`                                                                                | `pickBillingManager()`                | billing specs                   |
+| S7  | At least one seeded user's roles (`user_roles` → `roles.permissions`, following `roles.based_on_role_id`) grant `FULL_ACCESS`, or both `MANAGE_BILLING` and `READ_ADMIN_PORTAL`                                                                                | `pickBillingManager()`                | billing specs, community email  |
 
 The seed (`scripts/seed/`, `pre-weekend` phase) owns these invariants and pins one person per
 invariant in its own README (the "E2E fixtures" section). `scripts/seed/world.test.ts` asserts
@@ -180,6 +180,14 @@ and safe to remove by hand:
   touching it; if a run dies before restoring, the next billing run writes the file back (only when
   the row still holds test state), or you can copy the values back by hand.
 
+- **Community email**, `email_broadcasts.subject` starting with `E2E community email` (deleting the
+  row cascades to its recipients), and `email_unsubscribes` rows for the active men's candidates. The
+  spec removes both before and after itself; by hand:
+
+  ```sql
+  delete from email_broadcasts where subject like 'E2E community email%';
+  ```
+
 When in doubt, `bun run seed pre-weekend --yes` (destructive, owner's call) rebuilds a clean world from
 scratch rather than hunting for leftovers.
 
@@ -226,6 +234,16 @@ never-subscribed, and restore it column for column in `afterAll` (`e2e/fixtures/
   spec that rearranges them calls `bypassServerCache(context, baseURL)` (`e2e/fixtures/secuela.ts`),
   which sets a cookie the dev server honours; the nightly CI build sets `E2E_DISABLE_SERVER_CACHE=1`
   instead. `e2e/secuela-banner.spec.ts` is the example.
+
+## Community email
+
+`e2e/community-email.spec.ts` covers the basic flow of Admin → Email (docs/specs/23-spec-community-email)
+as the `billingManager` persona, who is a Full Access holder in the seed: write an email to the
+candidates persona's weekend, preview it, send it through the confirmation, and land on the sent
+report. Off production only the sender is emailed, so every candidate is recorded as `skipped` and
+nothing reaches Resend. A second test unsubscribes one candidate through the signed-out link page and
+another through the one-click endpoint (and checks a forged token gets 400); a third checks the
+`teamForms` persona can't open the page. Formatting options are not tested one by one.
 
 ## Where the merge gate lives
 
