@@ -56,6 +56,7 @@ describe('memberNavItems', () => {
       'My forms',
       'Online payment',
       'The weekend',
+      'Community',
       'Documents',
       'Review candidates',
       'Roster builder',
@@ -76,6 +77,7 @@ describe('memberNavItems', () => {
       'My forms': 'Do something',
       'Online payment': 'Do something',
       'The weekend': 'Find',
+      Community: 'Find',
       Documents: 'Find',
       'Review candidates': 'Role tools',
       'Roster builder': 'Role tools',
@@ -200,6 +202,7 @@ describe('resolveMemberNavHref', () => {
       'my-forms': '/team-forms',
       'online-payment': '/payment',
       weekends: '/weekends/g12/mens',
+      community: '/community',
       documents: '/files',
     })
   })

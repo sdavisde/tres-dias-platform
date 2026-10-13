@@ -1,11 +1,20 @@
 import 'server-only'
 
+import { isNil } from 'lodash'
 import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import { getRoles } from '@/services/identity/roles/role-service'
 import { getMasterRoster } from '@/services/master-roster'
 import { getContactInformation } from '@/services/notifications'
-import type { BoardMember, BoardRole, CommunityBoardData } from './types'
+import * as BoardRepository from './repository'
+import type {
+  BoardMember,
+  BoardRole,
+  CommunityBoardData,
+  CommunityLeadership,
+  CommunityPosition,
+  PositionHolder,
+} from './types'
 import {
   BOARD_ROLE_SORT_ORDER,
   BOARD_COMMITTEE_ROLES,
@@ -70,7 +79,10 @@ function isBoardCommitteeRole(role: BoardRole): boolean {
  * Roles in BOARD_ROLE_SORT_ORDER are sorted first in that order,
  * roles not in the list are sorted alphabetically after.
  */
-function sortRoles(roles: BoardRole[], target: Array<string>): BoardRole[] {
+function sortRoles<T extends BoardRole>(
+  roles: T[],
+  target: Array<string>
+): T[] {
   return [...roles].filter(isCommunityBoardRole).sort((a, b) => {
     const aIndex = BOARD_ROLE_SORT_ORDER.indexOf(
       a.label as (typeof BOARD_ROLE_SORT_ORDER)[number]
@@ -148,5 +160,72 @@ export async function getCommunityBoardData(): Promise<
     committeeRoles,
     members,
     preWeekendCoupleContact,
+  })
+}
+
+type RawPositionHolder = {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone_number: string | null
+  profile_photo_path: string | null
+  profile_photo_updated_at: string | null
+}
+
+type RawRoleWithHolders = BoardRole & {
+  user_roles: Array<{ users: RawPositionHolder | null }>
+}
+
+function normalizeHolder(user: RawPositionHolder): PositionHolder {
+  return {
+    id: user.id,
+    firstName: user.first_name,
+    lastName: user.last_name,
+    email: user.email,
+    phoneNumber: user.phone_number,
+    profilePhoto: {
+      path: user.profile_photo_path,
+      updatedAt: user.profile_photo_updated_at,
+    },
+  }
+}
+
+const holderSortKey = (holder: PositionHolder) =>
+  `${holder.lastName ?? ''} ${holder.firstName ?? ''}`
+
+function toPosition(role: RawRoleWithHolders): CommunityPosition {
+  const holders = role.user_roles
+    .flatMap(({ users }) => (isNil(users) ? [] : [normalizeHolder(users)]))
+    .sort((a, b) => holderSortKey(a).localeCompare(holderSortKey(b)))
+
+  return {
+    id: role.id,
+    label: role.label,
+    type: role.type,
+    description: role.description,
+    holders,
+  }
+}
+
+/**
+ * Board positions and committees with their holders, for the member
+ * Community page. Reads only the contact fields members may see.
+ */
+export async function getCommunityLeadership(): Promise<
+  Result<string, CommunityLeadership>
+> {
+  const result = await BoardRepository.getRolesWithHolders()
+  if (isErr(result)) {
+    return err(`Failed to fetch positions: ${result.error}`)
+  }
+
+  const positions = (result.data as RawRoleWithHolders[]).map(toPosition)
+
+  return ok({
+    boardPositions: sortRoles(positions, BOARD_ROLE_SORT_ORDER),
+    committees: positions
+      .filter(isBoardCommitteeRole)
+      .sort((a, b) => a.label.localeCompare(b.label)),
   })
 }

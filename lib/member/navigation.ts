@@ -11,6 +11,7 @@ import {
   FolderOpen,
   HeartHandshake,
   Home,
+  Users,
   LayoutGrid,
   ShieldCheck,
   type LucideIcon,
@@ -31,6 +32,7 @@ export type MemberNavKey =
   | 'my-forms'
   | 'online-payment'
   | 'weekends'
+  | 'community'
   | 'documents'
   | 'review-candidates'
   | 'roster-builder'
@@ -119,6 +121,14 @@ export const memberNavItems: MemberNavItem[] = [
     tab: true,
     tabLabel: 'Weekend',
     tabOrder: 1,
+  },
+  {
+    key: 'community',
+    title: 'Community',
+    href: '/community',
+    icon: Users,
+    section: 'Find',
+    permissionsNeeded: [],
   },
   {
     key: 'documents',

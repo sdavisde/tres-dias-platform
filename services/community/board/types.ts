@@ -60,6 +60,32 @@ export type BoardMember = {
   profilePhoto: ProfilePhoto
 }
 
+/** Someone holding a position, as the member Community page shows them. */
+export type PositionHolder = {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  email: string | null
+  phoneNumber: string | null
+  profilePhoto: ProfilePhoto
+}
+
+/**
+ * A board position, committee or team with whoever holds it. `type` tells a
+ * single-holder position (INDIVIDUAL) from a group (COMMITTEE).
+ */
+export type CommunityPosition = BoardRole & {
+  holders: PositionHolder[]
+}
+
+/** The read-only leadership view for the member Community page. */
+export type CommunityLeadership = {
+  /** Board positions in {@link BOARD_ROLE_SORT_ORDER}. */
+  boardPositions: CommunityPosition[]
+  /** Committees and teams, alphabetical. */
+  committees: CommunityPosition[]
+}
+
 /**
  * The complete community board data structure.
  * Contains all data needed to render both read-only and editable board views.

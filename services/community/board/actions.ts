@@ -1,6 +1,8 @@
 import 'server-only'
 
+import { authorizedAction } from '@/lib/actions/authorized-action'
 import * as BoardService from './board-service'
+import type { CommunityLeadership } from './types'
 
 /**
  * Gets community board data.
@@ -10,3 +12,9 @@ import * as BoardService from './board-service'
 export const getCommunityBoardData = async () => {
   return await BoardService.getCommunityBoardData()
 }
+
+/** Board positions and committees with their holders, for any signed-in member. */
+export const getCommunityLeadership = authorizedAction<[], CommunityLeadership>(
+  'authenticated',
+  async () => BoardService.getCommunityLeadership()
+)
