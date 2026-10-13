@@ -51,18 +51,7 @@ import { parseAudience } from './types'
 /** Resend allows a few requests a second; spacing batches keeps us under it. */
 const PAUSE_BETWEEN_BATCHES_MS = 600
 
-/**
- * The tables arrive with this feature's migration. Until it is applied (e.g. a
- * preview deployment reading the production database), the pages show a
- * notice instead of an error page.
- */
-export function isMissingTableError(error: string): boolean {
-  return (
-    error.includes('email_broadcasts') &&
-    (error.includes('Could not find the table') ||
-      error.includes('does not exist'))
-  )
-}
+export { isMissingTableError } from './errors'
 
 function fullName(person: Repository.RawBroadcast['creator']): string | null {
   if (isNil(person)) return null

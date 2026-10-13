@@ -15,6 +15,7 @@ import {
   createUnsubscribeToken,
   verifyUnsubscribeToken,
 } from './unsubscribe-token'
+import { isMissingTableError } from './errors'
 import type { AudienceMember } from './types'
 
 const member = (
@@ -148,5 +149,28 @@ describe('unsubscribe tokens', () => {
     expect(verifyUnsubscribeToken('nope')).toBeNull()
     expect(verifyUnsubscribeToken(`${token}.extra`)).toBeNull()
     expect(verifyUnsubscribeToken(null)).toBeNull()
+  })
+})
+
+describe('isMissingTableError', () => {
+  it('recognizes every PostgREST and Postgres wording for the missing tables', () => {
+    expect(
+      isMissingTableError(
+        "Could not find the table 'public.email_broadcasts' in the schema cache"
+      )
+    ).toBe(true)
+    expect(
+      isMissingTableError(
+        "Could not find a relationship between 'email_broadcasts' and 'users' in the schema cache"
+      )
+    ).toBe(true)
+    expect(
+      isMissingTableError('relation "public.email_broadcasts" does not exist')
+    ).toBe(true)
+  })
+
+  it('leaves other errors alone', () => {
+    expect(isMissingTableError('permission denied for table users')).toBe(false)
+    expect(isMissingTableError('JWT expired')).toBe(false)
   })
 })
