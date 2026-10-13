@@ -1,3 +1,9 @@
+## [1.69.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.68.0...v1.69.0) (2026-10-13)
+
+### Features
+
+- **community:** list Pre Weekend Couple under committees instead of the board ([7b657b5](https://github.com/sdavisde/tres-dias-platform/commit/7b657b52a984d042500814a6bb2c0f27b2774dad))
+
 ## [1.68.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.67.0...v1.68.0) (2026-10-13)
 
 ### Features
