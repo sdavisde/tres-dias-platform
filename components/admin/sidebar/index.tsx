@@ -7,6 +7,7 @@ import { House, type LucideIcon } from 'lucide-react'
 import { isNil } from 'lodash'
 import { NavUser } from '@/components/admin/sidebar/nav-user'
 import {
+  ADMIN_NAV_SECTION_ORDER,
   getNavIcon,
   isNavItemActive,
   type SerializableNavItem,
@@ -16,12 +17,14 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
 
 type AdminSidebarProps = React.ComponentProps<typeof Sidebar> & {
@@ -32,6 +35,12 @@ export function AdminSidebar({ items, ...props }: AdminSidebarProps) {
   const pathname = usePathname()
   const mainItems = items.filter((item) => item.footer !== true)
   const footerItems = items.filter((item) => item.footer === true)
+  // Sections the user can't see anything in drop out entirely; the top
+  // group always renders because it holds "Back to member site".
+  const sections = ADMIN_NAV_SECTION_ORDER.map((section) => ({
+    section,
+    items: mainItems.filter((item) => item.section === section),
+  })).filter(({ section, items }) => isNil(section) || items.length > 0)
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -55,32 +64,38 @@ export function AdminSidebar({ items, ...props }: AdminSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Back to member site">
-                <Link href="/home">
-                  <House />
-                  <span>Back to member site</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarMenu>
-            {mainItems.map((item) => (
-              <AdminNavMenuItem
-                key={item.href}
-                item={item}
-                icon={getNavIcon(item.href)}
-                isActive={isNavItemActive(item.href, pathname)}
-              />
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        {sections.map(({ section, items: sectionItems }) => (
+          <SidebarGroup key={section ?? 'top'}>
+            {!isNil(section) && (
+              <SidebarGroupLabel className="text-[11.5px] font-semibold tracking-[0.1em] text-muted-foreground/80 uppercase">
+                {section}
+              </SidebarGroupLabel>
+            )}
+            <SidebarMenu>
+              {isNil(section) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Back to member site">
+                    <Link href="/home">
+                      <House />
+                      <span>Back to member site</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {sectionItems.map((item) => (
+                <AdminNavMenuItem
+                  key={item.href}
+                  item={item}
+                  icon={getNavIcon(item.href)}
+                  isActive={isNavItemActive(item.href, pathname)}
+                />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
+        <SidebarSeparator className="mx-0" />
         {footerItems.length > 0 && (
           <SidebarMenu>
             {footerItems.map((item) => (

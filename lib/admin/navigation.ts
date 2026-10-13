@@ -8,7 +8,6 @@ import {
   Folder,
   HandHeart,
   Landmark,
-  LayoutGrid,
   Receipt,
   Settings2,
   ShieldCheck,
@@ -16,10 +15,24 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
+/**
+ * Sidebar sections, in order. `null` is the unlabeled top group under
+ * "Back to member site" (the logo is the Dashboard link); footer items ignore
+ * their section.
+ */
+export type AdminNavSection = null | 'Weekends' | 'Community'
+
+export const ADMIN_NAV_SECTION_ORDER: AdminNavSection[] = [
+  null,
+  'Weekends',
+  'Community',
+]
+
 export type AdminNavItem = {
   title: string
   href: string
   icon: LucideIcon
+  section: AdminNavSection
   /** Empty means visible to anyone who cleared the admin-portal gate. */
   permissionsNeeded: Permission[]
   /** Marked "SOON" in the sidebar and rendered as a non-link. */
@@ -34,61 +47,64 @@ export type AdminNavItem = {
  */
 export const adminNavItems: AdminNavItem[] = [
   {
-    title: 'Dashboard',
-    href: '/admin',
-    icon: LayoutGrid,
-    permissionsNeeded: [],
-  },
-  {
     title: 'Weekends',
+    section: 'Weekends',
     href: '/admin/weekends',
     icon: Calendar,
     permissionsNeeded: [Permission.READ_WEEKENDS],
   },
   {
     title: 'Events',
+    section: 'Weekends',
     href: '/admin/events',
     icon: Clock,
     permissionsNeeded: [Permission.READ_EVENTS],
   },
   {
     title: 'Secuela',
+    section: 'Weekends',
     href: '/admin/secuela',
     icon: HandHeart,
     permissionsNeeded: [Permission.READ_EVENTS],
   },
   {
-    title: 'Payments',
-    href: '/admin/payments',
-    icon: CreditCard,
-    permissionsNeeded: [Permission.READ_PAYMENTS],
-  },
-  {
     title: 'People',
+    section: 'Community',
     href: '/admin/people',
     icon: Users,
     permissionsNeeded: [],
   },
   {
-    title: 'Community',
+    title: 'Community Board',
+    section: 'Community',
     href: '/admin/community-board',
     icon: Landmark,
     permissionsNeeded: [],
   },
   {
-    title: 'Files',
-    href: '/admin/files',
-    icon: Folder,
-    permissionsNeeded: [],
-  },
-  {
     title: 'Security',
+    section: 'Community',
     href: '/admin/security',
     icon: ShieldCheck,
     permissionsNeeded: [Permission.READ_USER_ROLES],
   },
   {
+    title: 'Payments',
+    section: 'Community',
+    href: '/admin/payments',
+    icon: CreditCard,
+    permissionsNeeded: [Permission.READ_PAYMENTS],
+  },
+  {
+    title: 'Files',
+    section: 'Community',
+    href: '/admin/files',
+    icon: Folder,
+    permissionsNeeded: [],
+  },
+  {
     title: 'Reports',
+    section: 'Community',
     href: '/admin/reports',
     icon: BarChart3,
     permissionsNeeded: [],
@@ -96,6 +112,7 @@ export const adminNavItems: AdminNavItem[] = [
   },
   {
     title: 'Billing',
+    section: null,
     href: '/admin/billing',
     icon: Receipt,
     permissionsNeeded: [Permission.MANAGE_BILLING],
@@ -103,6 +120,7 @@ export const adminNavItems: AdminNavItem[] = [
   },
   {
     title: 'Site settings',
+    section: null,
     href: '/admin/settings',
     icon: Settings2,
     permissionsNeeded: [Permission.FULL_ACCESS],
@@ -131,13 +149,20 @@ export function filterNavByPermission<
 export type SerializableNavItem = {
   title: string
   href: string
+  section: AdminNavSection
   soon?: boolean
   footer?: boolean
 }
 
 export function getVisibleNavItems(user: User): SerializableNavItem[] {
   return filterNavByPermission(adminNavItems, user).map(
-    ({ title, href, soon, footer }) => ({ title, href, soon, footer })
+    ({ title, href, section, soon, footer }) => ({
+      title,
+      href,
+      section,
+      soon,
+      footer,
+    })
   )
 }
 

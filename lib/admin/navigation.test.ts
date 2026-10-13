@@ -4,6 +4,7 @@ import {
   getNavIcon,
   getVisibleNavItems,
   isNavItemActive,
+  type AdminNavSection,
 } from '@/lib/admin/navigation'
 import { Permission } from '@/lib/security'
 import type { User } from '@/lib/users/types'
@@ -36,15 +37,14 @@ function makeUser(permissions: Permission[]): User {
 describe('adminNavItems', () => {
   it('lists the final IA in order', () => {
     expect(adminNavItems.map((item) => item.title)).toEqual([
-      'Dashboard',
       'Weekends',
       'Events',
       'Secuela',
-      'Payments',
       'People',
-      'Community',
-      'Files',
+      'Community Board',
       'Security',
+      'Payments',
+      'Files',
       'Reports',
       'Billing',
       'Site settings',
@@ -55,19 +55,35 @@ describe('adminNavItems', () => {
     expect(
       Object.fromEntries(adminNavItems.map((item) => [item.title, item.href]))
     ).toEqual({
-      Dashboard: '/admin',
       Weekends: '/admin/weekends',
       Events: '/admin/events',
       Secuela: '/admin/secuela',
       Payments: '/admin/payments',
       People: '/admin/people',
-      Community: '/admin/community-board',
+      'Community Board': '/admin/community-board',
       Files: '/admin/files',
       'Site settings': '/admin/settings',
       Billing: '/admin/billing',
       Security: '/admin/security',
       Reports: '/admin/reports',
     })
+  })
+
+  it('groups items into sidebar sections', () => {
+    const titlesIn = (section: AdminNavSection) =>
+      adminNavItems
+        .filter((item) => item.footer !== true && item.section === section)
+        .map((item) => item.title)
+    expect(titlesIn(null)).toEqual([])
+    expect(titlesIn('Weekends')).toEqual(['Weekends', 'Events', 'Secuela'])
+    expect(titlesIn('Community')).toEqual([
+      'People',
+      'Community Board',
+      'Security',
+      'Payments',
+      'Files',
+      'Reports',
+    ])
   })
 
   it('pins Billing and Site settings to the footer', () => {
@@ -108,13 +124,7 @@ describe('filterNavByPermission', () => {
     const titles = filterNavByPermission(adminNavItems, user).map(
       (item) => item.title
     )
-    expect(titles).toEqual([
-      'Dashboard',
-      'People',
-      'Community',
-      'Files',
-      'Reports',
-    ])
+    expect(titles).toEqual(['People', 'Community Board', 'Files', 'Reports'])
   })
 
   it('restricts Site settings to FULL_ACCESS', () => {
@@ -165,6 +175,7 @@ describe('getVisibleNavItems', () => {
       expect(Object.keys(item).sort()).toEqual([
         'footer',
         'href',
+        'section',
         'soon',
         'title',
       ])
