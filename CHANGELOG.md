@@ -1,3 +1,10 @@
+## [1.67.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.66.0...v1.67.0) (2026-10-13)
+
+### Features
+
+- **admin:** group sidebar nav into Weekends and Community sections ([6f72905](https://github.com/sdavisde/tres-dias-platform/commit/6f729058366005acfbe7aa277c87ed6d746e1f79))
+- **weekends:** show secuela sign-in counts on the active group's schedule ([e38fd12](https://github.com/sdavisde/tres-dias-platform/commit/e38fd123e92620ffcb81ab19b47bfd9f4d9e50a6))
+
 ## [1.66.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.65.0...v1.66.0) (2026-10-12)
 
 ### Features
