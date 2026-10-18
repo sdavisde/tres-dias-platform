@@ -129,7 +129,7 @@ describe('toReviewCandidate', () => {
 })
 
 describe('queue filters and search', () => {
-  it('shows decisions on Needs review, everyone active on All, rejected on Archived', () => {
+  it('shows decisions on Needs review, everyone active on All, rejected on Dropped', () => {
     expect(
       matchesQueueFilter({ status: 'pending_approval' }, 'needs-review')
     ).toBe(true)
@@ -138,7 +138,7 @@ describe('queue filters and search', () => {
     )
     expect(matchesQueueFilter({ status: 'confirmed' }, 'all')).toBe(true)
     expect(matchesQueueFilter({ status: 'rejected' }, 'all')).toBe(false)
-    expect(matchesQueueFilter({ status: 'rejected' }, 'archived')).toBe(true)
+    expect(matchesQueueFilter({ status: 'rejected' }, 'dropped')).toBe(true)
   })
 
   it('matches name, email or sponsor, ignoring case', () => {
@@ -249,7 +249,7 @@ describe('primaryActionFor', () => {
 })
 
 describe('spotsLeft and resolveSelection', () => {
-  it('counts everyone who is not archived against capacity', () => {
+  it('counts everyone who is not dropped against capacity', () => {
     expect(
       spotsLeft([
         { status: 'confirmed' },
@@ -267,6 +267,6 @@ describe('spotsLeft and resolveSelection', () => {
     ]
     expect(resolveSelection(rows, 'a', 'needs-review')).toBe('a')
     expect(resolveSelection(rows, 'nope', 'needs-review')).toBe('b')
-    expect(resolveSelection(rows, null, 'archived')).toBeNull()
+    expect(resolveSelection(rows, null, 'dropped')).toBeNull()
   })
 })

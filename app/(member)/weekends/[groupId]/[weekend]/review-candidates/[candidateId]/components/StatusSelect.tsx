@@ -26,7 +26,7 @@ const STATUS_OPTIONS: { value: CandidateStatus; label: string }[] = [
   { value: 'pending_approval', label: 'Pending Approval' },
   { value: 'awaiting_payment', label: 'Awaiting Payment' },
   { value: 'confirmed', label: 'Confirmed' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'rejected', label: 'Dropped' },
 ]
 
 export function StatusSelect({

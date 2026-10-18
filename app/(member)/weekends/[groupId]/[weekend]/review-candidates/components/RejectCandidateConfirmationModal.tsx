@@ -22,7 +22,7 @@ interface RejectCandidateConfirmationModalProps {
   onConfirm: () => Promise<void>
 }
 
-/** Confirms archiving a candidate (the `rejected` status). */
+/** Confirms dropping a candidate (the `rejected` status). */
 export function RejectCandidateConfirmationModal({
   isOpen,
   candidate,
@@ -52,14 +52,14 @@ export function RejectCandidateConfirmationModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-serif text-xl font-semibold tracking-tight">
-            Archive this candidate
+            Drop this candidate
           </DialogTitle>
           <DialogDescription>
             Take{' '}
             <span className="font-semibold text-foreground">
               {candidate.name}
             </span>{' '}
-            off this weekend&rsquo;s list. They stay in the Archived chip, and
+            off this weekend&rsquo;s list. They stay in the Dropped chip, and
             their status can be changed back from the full details page.
           </DialogDescription>
         </DialogHeader>
@@ -91,7 +91,7 @@ export function RejectCandidateConfirmationModal({
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading ? 'Archiving…' : 'Archive candidate'}
+            {isLoading ? 'Dropping…' : 'Drop candidate'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -97,7 +97,7 @@ export function ReviewWorkspace({
         matchesQueueFilter(c, 'needs-review')
       ).length,
       all: sorted.filter((c) => matchesQueueFilter(c, 'all')).length,
-      archived: sorted.filter((c) => matchesQueueFilter(c, 'archived')).length,
+      dropped: sorted.filter((c) => matchesQueueFilter(c, 'dropped')).length,
     }),
     [sorted]
   )
@@ -116,7 +116,7 @@ export function ReviewWorkspace({
     setInitialised(true)
     const requested = sorted.find((c) => c.id === requestedId)
     if (!isNil(requested) && !matchesQueueFilter(requested, filter)) {
-      setFilter(requested.status === 'rejected' ? 'archived' : 'all')
+      setFilter(requested.status === 'rejected' ? 'dropped' : 'all')
     }
   }
 
@@ -191,12 +191,12 @@ export function ReviewWorkspace({
       status: 'rejected',
     })
     if (isErr(result)) {
-      toastError('Unable to archive the candidate. Please try again.', {
+      toastError('Unable to drop the candidate. Please try again.', {
         error: result.error,
       })
       return
     }
-    finish(`${selected.name} archived`)
+    finish(`${selected.name} dropped`)
   }
 
   const handleMove = async (targetWeekendId: string) => {

@@ -135,7 +135,7 @@ export function CandidateDetail({
                       variant="destructive"
                       onSelect={actions.onReject}
                     >
-                      Archive candidate
+                      Drop candidate
                     </DropdownMenuItem>
                   </>
                 )}
