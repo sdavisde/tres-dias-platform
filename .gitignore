@@ -64,3 +64,6 @@ docs/specs/**/*-proofs/
 
 # Claude Code local worktrees
 .claude/worktrees/
+
+# Master-roster import output: real member names, never commit
+unmatched_users.*

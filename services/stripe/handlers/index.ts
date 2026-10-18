@@ -2,20 +2,14 @@ import 'server-only'
 
 import { isNil } from 'lodash'
 import type Stripe from 'stripe'
-import type { Result } from '@/lib/results';
+import type { Result } from '@/lib/results'
 import { ok } from '@/lib/results'
 import { logger } from '@/lib/logger'
 import { checkoutSessionCompletedHandler } from './checkout-session-completed'
 import { chargeUpdatedHandler } from './charge-updated'
 import { payoutPaidHandler } from './payout-paid'
-import type {
-  WebhookHandler,
-  WebhookError,
-  HandlerSuccess} from './types';
-import {
-  WebhookHandlerContext,
-  WebhookErrorCodes,
-} from './types'
+import type { WebhookHandler, WebhookError, HandlerSuccess } from './types'
+import { WebhookHandlerContext, WebhookErrorCodes } from './types'
 import { webhookErr, createHandlerContext } from '../webhook-context'
 
 // Handler registry - maps event types to their handlers
@@ -33,21 +27,6 @@ const handlers = new Map<string, WebhookHandler<Stripe.Event>>([
     payoutPaidHandler as WebhookHandler<Stripe.Event>,
   ],
 ])
-
-/**
- * Gets the list of supported event types.
- * Useful for configuring Stripe webhook subscriptions.
- */
-export function getSupportedEventTypes(): string[] {
-  return Array.from(handlers.keys())
-}
-
-/**
- * Checks if an event type is supported by any handler.
- */
-export function isEventTypeSupported(eventType: string): boolean {
-  return handlers.has(eventType)
-}
 
 /**
  * Routes a Stripe webhook event to the appropriate handler.

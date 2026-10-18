@@ -8,8 +8,6 @@ export {
 // Webhook handlers and utilities
 export {
   routeWebhookEvent,
-  getSupportedEventTypes,
-  isEventTypeSupported,
   checkoutSessionCompletedHandler,
   chargeUpdatedHandler,
   payoutPaidHandler,
