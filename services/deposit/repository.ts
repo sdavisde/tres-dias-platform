@@ -228,9 +228,10 @@ export async function linkPaymentToDeposit(
     deposit_id: depositId,
     payment_transaction_id: paymentTransactionId,
   }
+  // Upsert so a retried payout webhook can relink without a duplicate error.
   const response = await supabase
     .from('deposit_payments')
-    .insert(data)
+    .upsert(data, { onConflict: 'deposit_id,payment_transaction_id' })
     .select()
     .single()
   return fromSupabase(response)

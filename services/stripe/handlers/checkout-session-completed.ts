@@ -77,6 +77,27 @@ export const checkoutSessionCompletedHandler: WebhookHandler<Stripe.CheckoutSess
           { paymentIntentId: session.payment_intent, paymentId },
           'Payment already recorded; ignoring replayed checkout.session.completed'
         )
+        // A delivery that recorded the payment but failed to confirm the
+        // candidate is retried; finish that step instead of skipping it.
+        const candidateId = session.metadata?.candidateId
+        if (
+          checkoutFeeTypeFromMetadata(session.metadata) === 'candidate' &&
+          !isNil(candidateId)
+        ) {
+          const confirmResult = await confirmIfAwaitingPayment(
+            candidateId,
+            ctx.adminClient
+          )
+          if (isErr(confirmResult)) {
+            return webhookErr(
+              WebhookErrorCodes.STATUS_UPDATE_FAILED,
+              confirmResult.error,
+              'status_update',
+              'error',
+              ctx.paymentContext
+            )
+          }
+        }
         return ok({
           processed: false,
           entityType: replayEntityType(session.metadata),
@@ -140,28 +161,10 @@ async function handleCandidatePayment(
   ctx.updateContext({ candidateId })
   logger.info({ candidateId }, 'Processing candidate payment')
 
-  // Verify candidate is awaiting payment and get weekend_id
-  const awaitingResult = await candidateIsAwaitingPayment(
-    candidateId,
-    ctx.adminClient
-  )
-  if (isErr(awaitingResult)) {
-    return webhookErr(
-      WebhookErrorCodes.CANDIDATE_NOT_AWAITING_PAYMENT,
-      awaitingResult.error,
-      'database_lookup',
-      'error',
-      ctx.paymentContext
-    )
-  }
-
-  const candidateInfo = awaitingResult.data
-  logger.info(
-    { candidateId, weekendId: candidateInfo.weekend_id },
-    'Candidate found and is awaiting payment'
-  )
-
-  // Record the payment using PaymentService
+  // The money arrived whatever the candidate's status: a confirmed
+  // candidate can still owe (fee raised, partial cash), and two open
+  // checkouts can both be paid. Always record it; only the status change
+  // depends on the candidate still awaiting payment.
   const paymentIntentId = session.payment_intent as string
   const grossAmount = !isNil(session.amount_total)
     ? session.amount_total / 100
@@ -210,8 +213,10 @@ async function handleCandidatePayment(
     'Successfully recorded candidate payment'
   )
 
-  // Update candidate status to confirmed
-  const confirmResult = await confirmCandidate(candidateId, ctx.adminClient)
+  const confirmResult = await confirmIfAwaitingPayment(
+    candidateId,
+    ctx.adminClient
+  )
   if (isErr(confirmResult)) {
     return webhookErr(
       WebhookErrorCodes.STATUS_UPDATE_FAILED,
@@ -222,7 +227,10 @@ async function handleCandidatePayment(
     )
   }
 
-  logger.info({ candidateId }, 'Successfully confirmed candidate')
+  logger.info(
+    { candidateId, confirmed: confirmResult.data },
+    'Candidate payment processed'
+  )
 
   // Notify pre-weekend couple (don't fail webhook if email fails)
   const paymentAmount = grossAmount
@@ -383,69 +391,29 @@ async function handleTeamPayment(
 }
 
 /**
- * Candidate data returned from validation check.
+ * Moves a candidate from awaiting_payment to confirmed. Any other status is
+ * left alone (already confirmed, or set by hand), so it is safe to repeat.
+ *
+ * @returns Whether this call confirmed the candidate
  */
-type CandidatePaymentInfo = {
-  id: string
-  weekend_id: string | null
-}
-
-/**
- * Checks if a candidate is in the awaiting_payment status.
- * Returns the candidate's ID and weekend_id for payment recording.
- */
-async function candidateIsAwaitingPayment(
+async function confirmIfAwaitingPayment(
   candidateId: string,
   adminClient: WebhookHandlerContext['adminClient']
 ): Promise<
-  | ReturnType<typeof ok<CandidatePaymentInfo>>
-  | ReturnType<typeof Results.err<string>>
+  ReturnType<typeof ok<boolean>> | ReturnType<typeof Results.err<string>>
 > {
-  const { data: candidate, error: fetchError } = await adminClient
-    .from('candidates')
-    .select('id, status, weekend_id')
-    .eq('id', candidateId)
-    .single()
-
-  if (!isNil(fetchError)) {
-    return Results.err(fetchError.message)
-  }
-
-  if (isNil(candidate)) {
-    return Results.err(`Candidate not found with id: ${candidateId}`)
-  }
-
-  if (candidate.status !== 'awaiting_payment') {
-    return Results.err(
-      `Candidate not in awaiting_payment status (current: ${candidate.status})`
-    )
-  }
-
-  return ok({
-    id: candidate.id,
-    weekend_id: candidate.weekend_id,
-  })
-}
-
-/**
- * Confirms a candidate by updating their status to confirmed.
- */
-async function confirmCandidate(
-  candidateId: string,
-  adminClient: WebhookHandlerContext['adminClient']
-): Promise<
-  ReturnType<typeof ok<true>> | ReturnType<typeof Results.err<string>>
-> {
-  const { error: updateError } = await adminClient
+  const { data, error } = await adminClient
     .from('candidates')
     .update({ status: 'confirmed' })
     .eq('id', candidateId)
+    .eq('status', 'awaiting_payment')
+    .select('id')
 
-  if (!isNil(updateError)) {
+  if (!isNil(error)) {
     return Results.err(
-      `Failed to update candidate status to confirmed: ${updateError.message}`
+      `Failed to update candidate status to confirmed: ${error.message}`
     )
   }
 
-  return ok(true)
+  return ok((data ?? []).length > 0)
 }

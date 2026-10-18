@@ -1,6 +1,6 @@
 import 'server-only'
 
-import type { Result } from '@/lib/results';
+import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import * as DepositRepository from './repository'
 import * as PaymentRepository from '@/services/payment/repository'
@@ -15,13 +15,15 @@ import type {
   DepositRow,
   DepositType,
   DepositStatus,
-  RawDepositPaymentWithTransaction} from './types';
+  RawDepositPaymentWithTransaction,
+} from './types'
 import {
   CreateDepositSchema,
   UpdateDepositSchema,
-  RecordStripePayoutSchema
+  RecordStripePayoutSchema,
 } from './types'
 import { isNil, sumBy } from 'lodash'
+import { logger } from '@/lib/logger'
 
 // ============================================================================
 // Deposit Normalization
@@ -155,25 +157,36 @@ export async function recordStripePayoutDeposit(
 
   const validatedData = parseResult.data
 
-  // Create the deposit
-  const depositResult = await DepositRepository.createDeposit(
-    {
-      deposit_type: 'stripe_payout',
-      amount: validatedData.amount,
-      status: validatedData.status,
-      arrival_date: validatedData.arrival_date ?? null,
-      transaction_count: validatedData.payment_intent_ids.length,
-      payout_id: validatedData.payout_id,
-      notes: null,
-    },
+  // A retried payout.paid reuses the deposit an earlier delivery created
+  // (payout_id is unique) and finishes linking its payments.
+  const existingResult = await DepositRepository.getDepositByPayoutId(
+    validatedData.payout_id,
     options
   )
-
-  if (isErr(depositResult)) {
-    return depositResult
+  if (isErr(existingResult)) {
+    return existingResult
   }
 
-  const deposit = depositResult.data
+  let deposit = existingResult.data
+  if (isNil(deposit)) {
+    const depositResult = await DepositRepository.createDeposit(
+      {
+        deposit_type: 'stripe_payout',
+        amount: validatedData.amount,
+        status: validatedData.status,
+        arrival_date: validatedData.arrival_date ?? null,
+        transaction_count: validatedData.payment_intent_ids.length,
+        payout_id: validatedData.payout_id,
+        notes: null,
+      },
+      options
+    )
+
+    if (isErr(depositResult)) {
+      return depositResult
+    }
+    deposit = depositResult.data
+  }
 
   // Link each payment to the deposit
   for (const paymentIntentId of validatedData.payment_intent_ids) {
@@ -185,16 +198,16 @@ export async function recordStripePayoutDeposit(
 
     if (isErr(paymentResult)) {
       // Log but continue - we don't want to fail the whole deposit if one payment link fails
-      console.error(
-        `Failed to find payment for intent ${paymentIntentId}:`,
-        paymentResult.error
+      logger.error(
+        { paymentIntentId, error: paymentResult.error },
+        'Failed to look up payment for payout deposit'
       )
       continue
     }
 
     if (paymentResult.data === null) {
       // Payment not found - this can happen if the payment was created before migration
-      console.warn(`Payment not found for intent ${paymentIntentId}`)
+      logger.warn({ paymentIntentId }, 'No payment recorded for payout charge')
       continue
     }
 
@@ -206,9 +219,13 @@ export async function recordStripePayoutDeposit(
     )
 
     if (isErr(linkResult)) {
-      console.error(
-        `Failed to link payment ${paymentResult.data.id} to deposit ${deposit.id}:`,
-        linkResult.error
+      logger.error(
+        {
+          paymentId: paymentResult.data.id,
+          depositId: deposit.id,
+          error: linkResult.error,
+        },
+        'Failed to link payment to payout deposit'
       )
     }
   }

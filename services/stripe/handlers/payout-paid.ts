@@ -28,15 +28,14 @@ export const payoutPaidHandler: WebhookHandler<Stripe.PayoutPaidEvent> = {
     // Get all transactions in this payout
     const transactionsResult = await getPayoutTransactions(payout.id)
     if (isErr(transactionsResult)) {
-      logger.error(
-        { error: transactionsResult.error, payoutId: payout.id },
-        'Failed to get payout transactions'
+      // Fail so Stripe retries; answering 200 would drop the deposit.
+      return webhookErr(
+        WebhookErrorCodes.PAYOUT_RECORD_FAILED,
+        `Failed to get payout transactions: ${transactionsResult.error}`,
+        'payout_processing',
+        'error',
+        ctx.paymentContext
       )
-      // Return success but with warning - we'll handle this manually if needed
-      return ok({
-        processed: false,
-        details: { warning: 'Failed to get payout transactions' },
-      })
     }
 
     const transactions = transactionsResult.data
@@ -101,11 +100,7 @@ export const payoutPaidHandler: WebhookHandler<Stripe.PayoutPaidEvent> = {
         payout_id: payout.id,
         amount: payout.amount / 100, // Convert from cents to dollars
         status: payout.status as
-          | 'pending'
-          | 'in_transit'
-          | 'paid'
-          | 'canceled'
-          | 'failed',
+          'pending' | 'in_transit' | 'paid' | 'canceled' | 'failed',
         arrival_date: arrivalDate,
         payment_intent_ids: paymentIntentIds,
       },

@@ -44,7 +44,10 @@ jest.mock('@/services/notifications/notification-service', () => ({
 import * as PaymentService from '@/services/payment/payment-service'
 import { getGroupMemberById } from '@/services/weekend-group-member/repository'
 import { getTransactionData } from '../stripe-service'
-import { notifyAssistantHeadForTeamPayment } from '@/services/notifications/notification-service'
+import {
+  notifyAssistantHeadForTeamPayment,
+  notifyCandidatePaymentReceivedAdmin,
+} from '@/services/notifications/notification-service'
 import { checkoutSessionCompletedHandler } from './checkout-session-completed'
 
 const findPaymentByIntentId = jest.mocked(PaymentService.findPaymentByIntentId)
@@ -159,5 +162,106 @@ describe('checkoutSessionCompletedHandler replay handling', () => {
       expect(result.data.processed).toBe(true)
       expect(result.data.entityId).toBe('pay-new')
     }
+  })
+})
+
+function candidateEvent(): Stripe.CheckoutSessionCompletedEvent {
+  return {
+    id: 'evt_test',
+    type: 'checkout.session.completed',
+    data: {
+      object: {
+        id: 'cs_test',
+        payment_intent: 'pi_test',
+        amount_total: 21000,
+        metadata: {
+          fee_type: 'candidate',
+          candidateId: 'cand-1',
+          payment_owner: 'Sam Sponsor',
+        },
+      },
+    },
+  } as unknown as Stripe.CheckoutSessionCompletedEvent
+}
+
+/**
+ * An admin client whose `candidates` status update answers with `confirmed`
+ * rows (one when the candidate was awaiting payment, none otherwise), and
+ * records the filters it was called with.
+ */
+function candidateCtx(confirmedRows: { id: string }[]) {
+  const filters: [string, string][] = []
+  const query = {
+    eq: (column: string, value: string) => {
+      filters.push([column, value])
+      return query
+    },
+    select: async () => ({ data: confirmedRows, error: null }),
+  }
+  const ctx = makeCtx()
+  ctx.adminClient = {
+    from: () => ({ update: () => query }),
+  } as unknown as WebhookHandlerContext['adminClient']
+  return { ctx, filters }
+}
+
+describe('checkoutSessionCompletedHandler candidate payments', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.mocked(getTransactionData).mockResolvedValue(err('not yet'))
+    jest
+      .mocked(notifyCandidatePaymentReceivedAdmin)
+      .mockResolvedValue(ok(undefined) as never)
+  })
+
+  it('records the payment and confirms only an awaiting candidate', async () => {
+    findPaymentByIntentId.mockResolvedValue(ok(null))
+    recordPayment.mockResolvedValue(ok({ id: 'pay-new' } as never))
+    const { ctx, filters } = candidateCtx([{ id: 'cand-1' }])
+
+    const result = await checkoutSessionCompletedHandler.handle(
+      candidateEvent(),
+      ctx
+    )
+
+    expect(recordPayment).toHaveBeenCalledTimes(1)
+    expect(filters).toEqual([
+      ['id', 'cand-1'],
+      ['status', 'awaiting_payment'],
+    ])
+    expect(isOk(result) && result.data.processed).toBe(true)
+  })
+
+  it('still records a payment for a candidate who is already confirmed', async () => {
+    findPaymentByIntentId.mockResolvedValue(ok(null))
+    recordPayment.mockResolvedValue(ok({ id: 'pay-new' } as never))
+    const { ctx } = candidateCtx([])
+
+    const result = await checkoutSessionCompletedHandler.handle(
+      candidateEvent(),
+      ctx
+    )
+
+    expect(recordPayment).toHaveBeenCalledTimes(1)
+    expect(recordPayment.mock.calls[0]![0]).toMatchObject({
+      target_type: 'candidate',
+      target_id: 'cand-1',
+      gross_amount: 210,
+    })
+    expect(isOk(result)).toBe(true)
+  })
+
+  it('finishes confirming on a replay without recording again', async () => {
+    findPaymentByIntentId.mockResolvedValue(ok({ id: 'pay-1' } as never))
+    const { ctx, filters } = candidateCtx([{ id: 'cand-1' }])
+
+    const result = await checkoutSessionCompletedHandler.handle(
+      candidateEvent(),
+      ctx
+    )
+
+    expect(recordPayment).not.toHaveBeenCalled()
+    expect(filters).toContainEqual(['status', 'awaiting_payment'])
+    expect(isOk(result) && result.data.processed).toBe(false)
   })
 })
