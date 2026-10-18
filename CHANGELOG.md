@@ -1,3 +1,9 @@
+## [1.70.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.70.0...v1.70.1) (2026-10-18)
+
+### Bug Fixes
+
+- **payments:** record every card payment and make payout webhooks retry-safe ([36b7ef8](https://github.com/sdavisde/tres-dias-platform/commit/36b7ef8b474aab5486f4347dbe34816682ca11a8))
+
 ## [1.70.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.69.0...v1.70.0) (2026-10-18)
 
 ### Features
