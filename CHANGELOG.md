@@ -1,3 +1,16 @@
+## [1.70.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.69.0...v1.70.0) (2026-10-18)
+
+### Features
+
+- **email:** add community email (mass email) to the admin ([ea07f7f](https://github.com/sdavisde/tres-dias-platform/commit/ea07f7f77f9ce83d2f766bef45949a99fea1a427))
+- **email:** email a weekend's team and secuela from where people work ([268c073](https://github.com/sdavisde/tres-dias-platform/commit/268c0735171926bf4a79507c8088d2a4fbab9517))
+- **review:** add a weekend group selector to review candidates ([07aa57c](https://github.com/sdavisde/tres-dias-platform/commit/07aa57ca7d454a6fe3506e6d5f4a88438823cc81))
+
+### Bug Fixes
+
+- **email:** show the setup notice on older PostgREST versions ([cbb178b](https://github.com/sdavisde/tres-dias-platform/commit/cbb178bac177214fe6d95c546a16a41bdfae883f))
+- **review:** call removed candidates "Dropped" instead of "Archived" ([be60af0](https://github.com/sdavisde/tres-dias-platform/commit/be60af0850027cecca184e6b121a0e24dd2d8b7a))
+
 ## [1.69.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.68.0...v1.69.0) (2026-10-13)
 
 ### Features
