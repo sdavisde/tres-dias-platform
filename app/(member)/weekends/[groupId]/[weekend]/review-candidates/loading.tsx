@@ -13,6 +13,7 @@ export default function ReviewCandidatesLoading() {
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3.5">
         <Skeleton className="h-7 w-44" />
+        <Skeleton className="h-8 w-28" />
         <Skeleton className="h-8 w-36" />
       </div>
       <div className="flex min-h-[60vh] flex-1 overflow-hidden rounded-lg border bg-card md:grid md:grid-cols-[350px_minmax(0,1fr)]">
