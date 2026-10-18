@@ -136,8 +136,8 @@ export function MeetingMinutesList({ files }: MeetingMinutesListProps) {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="size-11 text-muted-foreground md:size-8"
+                      size="icon-sm"
+                      className="text-muted-foreground"
                     >
                       <MoreVertical className="size-4.5" />
                       <span className="sr-only">Actions for {file.name}</span>

@@ -343,7 +343,7 @@ export function SponsorForm({ weekends, defaults }: SponsorFormProps) {
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="h-12 w-full sm:w-auto md:h-10"
+            className="w-full sm:w-auto"
           >
             {form.formState.isSubmitting ? 'Sending…' : 'Send sponsorship'}
           </Button>

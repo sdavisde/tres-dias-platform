@@ -26,7 +26,7 @@ export function TopBar({ nav, showAdmin }: TopBarProps) {
           asChild
           variant="ghost"
           size="sm"
-          className="h-11 gap-1.5 px-2 text-muted-foreground md:hidden"
+          className="gap-1.5 text-muted-foreground md:hidden"
         >
           <Link href="/admin">
             <ShieldCheck className="size-5" aria-hidden />

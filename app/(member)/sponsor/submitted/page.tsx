@@ -85,10 +85,8 @@ export default async function SponsorSubmittedPage({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Button href="/home" className="h-12 md:h-10">
-            Back to Home
-          </Button>
-          <Button href="/sponsor" variant="outline" className="h-12 md:h-10">
+          <Button href="/home">Back to Home</Button>
+          <Button href="/sponsor" variant="outline">
             Sponsor another candidate
           </Button>
         </div>

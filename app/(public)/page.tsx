@@ -37,7 +37,7 @@ export default function Home() {
           <Button
             href="/login"
             size="lg"
-            className="bg-white text-[#3D2B1F] hover:bg-white/90 text-base px-8 py-6"
+            className="bg-white text-[#3D2B1F] hover:bg-white/90 text-base"
           >
             Community Login
           </Button>
@@ -132,7 +132,7 @@ export default function Home() {
 
           <Button
             href="mailto:admin@dustytrailstresdias.org"
-            className="mt-10 text-base px-8 py-6"
+            className="mt-10 text-base"
             size="lg"
           >
             Reach Out to Our Team

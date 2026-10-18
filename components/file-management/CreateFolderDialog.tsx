@@ -84,7 +84,7 @@ export function CreateFolderDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="default" className="h-11 md:h-9.5">
+        <Button variant="outline" size="default">
           <FolderPlus className="size-4" />
           New folder
         </Button>
@@ -118,7 +118,7 @@ export function CreateFolderDialog({
               <Button
                 type="button"
                 variant="ghost"
-                className="h-11 sm:mr-auto md:h-9.5"
+                className="sm:mr-auto"
                 onClick={() => setName(`Test Folder ${Date.now() % 10000}`)}
               >
                 Fill with test data
@@ -127,17 +127,12 @@ export function CreateFolderDialog({
             <Button
               type="button"
               variant="outline"
-              className="h-11 md:h-9.5"
               onClick={() => handleOpenChange(false)}
               disabled={saving}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="h-11 md:h-9.5"
-              disabled={saving || name.trim() === ''}
-            >
+            <Button type="submit" disabled={saving || name.trim() === ''}>
               {saving && <Loader2 className="size-4 animate-spin" />}
               Create folder
             </Button>

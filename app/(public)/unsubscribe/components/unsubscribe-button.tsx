@@ -23,7 +23,7 @@ export function UnsubscribeButton({ token }: { token: string }) {
 
   return (
     <Button
-      className="h-11 w-full"
+      className="w-full"
       disabled={pending}
       onClick={async () => {
         setPending(true)

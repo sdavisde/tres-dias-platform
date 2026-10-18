@@ -89,8 +89,8 @@ export function ExperienceEditSection({
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive/90"
+                size="icon-sm"
+                className="text-destructive hover:text-destructive/90"
                 onClick={() => onDeleteExisting(record.id)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -182,8 +182,8 @@ export function ExperienceEditSection({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive"
+                    size="icon-sm"
+                    className="text-destructive"
                     onClick={() => onRemoveNew(entry.key)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

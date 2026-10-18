@@ -225,7 +225,7 @@ export function Payments({
           variant="outline"
           onClick={handleExportCsv}
           disabled={filteredRows.length === 0}
-          className="h-11 flex-1 sm:h-9 sm:flex-none"
+          className="flex-1 sm:flex-none"
         >
           <Download className="mr-1 h-4 w-4" />
           Export CSV

@@ -149,7 +149,6 @@ export function PaymentInfoModal({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 px-2"
                               onClick={() => window.open(stripeUrl, '_blank')}
                             >
                               <ExternalLink className="h-3 w-3" />

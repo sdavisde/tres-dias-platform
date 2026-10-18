@@ -101,8 +101,8 @@ export function DataTableMobileToolbar<TData>({
         {sortColumnId !== '' && (
           <Button
             variant="outline"
-            size="icon"
-            className="size-8 shrink-0"
+            size="icon-sm"
+            className="shrink-0"
             onClick={handleDirectionToggle}
           >
             {sortDesc ? (
@@ -120,11 +120,8 @@ export function DataTableMobileToolbar<TData>({
         {filterableColumns.length > 0 && (
           <Button
             variant="outline"
-            size="icon"
-            className={cn(
-              'size-8 shrink-0 relative',
-              filtersOpen && 'bg-accent'
-            )}
+            size="icon-sm"
+            className={cn('shrink-0 relative', filtersOpen && 'bg-accent')}
             onClick={() => setFiltersOpen((prev) => !prev)}
           >
             <ListFilter className="size-4" />

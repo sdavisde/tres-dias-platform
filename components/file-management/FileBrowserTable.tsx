@@ -181,11 +181,7 @@ export function FileBrowserTable({
     <div onClick={(event) => event.stopPropagation()}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-11 text-muted-foreground md:size-8.5"
-          >
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
             <MoreVertical className="size-4.5" />
             <span className="sr-only">Actions for {entry.name}</span>
           </Button>

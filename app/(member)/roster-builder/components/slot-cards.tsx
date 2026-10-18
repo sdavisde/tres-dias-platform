@@ -236,7 +236,7 @@ export function FilledSlotCard({
             <Button
               size="sm"
               variant="outline"
-              className="mt-3 h-11 w-full gap-1.5 text-[13px] md:h-9"
+              className="mt-3 w-full gap-1.5 text-[13px]"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
               Finalize

@@ -19,24 +19,14 @@ export function ContactButtons({
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       {digits !== '' && (
-        <Button
-          asChild
-          variant="outline"
-          size="icon"
-          className="size-11 md:size-8"
-        >
+        <Button asChild variant="outline" size="icon-sm">
           <a href={`tel:${digits}`} aria-label={`Call ${name}`}>
             <Phone className="size-4" />
           </a>
         </Button>
       )}
       {!isNil(email) && email !== '' && (
-        <Button
-          asChild
-          variant="outline"
-          size="icon"
-          className="size-11 md:size-8"
-        >
+        <Button asChild variant="outline" size="icon-sm">
           <a href={`mailto:${email}`} aria-label={`Email ${name}`}>
             <Mail className="size-4" />
           </a>

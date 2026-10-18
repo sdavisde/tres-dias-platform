@@ -75,7 +75,7 @@ export function AssignMemberPopover({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size="sm" className={cn('h-11 text-sm md:h-9', className)}>
+        <Button size="sm" className={cn('text-sm', className)}>
           <UserPlus className="mr-1.5 h-3.5 w-3.5" />
           Assign to...
           <ChevronDown className="ml-auto h-3.5 w-3.5 opacity-60" />

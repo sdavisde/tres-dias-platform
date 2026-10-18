@@ -68,7 +68,7 @@ export function SearchPalette({ nav }: { nav: MemberNav }) {
         type="button"
         variant="ghost"
         size="icon"
-        className="size-11 md:hidden"
+        className="md:hidden"
         onClick={() => setOpen(true)}
         aria-label="Search this site"
       >
