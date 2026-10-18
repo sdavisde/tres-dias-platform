@@ -26,7 +26,7 @@ type CandidateQueueProps = {
 
 /**
  * The left pane of the review page: search, the Needs review / All /
- * Archived chips, and one row per candidate. On phones this is the whole
+ * Dropped chips, and one row per candidate. On phones this is the whole
  * page and picking a row opens the detail sheet.
  */
 export function CandidateQueue({
@@ -111,8 +111,8 @@ export function CandidateQueue({
               ? 'No candidates match that search.'
               : filter === 'needs-review'
                 ? 'Nobody is waiting on a decision right now.'
-                : filter === 'archived'
-                  ? 'No archived candidates on this weekend.'
+                : filter === 'dropped'
+                  ? 'No dropped candidates on this weekend.'
                   : 'No candidates on this weekend yet.'}
           </li>
         ) : (

@@ -106,7 +106,7 @@ function PositionRow({
           variant="outline"
           size="sm"
           onClick={onAssignClick}
-          className="h-11 w-full shrink-0 sm:ml-auto sm:h-8 sm:w-auto"
+          className="w-full shrink-0 sm:ml-auto sm:w-auto"
         >
           {hasAssignments ? 'Change' : 'Assign'}
         </Button>
@@ -179,9 +179,9 @@ export function RoleAssignments({
       </span>
       {canEdit && (
         <Button
-          size="sm"
+          size="icon-sm"
           variant="ghost"
-          className="size-11 shrink-0 p-0 sm:size-6"
+          className="shrink-0"
           onClick={preWeekendEmail.startEditEmail}
         >
           <Pencil className="h-3 w-3" />

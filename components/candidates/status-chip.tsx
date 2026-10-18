@@ -18,7 +18,7 @@ export function StatusChip({ status }: StatusChipProps) {
     pending_approval: { color: 'error', label: 'Pending Approval' },
     awaiting_payment: { color: 'warning', label: 'Awaiting Payment' },
     confirmed: { color: 'success', label: 'Confirmed' },
-    rejected: { color: 'error', label: 'Rejected' },
+    rejected: { color: 'error', label: 'Dropped' },
   }
 
   const config = statusConfig[status] ?? {

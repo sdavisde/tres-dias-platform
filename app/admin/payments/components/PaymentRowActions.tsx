@@ -46,11 +46,7 @@ export function PaymentRowActions({ row }: PaymentRowActionsProps) {
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-11 w-11 p-0 md:h-8 md:w-8"
-            >
+            <Button variant="ghost" size="icon-sm">
               <span className="sr-only">Overpayment actions</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -74,11 +70,7 @@ export function PaymentRowActions({ row }: PaymentRowActionsProps) {
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-11 w-11 p-0 md:h-8 md:w-8"
-            >
+            <Button variant="ghost" size="icon-sm">
               <span className="sr-only">Fee actions</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -103,11 +95,7 @@ export function PaymentRowActions({ row }: PaymentRowActionsProps) {
     <div onClick={(e) => e.stopPropagation()}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-11 w-11 p-0 md:h-8 md:w-8"
-          >
+          <Button variant="ghost" size="icon-sm">
             <span className="sr-only">Payment actions</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>

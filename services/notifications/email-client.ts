@@ -1,7 +1,11 @@
 import 'server-only'
 
 import { isNil } from 'lodash'
-import type { CreateEmailOptions, CreateEmailResponseSuccess } from 'resend'
+import type {
+  CreateBatchEmailOptions,
+  CreateEmailOptions,
+  CreateEmailResponseSuccess,
+} from 'resend'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import type { Result } from '@/lib/results'
@@ -19,6 +23,8 @@ export type EmailTemplate =
   | 'candidate-forms'
   | 'candidate-forms-completed'
   | 'candidate-payment-completed'
+  | 'community-email'
+  | 'community-email-test'
   | 'email-change-notification'
   | 'payment-request'
   | 'sponsorship-notification'
@@ -71,10 +77,65 @@ export async function sendEmail(
   return ok(data)
 }
 
-type SendOutcome = {
-  status: 'sent' | 'failed'
-  resendMessageId: string | null
-  errorSummary: string | null
+/** Resend's batch endpoint accepts at most this many emails per call. */
+export const BATCH_SEND_LIMIT = 100
+
+/**
+ * Sends up to {@link BATCH_SEND_LIMIT} emails in one Resend batch call and
+ * records the batch as one `email_log` row (one row per batch keeps the usage
+ * metric honest without a row per recipient; `recipient_count` carries the
+ * size).
+ *
+ * The batch is all-or-nothing (Resend's strict validation): on error no email
+ * in it was sent. Returns the Resend ids in the same order as `emails`.
+ * `idempotencyKey` makes a retried batch a no-op on Resend's side.
+ */
+export async function sendBatchEmails(
+  template: EmailTemplate,
+  emails: CreateBatchEmailOptions[],
+  idempotencyKey: string
+): Promise<Result<string, string[]>> {
+  if (emails.length === 0) return ok([])
+  if (emails.length > BATCH_SEND_LIMIT) {
+    return err(`A batch holds at most ${BATCH_SEND_LIMIT} emails`)
+  }
+
+  const logFields = {
+    subject: emails[0].subject ?? '',
+    recipients: emails.flatMap((email) => toRecipientList(email.to)),
+  }
+
+  let response
+  try {
+    response = await resend.batch.send(emails, { idempotencyKey })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    await recordLogRow(template, logFields, {
+      status: 'failed',
+      resendMessageId: null,
+      errorSummary: message,
+    })
+    return err(message)
+  }
+
+  const { data, error } = response
+  if (!isNil(error) || isNil(data)) {
+    const message = error?.message ?? 'Resend returned no batch result'
+    await recordLogRow(template, logFields, {
+      status: 'failed',
+      resendMessageId: null,
+      errorSummary: message,
+    })
+    return err(message)
+  }
+
+  const ids = data.data.map((entry) => entry.id)
+  await recordLogRow(template, logFields, {
+    status: 'sent',
+    resendMessageId: ids[0] ?? null,
+    errorSummary: null,
+  })
+  return ok(ids)
 }
 
 /**
@@ -82,16 +143,16 @@ type SendOutcome = {
  * and swallowed, because the email has already been handed to Resend by the
  * time this runs and losing the audit row must not surface to the user.
  */
-async function recordSendAttempt(
+async function recordLogRow(
   template: EmailTemplate,
-  options: CreateEmailOptions,
+  fields: { subject: string; recipients: string[] },
   outcome: SendOutcome
 ): Promise<void> {
   try {
     const result = await NotificationRepository.insertEmailLog({
       template,
-      subject: options.subject ?? '',
-      recipients: toRecipientList(options.to),
+      subject: fields.subject,
+      recipients: fields.recipients,
       status: outcome.status,
       resendMessageId: outcome.resendMessageId,
       errorSummary: outcome.errorSummary,
@@ -104,6 +165,25 @@ async function recordSendAttempt(
   } catch (error) {
     logger.error(error, `Failed to record email log entry for ${template}`)
   }
+}
+
+type SendOutcome = {
+  status: 'sent' | 'failed'
+  resendMessageId: string | null
+  errorSummary: string | null
+}
+
+/** {@link recordLogRow} for a single `sendEmail` call. */
+async function recordSendAttempt(
+  template: EmailTemplate,
+  options: CreateEmailOptions,
+  outcome: SendOutcome
+): Promise<void> {
+  await recordLogRow(
+    template,
+    { subject: options.subject ?? '', recipients: toRecipientList(options.to) },
+    outcome
+  )
 }
 
 function toRecipientList(to: CreateEmailOptions['to']): string[] {

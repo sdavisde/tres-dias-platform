@@ -190,17 +190,12 @@ export function AddCommitteeDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-11 md:h-9"
                   disabled={isSaving}
                   onClick={() => handleOpenChange(false)}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className="h-11 md:h-9"
-                  disabled={isSaving}
-                >
+                <Button type="submit" disabled={isSaving}>
                   {isSaving ? 'Creating…' : 'Create committee'}
                 </Button>
               </div>

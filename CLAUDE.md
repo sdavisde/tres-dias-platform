@@ -179,7 +179,7 @@ the user, do it.
    - **Header**: Primary identifier (name, title) prominently displayed with larger font (`text-lg`, `font-medium`)
    - **Content Organization**: Use labeled sections with consistent spacing (`space-y-2`, `space-y-3`)
    - **Labels**: Muted foreground labels with fixed width for alignment (`text-muted-foreground w-16`)
-   - **Action Buttons**: Position in header with proper touch targets (minimum 44px)
+   - **Action Buttons**: Position in header
    - **Status/Badges**: Group together with flexbox (`flex flex-wrap items-center gap-2`)
    - **Borders**: Use card styling (`bg-card border rounded-lg p-4`)
 
@@ -190,7 +190,6 @@ the user, do it.
    - **Empty States**: Show appropriate messages for both layouts
 
 5. **Touch Optimization**:
-   - Minimum 44px touch targets for interactive elements
    - Proper spacing between interactive elements (minimum 8px gaps)
    - Hover states replaced with appropriate mobile interactions
 
@@ -216,3 +215,13 @@ the user, do it.
 - Shared types in `lib/` subdirectories by domain
 - Email templates using React Email in `components/email/`
 - use `bun run build` to confirm compilation
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

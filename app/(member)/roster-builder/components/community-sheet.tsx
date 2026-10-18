@@ -157,7 +157,7 @@ function CommunityMemberCard({
         {/* Action row */}
         <div className="mt-3 flex items-center gap-2">
           {isAssigned ? (
-            <Button size="sm" className="h-11 flex-1 text-sm md:h-9" disabled>
+            <Button size="sm" className="flex-1 text-sm" disabled>
               Already assigned
             </Button>
           ) : (
@@ -171,7 +171,7 @@ function CommunityMemberCard({
           <Button
             variant="outline"
             size="sm"
-            className="h-11 shrink-0 gap-1 text-sm md:h-9"
+            className="shrink-0 gap-1 text-sm"
             onClick={onViewProfile}
           >
             Profile
@@ -298,7 +298,7 @@ export function CommunitySheet({
       }}
     >
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="h-11 gap-2 md:h-9">
+        <Button variant="outline" size="sm" className="gap-2">
           <Users className="h-4 w-4" />
           Browse Community
         </Button>
@@ -350,7 +350,7 @@ export function CommunitySheet({
                 </div>
                 <Button
                   variant="outline"
-                  className="h-11 shrink-0 gap-2 md:h-9"
+                  className="shrink-0 gap-2"
                   onClick={() => setView({ type: 'filters' })}
                 >
                   <SlidersHorizontal aria-hidden className="h-4 w-4" />
@@ -434,7 +434,6 @@ export function CommunitySheet({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-11 md:size-9"
                 aria-label="Back to members"
                 onClick={() => setView({ type: 'list' })}
               >
@@ -447,7 +446,7 @@ export function CommunitySheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-11 text-sm text-muted-foreground md:h-9"
+                  className="text-sm text-muted-foreground"
                   onClick={resetFilters}
                 >
                   Reset
@@ -466,7 +465,7 @@ export function CommunitySheet({
             </ScrollArea>
             <div className="border-t bg-card px-5 py-3">
               <Button
-                className="h-11 w-full text-sm md:h-10"
+                className="w-full text-sm"
                 onClick={() => setView({ type: 'list' })}
               >
                 Show {filteredMembers.length}{' '}
@@ -483,7 +482,7 @@ export function CommunitySheet({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-11 gap-1.5 px-2 text-sm text-nav-foreground md:h-9"
+                className="gap-1.5 text-sm text-nav-foreground"
                 onClick={() => setView({ type: 'list' })}
               >
                 <ArrowLeft aria-hidden className="h-4 w-4" />

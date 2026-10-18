@@ -20,6 +20,7 @@ import { hubPath } from '@/lib/weekend/hub'
 import { getWeekendRosterViewData } from '@/services/weekend/weekend-service'
 import { Permission, userHasPermission } from '@/lib/security'
 import type { User } from '@/lib/users/types'
+import type { WeekendRosterMember } from '@/services/weekend'
 import { formatDateOnly } from '@/lib/utils'
 import { Results } from '@/lib/results'
 
@@ -39,6 +40,14 @@ export type WeekendRosterViewProps = {
    * roster route is unchanged.
    */
   hideWeekendHeader?: boolean
+
+  /**
+   * With `hideWeekendHeader`, fills the space beside the experience chart
+   * (the hub's leadership and next-meeting card). Gets the loaded roster.
+   */
+  summarySlot?: (roster: WeekendRosterMember[]) => React.ReactNode
+  /** Extra actions in the roster toolbar, before Export. */
+  toolbarSlot?: React.ReactNode
 }
 
 export async function WeekendRosterView({
@@ -47,6 +56,8 @@ export async function WeekendRosterView({
   weekend: knownWeekend,
   headerSlot,
   hideWeekendHeader = false,
+  summarySlot,
+  toolbarSlot,
 }: WeekendRosterViewProps) {
   // Load all data using the service
   const result = await getWeekendRosterViewData(weekendId, knownWeekend)
@@ -92,9 +103,13 @@ export async function WeekendRosterView({
     <>
       {/* Weekend Information Header */}
       {(!hideWeekendHeader ||
+        !isNil(summarySlot) ||
         (canViewExperienceDistribution && !isNil(experienceDistribution))) && (
         <div className="mb-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-stretch lg:justify-between gap-6">
+            {hideWeekendHeader && !isNil(summarySlot) && (
+              <div className="min-w-0 flex-1">{summarySlot(roster)}</div>
+            )}
             {/* Left side: Weekend info */}
             {!hideWeekendHeader && (
               <div className="flex-1">
@@ -151,6 +166,7 @@ export async function WeekendRosterView({
         <div className="mb-4">
           <ActiveRosterHeader roster={roster} title="Team Roster">
             <div className="flex gap-2">
+              {toolbarSlot}
               <ExportRosterButton
                 roster={roster}
                 options={{

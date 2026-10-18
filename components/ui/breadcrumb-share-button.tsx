@@ -42,10 +42,10 @@ export function BreadcrumbShareButton({ title }: BreadcrumbShareButtonProps) {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className={cn(
             // 44px touch target on phones, compact beside the trail on desktop.
-            'size-11 text-muted-foreground md:size-7',
+            'text-muted-foreground',
             // `!` so the reveals win over the hide regardless of variant order.
             'transition-opacity [@media(hover:hover)]:opacity-0',
             'group-hover/breadcrumbs:opacity-100! focus-visible:opacity-100!',

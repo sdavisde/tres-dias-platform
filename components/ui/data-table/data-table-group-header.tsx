@@ -29,7 +29,7 @@ export function CollapsedGroupHeader<TData, TValue>({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 px-1.5 text-primary hover:text-primary"
+        className="text-primary hover:text-primary"
         onClick={onExpand}
         aria-label={`Expand ${label} columns`}
         aria-expanded={false}
@@ -58,7 +58,7 @@ export function ExpandedGroupHeader({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 px-1.5 text-primary hover:text-primary"
+        className="text-primary hover:text-primary"
         onClick={onCollapse}
         aria-label={`Collapse ${label} columns`}
         aria-expanded={true}
@@ -71,7 +71,7 @@ export function ExpandedGroupHeader({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 px-1.5 text-primary hover:text-primary"
+        className="text-primary hover:text-primary"
         onClick={onCollapse}
         aria-label={`Collapse ${label} columns`}
         aria-expanded={true}

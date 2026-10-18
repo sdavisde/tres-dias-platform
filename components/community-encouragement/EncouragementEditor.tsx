@@ -113,7 +113,7 @@ export function EncouragementEditor({
                 size="sm"
                 variant="outline"
                 onClick={handleOpenDialog}
-                className="h-8 gap-2"
+                className="gap-2"
                 disabled={isPending}
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -123,7 +123,7 @@ export function EncouragementEditor({
                 size="sm"
                 variant="outline"
                 onClick={handleRemove}
-                className="h-8 gap-2"
+                className="gap-2"
                 disabled={isPending}
               >
                 <Trash2 className="h-3.5 w-3.5" />

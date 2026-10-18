@@ -149,12 +149,12 @@ export function toReviewCandidate(
 // Queue
 // ---------------------------------------------------------------------------
 
-export type QueueFilter = 'needs-review' | 'all' | 'archived'
+export type QueueFilter = 'needs-review' | 'all' | 'dropped'
 
 export const QUEUE_FILTERS: Array<{ filter: QueueFilter; label: string }> = [
   { filter: 'needs-review', label: 'Needs review' },
   { filter: 'all', label: 'All' },
-  { filter: 'archived', label: 'Archived' },
+  { filter: 'dropped', label: 'Dropped' },
 ]
 
 /** Which candidates a queue chip shows. */
@@ -165,7 +165,7 @@ export function matchesQueueFilter(
   switch (filter) {
     case 'needs-review':
       return candidate.status === 'pending_approval'
-    case 'archived':
+    case 'dropped':
       return candidate.status === 'rejected'
     case 'all':
       return candidate.status !== 'rejected'
@@ -240,7 +240,7 @@ export const STATUS_PILLS: Record<
   pending_approval: { label: 'Ready to review', tone: 'cream' },
   awaiting_payment: { label: 'Payment requested', tone: 'cream' },
   confirmed: { label: 'Confirmed', tone: 'success' },
-  rejected: { label: 'Archived', tone: 'outline' },
+  rejected: { label: 'Dropped', tone: 'outline' },
 }
 
 // ---------------------------------------------------------------------------
@@ -277,11 +277,11 @@ export function primaryActionFor(
     case 'confirmed':
       return { kind: 'none', label: 'Confirmed' }
     case 'rejected':
-      return { kind: 'none', label: 'Archived' }
+      return { kind: 'none', label: 'Dropped' }
   }
 }
 
-/** Spots still open on the weekend: capacity minus everyone not archived. */
+/** Spots still open on the weekend: capacity minus everyone not dropped. */
 export function spotsLeft(
   candidates: Array<Pick<ReviewCandidate, 'status'>>,
   capacity: number = WEEKEND_CANDIDATE_CAPACITY

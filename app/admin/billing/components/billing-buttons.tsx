@@ -116,7 +116,6 @@ export function RefreshBillingButton() {
       type="button"
       variant="ghost"
       size="sm"
-      className="h-11 sm:h-9"
       disabled={busy}
       onClick={run}
     >

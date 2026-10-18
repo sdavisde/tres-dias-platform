@@ -517,6 +517,129 @@ export type Database = {
           },
         ]
       }
+      email_broadcast_recipients: {
+        Row: {
+          broadcast_id: string
+          created_at: string
+          email: string
+          error_summary: string | null
+          id: string
+          name: string | null
+          resend_message_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          broadcast_id: string
+          created_at?: string
+          email: string
+          error_summary?: string | null
+          id?: string
+          name?: string | null
+          resend_message_id?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          broadcast_id?: string
+          created_at?: string
+          email?: string
+          error_summary?: string | null
+          id?: string
+          name?: string | null
+          resend_message_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'email_broadcast_recipients_broadcast_id_fkey'
+            columns: ['broadcast_id']
+            isOneToOne: false
+            referencedRelation: 'email_broadcasts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'email_broadcast_recipients_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      email_broadcasts: {
+        Row: {
+          audience: NonNullable<Json>
+          body_html: string
+          community_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          deleted_at: string | null
+          failed_count: number
+          id: string
+          recipient_count: number
+          sent_at: string | null
+          sent_by_user_id: string | null
+          sent_count: number
+          skipped_count: number
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: NonNullable<Json>
+          body_html?: string
+          community_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          failed_count?: number
+          id?: string
+          recipient_count?: number
+          sent_at?: string | null
+          sent_by_user_id?: string | null
+          sent_count?: number
+          skipped_count?: number
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: NonNullable<Json>
+          body_html?: string
+          community_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          deleted_at?: string | null
+          failed_count?: number
+          id?: string
+          recipient_count?: number
+          sent_at?: string | null
+          sent_by_user_id?: string | null
+          sent_count?: number
+          skipped_count?: number
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'email_broadcasts_created_by_user_id_fkey'
+            columns: ['created_by_user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'email_broadcasts_sent_by_user_id_fkey'
+            columns: ['sent_by_user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       email_log: {
         Row: {
           community_id: string | null
@@ -566,6 +689,30 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      email_unsubscribes: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          source: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
       }
       events: {
         Row: {

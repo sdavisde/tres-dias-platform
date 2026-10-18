@@ -254,7 +254,7 @@ export function RecordPaymentDialog({
                           variant="outline"
                           role="combobox"
                           aria-expanded={pickerOpen}
-                          className="h-11 w-full justify-between font-normal sm:h-9"
+                          className="w-full justify-between font-normal"
                           disabled={isLoadingOptions && isNil(selectedName)}
                         >
                           {!isNil(selectedName) ? (

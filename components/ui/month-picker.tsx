@@ -69,7 +69,7 @@ export function MonthPicker({ selected, onSelect }: MonthPickerProps) {
                 ? 'default'
                 : 'ghost'
             }
-            className="text-sm h-8"
+            className="text-sm"
             onClick={() => handleMonthSelect(index)}
           >
             {month.slice(0, 3)}

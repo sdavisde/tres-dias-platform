@@ -35,8 +35,8 @@ export function DataTableColumnFilter<TData, TValue>({
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
-          className={cn('size-7', isActive && 'text-primary')}
+          size="icon-sm"
+          className={cn(isActive && 'text-primary')}
         >
           <ListFilter className="size-4" />
           <span className="sr-only">Filter</span>
@@ -72,7 +72,7 @@ function TextFilter<TData, TValue>({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-full text-xs"
+          className="w-full text-xs"
           onClick={() => column.setFilterValue(undefined)}
         >
           Clear
@@ -168,7 +168,7 @@ function SelectFilter<TData, TValue>({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 w-full text-xs"
+          className="w-full text-xs"
           onClick={() => column.setFilterValue(undefined)}
         >
           Clear

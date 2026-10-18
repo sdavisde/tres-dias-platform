@@ -8,6 +8,7 @@ import {
   Folder,
   HandHeart,
   Landmark,
+  Mail,
   Receipt,
   Settings2,
   ShieldCheck,
@@ -80,6 +81,16 @@ export const adminNavItems: AdminNavItem[] = [
     href: '/admin/community-board',
     icon: Landmark,
     permissionsNeeded: [],
+  },
+  {
+    title: 'Email',
+    section: 'Community',
+    href: '/admin/email',
+    icon: Mail,
+    permissionsNeeded: [
+      Permission.READ_COMMUNITY_EMAIL,
+      Permission.SEND_COMMUNITY_EMAIL,
+    ],
   },
   {
     title: 'Security',

@@ -306,7 +306,7 @@ export function RoleEditor({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-11 shrink-0 md:h-8"
+                    className="shrink-0"
                     onClick={fillWithTestData}
                   >
                     Fill with test data
@@ -571,7 +571,7 @@ export function RoleEditor({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-11 self-start border-destructive/50 bg-card text-destructive hover:bg-destructive hover:text-white md:h-9"
+                    className="self-start border-destructive/50 bg-card text-destructive hover:bg-destructive hover:text-white"
                     disabled={!isNil(deleteBlockedReason)}
                     onClick={() => onDelete(role)}
                   >
@@ -598,7 +598,6 @@ export function RoleEditor({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-11 md:h-9"
                 disabled={isCreating}
                 onClick={() => {
                   form.reset(defaults)
@@ -607,12 +606,7 @@ export function RoleEditor({
               >
                 Discard
               </Button>
-              <Button
-                type="submit"
-                size="sm"
-                className="h-11 md:h-9"
-                disabled={isCreating}
-              >
+              <Button type="submit" size="sm" disabled={isCreating}>
                 {isCreating ? 'Creating…' : 'Create role'}
               </Button>
             </div>

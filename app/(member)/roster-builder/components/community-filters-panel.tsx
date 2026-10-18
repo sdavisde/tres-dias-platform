@@ -187,7 +187,7 @@ function OptionCombobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="h-11 w-full justify-between px-3 text-sm font-normal text-muted-foreground md:h-9"
+            className="w-full justify-between text-sm font-normal text-muted-foreground"
           >
             {placeholder}
             <ChevronsUpDown aria-hidden className="h-4 w-4 opacity-60" />
@@ -547,7 +547,7 @@ export function ActiveFilterChips({
         variant="ghost"
         size="sm"
         onClick={onClearAll}
-        className="h-7 px-2 text-xs text-muted-foreground"
+        className="text-xs text-muted-foreground"
       >
         Clear all
       </Button>

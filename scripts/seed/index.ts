@@ -50,6 +50,9 @@ const WIPED_TABLES = [
   'user_roles',
   'user_medical_profiles',
   'email_log',
+  'email_broadcast_recipients',
+  'email_broadcasts',
+  'email_unsubscribes',
   'contact_information',
 ].map((t) => `public.${t}`)
 

@@ -42,6 +42,7 @@ describe('adminNavItems', () => {
       'Secuela',
       'People',
       'Community Board',
+      'Email',
       'Security',
       'Payments',
       'Files',
@@ -61,6 +62,7 @@ describe('adminNavItems', () => {
       Payments: '/admin/payments',
       People: '/admin/people',
       'Community Board': '/admin/community-board',
+      Email: '/admin/email',
       Files: '/admin/files',
       'Site settings': '/admin/settings',
       Billing: '/admin/billing',
@@ -79,6 +81,7 @@ describe('adminNavItems', () => {
     expect(titlesIn('Community')).toEqual([
       'People',
       'Community Board',
+      'Email',
       'Security',
       'Payments',
       'Files',
@@ -147,6 +150,17 @@ describe('filterNavByPermission', () => {
     ).not.toContain('Billing')
     expect(titles([Permission.MANAGE_BILLING])).toContain('Billing')
     expect(titles([Permission.FULL_ACCESS])).toContain('Billing')
+  })
+
+  it('shows Email to readers and senders of community email', () => {
+    const titles = (permissions: Permission[]) =>
+      filterNavByPermission(adminNavItems, makeUser(permissions)).map(
+        (item) => item.title
+      )
+    expect(titles([])).not.toContain('Email')
+    expect(titles([Permission.READ_COMMUNITY_EMAIL])).toContain('Email')
+    expect(titles([Permission.SEND_COMMUNITY_EMAIL])).toContain('Email')
+    expect(titles([Permission.FULL_ACCESS])).toContain('Email')
   })
 
   it('shows gated items when the user holds the permission', () => {

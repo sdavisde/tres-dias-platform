@@ -97,12 +97,7 @@ export function CandidateDetail({
             <ReviewStatusPill status={candidate.status} size="md" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-11 md:size-9"
-                  aria-label="More actions"
-                >
+                <Button variant="outline" size="icon" aria-label="More actions">
                   <Ellipsis className="size-4" aria-hidden />
                 </Button>
               </DropdownMenuTrigger>
@@ -135,7 +130,7 @@ export function CandidateDetail({
                       variant="destructive"
                       onSelect={actions.onReject}
                     >
-                      Archive candidate
+                      Drop candidate
                     </DropdownMenuItem>
                   </>
                 )}
@@ -209,7 +204,6 @@ export function CandidateDetail({
             <Button
               variant="outline"
               size="default"
-              className="h-11 md:h-9"
               onClick={actions.onViewMedical}
             >
               View
@@ -323,7 +317,7 @@ function PrimaryButton({
       variant={
         action.kind === 'approve' && action.resend ? 'outline' : 'default'
       }
-      className="h-11 px-5 text-[14.5px] font-semibold md:h-10"
+      className="text-[14.5px] font-semibold"
       disabled={disabled}
       onClick={onClick}
     >
@@ -352,7 +346,7 @@ function SoonButton({
             disabled
             aria-disabled="true"
             className={cn(
-              'h-11 text-[14.5px] font-semibold md:h-10',
+              'text-[14.5px] font-semibold',
               variant === 'ghost' && 'text-muted-foreground'
             )}
           >
