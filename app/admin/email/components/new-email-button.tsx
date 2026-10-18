@@ -42,7 +42,8 @@ export function NewEmailButton({ className }: { className?: string }) {
   return (
     <Button
       type="button"
-      className={cn('h-11 w-full sm:w-auto', className)}
+      size="default"
+      className={cn('w-full sm:w-auto', className)}
       disabled={pending}
       onClick={run}
     >
@@ -66,7 +67,8 @@ export function DuplicateEmailButton({
     <Button
       type="button"
       variant={variant}
-      className="h-11 w-full sm:w-auto"
+      size="default"
+      className="w-full sm:w-auto"
       disabled={pending}
       onClick={run}
     >

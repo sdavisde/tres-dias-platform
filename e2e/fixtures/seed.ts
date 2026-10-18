@@ -509,6 +509,87 @@ export async function pickBillingManager({
   return pick
 }
 
+// ---------------------------------------------------------------------------
+// S8, S9: community email
+// ---------------------------------------------------------------------------
+
+/**
+ * S8: a confirmed seeded user holding the role labelled `label`, whose roles
+ * (following `roles.based_on_role_id`) grant READ_COMMUNITY_EMAIL and
+ * READ_ADMIN_PORTAL. Email order.
+ */
+export async function pickRoleHolder(label: string): Promise<UserPick> {
+  const admin = adminClient()
+  const [roles, userRoles, users] = await Promise.all([
+    admin.from('roles').select('id, label, permissions, based_on_role_id'),
+    admin.from('user_roles').select('user_id, role_id'),
+    seededUsers(),
+  ])
+  const roleRows = unwrap(roles, 'roles')
+  const role = roleRows.find((r) => r.label === label)
+  const links = unwrap(userRoles, 'user roles')
+
+  const grants = (userId: string, permission: Permission) =>
+    links
+      .filter((link) => link.user_id === userId)
+      .some((link) =>
+        getEffectivePermissions(link.role_id, roleRows).has(permission)
+      )
+
+  const pick = users.find(
+    (p) =>
+      links.some((l) => l.user_id === p.user.id && l.role_id === role?.id) &&
+      grants(p.user.id, Permission.READ_COMMUNITY_EMAIL) &&
+      grants(p.user.id, Permission.READ_ADMIN_PORTAL)
+  )
+  if (isNil(pick)) {
+    throw invariant(
+      8,
+      `a confirmed seeded user with the "${label}" role whose roles grant READ_COMMUNITY_EMAIL and READ_ADMIN_PORTAL`
+    )
+  }
+  return pick
+}
+
+export type WeekendLeadersPick = {
+  weekend: Tables<'weekends'>
+  rector: UserPick
+  head: UserPick
+}
+
+/**
+ * S9: the active group's men's weekend has a confirmed seeded user as Rector
+ * and another as Head (active roster rows).
+ */
+export async function pickWeekendLeaders(): Promise<WeekendLeadersPick> {
+  const { weekends } = await activeGroup()
+  const weekend = weekends.find((w) => w.type === 'MENS')
+  const lookedFor =
+    "the active group's men's weekend with a confirmed seeded Rector and Head"
+  if (isNil(weekend)) throw invariant(9, lookedFor)
+
+  const [roster, users] = await Promise.all([
+    adminClient()
+      .from('weekend_roster')
+      .select('user_id, cha_role, status')
+      .eq('weekend_id', weekend.id)
+      .in('cha_role', ['Rector', 'Head']),
+    seededUsers(),
+  ])
+  const active = unwrap(roster, 'leadership roster').filter(
+    (row) => row.status !== 'drop'
+  )
+  const holder = (role: string) =>
+    users.find((p) =>
+      active.some((row) => row.cha_role === role && row.user_id === p.user.id)
+    )
+  const rector = holder('Rector')
+  const head = holder('Head')
+  if (isNil(rector) || isNil(head)) throw invariant(9, lookedFor)
+
+  return { weekend, rector, head }
+}
+
 /** S5: the password every seeded auth user shares. */
 export function seedPassword(): string {
   return process.env.E2E_SEED_PASSWORD ?? 'password'

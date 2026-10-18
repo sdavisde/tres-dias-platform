@@ -8,17 +8,42 @@ import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import * as CommunityEmailService from './community-email-service'
 import { verifyUnsubscribeToken } from './unsubscribe-token'
-import type { AudienceSummary, DraftUpdate, SendSummary } from './types'
+import type { User } from '@/lib/users/types'
+import { canSendSomeEmail, canSendToAudience } from './audience-access'
+import type {
+  Audience,
+  AudienceSummary,
+  DraftUpdate,
+  SendSummary,
+} from './types'
 import { AudienceSchema, DraftUpdateSchema } from './types'
 
 /**
- * Community email actions. Everything that writes, previews or sends needs
- * SEND_COMMUNITY_EMAIL (Full Access passes). The one exception is
- * {@link unsubscribeFromCommunityEmail}, which is public by design and is
- * authorized by its signed token instead of a session.
+ * Community email actions. Admin → Email's own actions (blank drafts,
+ * duplicates) need SEND_COMMUNITY_EMAIL. Everything that touches one email
+ * checks the caller may send to *its* audience ({@link canSendToAudience}),
+ * so a weekend leader can only work on emails to their own team. The one
+ * exception is {@link unsubscribeFromCommunityEmail}, which is public by
+ * design and is authorized by its signed token instead of a session.
  */
 
 const SEND = Permission.SEND_COMMUNITY_EMAIL
+
+/** The caller may send to the stored email's audience. */
+async function canSendStored(user: User, id: string): Promise<boolean> {
+  const email = await CommunityEmailService.getBroadcastForSender(id)
+  return (
+    !isErr(email) &&
+    !isNil(email.data) &&
+    canSendToAudience(user, email.data.audience)
+  )
+}
+
+/** The caller may send to an audience passed in from the client. */
+function canSendTo(user: User, audience: unknown): boolean {
+  const parsed = AudienceSchema.safeParse(audience)
+  return parsed.success && canSendToAudience(user, parsed.data)
+}
 
 function revalidatingEmail<T>(
   result: Result<string, T>,
@@ -45,21 +70,41 @@ export const duplicateCommunityEmail = authorizedAction<[string], string>(
     revalidatingEmail(await CommunityEmailService.duplicateBroadcast(user, id))
 )
 
+/**
+ * Starts a draft already addressed to `audience` (the weekend hub's and
+ * Secuela's "Email …" buttons) and returns its id.
+ */
+export const createCommunityEmailFor = authorizedAction<[Audience], string>(
+  canSendTo,
+  async (user, audience) =>
+    revalidatingEmail(
+      await CommunityEmailService.createDraft(user, {
+        subject: '',
+        bodyHtml: '',
+        audience: AudienceSchema.parse(audience),
+      })
+    )
+)
+
 /** Auto-save target for the composer. */
 export const saveCommunityEmailDraft = authorizedAction<
   [string, DraftUpdate],
   true
->(SEND, async (_user, id, update) => {
-  const parsed = DraftUpdateSchema.safeParse(update)
-  if (!parsed.success) return err('The email could not be saved')
-  return revalidatingEmail(
-    await CommunityEmailService.saveDraft(id, parsed.data),
-    id
-  )
-})
+>(
+  async (user, id, update) =>
+    canSendTo(user, update?.audience) && (await canSendStored(user, id)),
+  async (_user, id, update) => {
+    const parsed = DraftUpdateSchema.safeParse(update)
+    if (!parsed.success) return err('The email could not be saved')
+    return revalidatingEmail(
+      await CommunityEmailService.saveDraft(id, parsed.data),
+      id
+    )
+  }
+)
 
 export const deleteCommunityEmailDraft = authorizedAction<[string], true>(
-  SEND,
+  canSendStored,
   async (_user, id) =>
     revalidatingEmail(await CommunityEmailService.deleteDraft(id))
 )
@@ -84,7 +129,7 @@ function toPreview(summary: AudienceSummary): AudiencePreview {
 export const previewCommunityEmailAudience = authorizedAction<
   [unknown],
   AudiencePreview
->(SEND, async (_user, audience) => {
+>(canSendTo, async (_user, audience) => {
   const parsed = AudienceSchema.safeParse(audience)
   if (!parsed.success) return err('Choose who this email goes to')
   const summary = await CommunityEmailService.summarizeRecipients(parsed.data)
@@ -96,7 +141,7 @@ export const previewCommunityEmailAudience = authorizedAction<
 export const renderCommunityEmailPreview = authorizedAction<
   [Pick<DraftUpdate, 'subject' | 'bodyHtml'>],
   string
->(SEND, async (user, update) =>
+>(canSendSomeEmail, async (user, update) =>
   CommunityEmailService.renderPreview(
     { subject: update.subject ?? '', bodyHtml: update.bodyHtml ?? '' },
     user
@@ -107,7 +152,7 @@ export const renderCommunityEmailPreview = authorizedAction<
 export const sendCommunityEmailTest = authorizedAction<
   [Pick<DraftUpdate, 'subject' | 'bodyHtml'>],
   string
->(SEND, async (user, update) =>
+>(canSendSomeEmail, async (user, update) =>
   CommunityEmailService.sendTest(user, {
     subject: update.subject ?? '',
     bodyHtml: update.bodyHtml ?? '',
@@ -115,7 +160,7 @@ export const sendCommunityEmailTest = authorizedAction<
 )
 
 export const sendCommunityEmail = authorizedAction<[string], SendSummary>(
-  SEND,
+  canSendStored,
   async (user, id) =>
     revalidatingEmail(await CommunityEmailService.sendBroadcast(user, id), id)
 )

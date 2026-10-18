@@ -49,7 +49,7 @@ its own server against a fresh build.
 
 Playwright global setup (`e2e/global-setup.ts`) runs once before the suite, also when the UI mode
 opens. It selects the run's cast by predicate (see Seed Invariants below), writes the chosen ids,
-emails and fee numbers to `e2e/.auth/personas.json`, then signs three of those personas in through
+emails and fee numbers to `e2e/.auth/personas.json`, then signs seven of those personas in through
 the real `/login` form and saves their storage state to `e2e/.auth/<persona>.json`. The whole
 `e2e/.auth/` directory is gitignored; it is regenerated every run.
 
@@ -96,6 +96,8 @@ and fails loudly if nothing answers it. Each row below is checked by a selector 
 | S5  | Every seeded `auth.users` row is confirmed and shares one password, read from `E2E_SEED_PASSWORD`                                                                                                                                                              | `pickSeededUser()`, `seedPassword()`  | Unit 2 setup, login specs       |
 | S6  | At least one seeded user has no roster row on any `ACTIVE` weekend                                                                                                                                                                                             | `pickNonRosterUser()`                 | Unit 3 negative case            |
 | S7  | At least one seeded user's roles (`user_roles` → `roles.permissions`, following `roles.based_on_role_id`) grant `FULL_ACCESS`, or both `MANAGE_BILLING` and `READ_ADMIN_PORTAL`                                                                                | `pickBillingManager()`                | billing specs, community email  |
+| S8  | A confirmed seeded user holds the `President` role, and another the `Corresponding Secretary` role, and their roles grant `READ_COMMUNITY_EMAIL` and `READ_ADMIN_PORTAL`                                                                                       | `pickRoleHolder(label)`               | weekend email                   |
+| S9  | The active group's men's weekend has a confirmed seeded user as `Rector` and another as `Head` (roster rows not dropped)                                                                                                                                       | `pickWeekendLeaders()`                | weekend email                   |
 
 The seed (`scripts/seed/`, `pre-weekend` phase) owns these invariants and pins one person per
 invariant in its own README (the "E2E fixtures" section). `scripts/seed/world.test.ts` asserts
@@ -106,10 +108,11 @@ global setup fails after a seed change.
 
 ## Rate limit budget
 
-Local GoTrue allows 30 sign-in/sign-up requests per IP per 5 minutes. A full run costs 3 sign-ins
-from global setup (`teamForms`, `teamFee`, `billingManager`) plus 6 from the auth spec (login, wrong
-password, unknown email, register, duplicate email, mismatched passwords stops before any request) —
-about 9 requests, doubled to about 18 if one test retries. That leaves headroom, and it must stay that way:
+Local GoTrue allows 30 sign-in/sign-up requests per IP per 5 minutes. A full run costs 7 sign-ins
+from global setup (`teamForms`, `teamFee`, `billingManager`, `president`, `correspondingSecretary`,
+`rector`, `head`) plus 6 from the auth spec (login, wrong password, unknown email, register,
+duplicate email, mismatched passwords stops before any request) — about 13 requests, doubled to
+about 26 if one test retries. That leaves headroom, and it must stay that way:
 **`config.toml`'s `[auth]` rate limit is never raised** to buy more room, because `supabase config
 push` applies `[auth]` to production on every merge to `main`. If the budget ever gets tight, the
 fix is to sign personas in through the admin API (`auth.admin.generateLink`) instead of the real
@@ -237,13 +240,18 @@ never-subscribed, and restore it column for column in `afterAll` (`e2e/fixtures/
 
 ## Community email
 
-`e2e/community-email.spec.ts` covers the basic flow of Admin → Email (docs/specs/23-spec-community-email)
-as the `billingManager` persona, who is a Full Access holder in the seed: write an email to the
-candidates persona's weekend, preview it, send it through the confirmation, and land on the sent
-report. Off production only the sender is emailed, so every candidate is recorded as `skipped` and
-nothing reaches Resend. A second test unsubscribes one candidate through the signed-out link page and
-another through the one-click endpoint (and checks a forged token gets 400); a third checks the
-`teamForms` persona can't open the page. Formatting options are not tested one by one.
+`e2e/weekend-email.spec.ts` covers who can reach community email outside Admin → Email: the
+`president` and `correspondingSecretary` personas can read sent emails in Admin → Email but not
+write one; the men's `rector` and `head` get an Email menu on their weekend's Team tab that offers
+their own team only (and none on the women's weekend); and the `head` writes and sends from
+`/email/{id}`. Off production a send emails only the sender and `COMMUNITY_EMAIL_SANDBOX_ALLOWLIST`,
+so the test unsubscribes those team members first: nothing reaches Resend and every other member is
+recorded as `skipped`. The Resend request itself (batches, one copy per recipient, unsubscribe
+headers) is unit-tested in `services/community-email/send-broadcast.test.ts`.
+
+`e2e/community-email.spec.ts` unsubscribes one candidate through the signed-out link page and
+another through the one-click endpoint (and checks a forged token gets 400), and checks the
+`teamForms` persona can't open Admin → Email.
 
 ## Where the merge gate lives
 

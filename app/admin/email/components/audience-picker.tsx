@@ -47,6 +47,15 @@ function defaultWeekendId(options: AudienceOptions): string {
   )
 }
 
+/** A sensible starting group: the active one, else the newest. */
+function defaultGroupId(options: AudienceOptions): string {
+  return (
+    options.groups.find((group) => group.status === 'ACTIVE')?.id ??
+    options.groups[0]?.id ??
+    ''
+  )
+}
+
 function switchType(
   type: AudienceType,
   current: Audience,
@@ -63,6 +72,13 @@ function switchType(
       return { type, weekendId }
     case 'role':
       return { type, roleId: options.roles[0]?.id ?? '' }
+    case 'group_team':
+    case 'group_pescadores':
+      return {
+        type,
+        groupId:
+          'groupId' in current ? current.groupId : defaultGroupId(options),
+      }
   }
 }
 
@@ -186,6 +202,29 @@ export function AudiencePicker({
           </div>
         )}
 
+        {'groupId' in audience && (
+          <div className="space-y-2">
+            <Label htmlFor="audience-group">Weekend group</Label>
+            <Select
+              value={audience.groupId}
+              onValueChange={(groupId) => onChange({ ...audience, groupId })}
+              disabled={options.groups.length === 0}
+            >
+              <SelectTrigger id="audience-group" className="h-11 w-full">
+                <SelectValue placeholder="No weekend groups yet" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.groups.map((group) => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.label}
+                    {group.status === 'ACTIVE' && ' · Active'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {audience.type === 'role' && (
           <div className="space-y-2">
             <Label htmlFor="audience-role">Role</Label>
@@ -214,7 +253,7 @@ export function AudiencePicker({
   )
 }
 
-function RecipientSummary({
+export function RecipientSummary({
   preview,
   loading,
 }: {
@@ -272,7 +311,6 @@ function RecipientSummary({
             type="button"
             variant="outline"
             size="sm"
-            className="h-11 sm:h-8"
             disabled={preview.count === 0}
           >
             See who

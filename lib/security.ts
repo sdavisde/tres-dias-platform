@@ -91,6 +91,12 @@ export enum Permission {
   READ_COMMUNITY_EMAIL = 'READ_COMMUNITY_EMAIL',
   /** Write and send email to groups of people in the community. */
   SEND_COMMUNITY_EMAIL = 'SEND_COMMUNITY_EMAIL',
+  /**
+   * Email a weekend group's people: its teams and its new pescadores. From a
+   * role it reaches every group; from a CHA role, only that weekend's team
+   * (see services/community-email/audience-access.ts).
+   */
+  SEND_WEEKEND_EMAIL = 'SEND_WEEKEND_EMAIL',
 
   // Settings
   WRITE_SETTINGS = 'WRITE_SETTINGS',
@@ -128,6 +134,7 @@ export enum Permission {
  */
 const CHA_ROLE_PERMISSIONS: Readonly<Record<CHARole, readonly Permission[]>> = {
   [CHARole.RECTOR]: [
+    Permission.SEND_WEEKEND_EMAIL,
     Permission.READ_WRITE_TEAM_PAYMENTS,
     Permission.WRITE_TEAM_ROSTER,
     Permission.READ_TEAM_ROSTER_BUILDER,
@@ -142,6 +149,7 @@ const CHA_ROLE_PERMISSIONS: Readonly<Record<CHARole, readonly Permission[]>> = {
     Permission.READ_TEAM_FORM_INFO,
   ],
   [CHARole.BACKUP_RECTOR]: [
+    Permission.SEND_WEEKEND_EMAIL,
     Permission.READ_WRITE_TEAM_PAYMENTS,
     Permission.WRITE_TEAM_ROSTER,
     Permission.READ_DROPPED_ROSTER,
@@ -156,6 +164,7 @@ const CHA_ROLE_PERMISSIONS: Readonly<Record<CHARole, readonly Permission[]>> = {
     Permission.READ_TEAM_FORM_INFO,
   ],
   [CHARole.HEAD]: [
+    Permission.SEND_WEEKEND_EMAIL,
     Permission.READ_WRITE_TEAM_PAYMENTS,
     Permission.WRITE_TEAM_ROSTER,
     Permission.READ_DROPPED_ROSTER,
@@ -169,6 +178,7 @@ const CHA_ROLE_PERMISSIONS: Readonly<Record<CHARole, readonly Permission[]>> = {
     Permission.READ_TEAM_FORM_INFO,
   ],
   [CHARole.ASSISTANT_HEAD]: [
+    Permission.SEND_WEEKEND_EMAIL,
     Permission.READ_WRITE_TEAM_PAYMENTS,
     Permission.WRITE_TEAM_ROSTER,
     Permission.READ_DROPPED_ROSTER,

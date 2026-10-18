@@ -11,6 +11,8 @@ export function describeAudience(
 ): string {
   const weekend = (id: string) =>
     options.weekends.find((w) => w.id === id)?.label ?? 'a weekend'
+  const group = (id: string) =>
+    options.groups.find((g) => g.id === id)?.label ?? 'a weekend group'
 
   switch (audience.type) {
     case 'community':
@@ -27,5 +29,9 @@ export function describeAudience(
       const role = options.roles.find((r) => r.id === audience.roleId)
       return isNil(role) ? 'People with a role' : `${role.label} role`
     }
+    case 'group_team':
+      return `${group(audience.groupId)} Men's and Women's teams`
+    case 'group_pescadores':
+      return `${group(audience.groupId)} new pescadores`
   }
 }

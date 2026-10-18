@@ -8,6 +8,7 @@ import { permissionLock, userHasPermission, Permission } from '@/lib/security'
 import { isErr, Results } from '@/lib/results'
 import { Errors } from '@/lib/error'
 import { getUrl } from '@/lib/url'
+import { loadSecuelaEmailMenu } from '@/components/community-email/hub-email'
 import SecuelaClient from './components/secuela-client'
 
 export default async function SecuelaPage() {
@@ -29,6 +30,13 @@ export default async function SecuelaPage() {
     redirect(`/?error=${(error as Error).message}`)
   }
 
+  // The active secuela's Email menu: its new pescadores, or everyone.
+  const activeGroupId = Results.unwrapOr(overviewResult, null)?.activeGroup
+    ?.groupId
+  const emailMenu = isNil(activeGroupId)
+    ? null
+    : await loadSecuelaEmailMenu(user, activeGroupId)
+
   return (
     <>
       <AdminBreadcrumbs
@@ -41,6 +49,7 @@ export default async function SecuelaPage() {
           canEdit={userHasPermission(user, [Permission.WRITE_EVENTS])}
           signInUrl={getUrl('/secuela-signin')}
           weekendOptions={Results.unwrapOr(weekendOptionsResult, [])}
+          emailMenu={emailMenu}
         />
       </div>
     </>

@@ -18,6 +18,8 @@ import {
   pickAwaitingCandidate,
   pickBillingManager,
   pickNonRosterUser,
+  pickRoleHolder,
+  pickWeekendLeaders,
   pickSeededUser,
   pickTeamFormsMember,
   pickUnpaidTeamMember,
@@ -33,7 +35,8 @@ import {
  * e2e/.auth/personas.json, and signs in the personas that specs reuse through
  * `test.use({ storageState })`.
  *
- * Auth budget: 3 sign-ins (teamForms, teamFee, billingManager) against GoTrue's local limit of
+ * Auth budget: 7 sign-ins (teamForms, teamFee, billingManager, president,
+ * correspondingSecretary, rector, head) against GoTrue's local limit of
  * 30 sign-in/sign-up requests per IP per 5 minutes.
  */
 
@@ -177,6 +180,11 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
       billingManager.user.id,
     ],
   })
+  const [president, correspondingSecretary, leaders] = await Promise.all([
+    pickRoleHolder('President'),
+    pickRoleHolder('Corresponding Secretary'),
+    pickWeekendLeaders(),
+  ])
   const [full, partial] = await Promise.all([
     pickAwaitingCandidate({ partial: false }),
     pickAwaitingCandidate({ partial: true }),
@@ -188,6 +196,13 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     seededUser: toUser(seededUser),
     nonRosterUser: toUser(nonRosterUser),
     billingManager: toUser(billingManager),
+    president: toUser(president),
+    correspondingSecretary: toUser(correspondingSecretary),
+    leaders: {
+      weekendId: leaders.weekend.id,
+      rector: toUser(leaders.rector),
+      head: toUser(leaders.head),
+    },
     candidates: { full: toCandidate(full), partial: toCandidate(partial) },
     group: {
       id: group.id,
@@ -206,6 +221,10 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     personas.seededUser.userId,
     personas.nonRosterUser.userId,
     personas.billingManager.userId,
+    personas.president.userId,
+    personas.correspondingSecretary.userId,
+    personas.leaders.rector.userId,
+    personas.leaders.head.userId,
   ]
   expect(new Set(userIds).size, `persona user ids: ${userIds.join(', ')}`).toBe(
     userIds.length
@@ -223,6 +242,15 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
       'billingManager',
       personas.billingManager.email
     )
+    await signIn(browser, baseURL, 'president', personas.president.email)
+    await signIn(
+      browser,
+      baseURL,
+      'correspondingSecretary',
+      personas.correspondingSecretary.email
+    )
+    await signIn(browser, baseURL, 'rector', personas.leaders.rector.email)
+    await signIn(browser, baseURL, 'head', personas.leaders.head.email)
   } finally {
     await browser.close()
   }

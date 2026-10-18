@@ -82,7 +82,10 @@ describe('permission areas', () => {
     expect(byId.files.implicitView).toBe(true)
 
     expect(byId.email.view).toEqual([Permission.READ_COMMUNITY_EMAIL])
-    expect(byId.email.manage).toEqual([Permission.SEND_COMMUNITY_EMAIL])
+    expect(byId.email.manage).toEqual([
+      Permission.SEND_WEEKEND_EMAIL,
+      Permission.SEND_COMMUNITY_EMAIL,
+    ])
 
     expect(byId.people.view).toEqual([
       Permission.READ_USER_ROLES,

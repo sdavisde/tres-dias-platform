@@ -54,6 +54,15 @@ export type Personas = {
   nonRosterUser: PersonaUser
   /** S7: can open Admin → Billing and the admin dashboard. */
   billingManager: PersonaUser
+  /** S8: board members who can read Admin → Email. */
+  president: PersonaUser
+  correspondingSecretary: PersonaUser
+  /** S9: the men's weekend's Rector and Head. */
+  leaders: {
+    weekendId: string
+    rector: PersonaUser
+    head: PersonaUser
+  }
   /** S4 */
   candidates: {
     full: CandidatePersona
@@ -72,7 +81,14 @@ export type Personas = {
 
 export const PERSONAS_PATH = 'e2e/.auth/personas.json'
 
-export type SignedInPersona = 'teamForms' | 'teamFee' | 'billingManager'
+export type SignedInPersona =
+  | 'teamForms'
+  | 'teamFee'
+  | 'billingManager'
+  | 'president'
+  | 'correspondingSecretary'
+  | 'rector'
+  | 'head'
 
 /** Saved browser session for a persona signed in by the setup project. */
 export function storageStatePath(name: SignedInPersona): string {
@@ -147,6 +163,18 @@ export async function loadPersonas(): Promise<Personas> {
       userId: personas.billingManager.userId,
       email: personas.billingManager.email,
     },
+    ...(
+      [
+        ['president', personas.president],
+        ['correspondingSecretary', personas.correspondingSecretary],
+        ['rector', personas.leaders.rector],
+        ['head', personas.leaders.head],
+      ] as const
+    ).map(([field, user]) => ({
+      field,
+      userId: user.userId,
+      email: user.email,
+    })),
   ]
   const { data: users, error: usersError } = await db
     .from('users')

@@ -72,7 +72,7 @@ export function EmailReport({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="size-11">
+          <Button asChild variant="ghost" size="icon">
             <Link href="/admin/email" aria-label="Back to all emails">
               <ArrowLeft className="size-4" />
             </Link>

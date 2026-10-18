@@ -9,7 +9,7 @@ import type { Result } from '@/lib/results'
 import { err, isErr, ok } from '@/lib/results'
 import type { User } from '@/lib/users/types'
 import { COMMUNITY_DISPLAY_NAME } from '@/lib/weekend/constants'
-import { formatWeekendLabelFor } from '@/lib/weekend'
+import { formatWeekendGroupTitle, formatWeekendLabelFor } from '@/lib/weekend'
 import type { WeekendType } from '@/lib/weekend/types'
 import { getSystemEmailFrom } from '@/services/settings/settings-service'
 import {
@@ -94,6 +94,28 @@ export async function getBroadcast(
   return ok(isNil(result.data) ? null : toBroadcast(result.data))
 }
 
+/** A broadcast for a sender outside Admin; see the repository's caveat. */
+export async function getBroadcastForSender(
+  id: string
+): Promise<Result<string, Broadcast | null>> {
+  const result = await Repository.findBroadcastByIdForSender(id)
+  if (isErr(result)) return result
+  return ok(isNil(result.data) ? null : toBroadcast(result.data))
+}
+
+/** Emails already sent to a weekend group's teams or pescadores. */
+export async function listSentBroadcastsForGroup(
+  groupId: string,
+  weekendIds: string[]
+): Promise<Result<string, Broadcast[]>> {
+  const result = await Repository.findSentBroadcastsForGroup(
+    groupId,
+    weekendIds
+  )
+  if (isErr(result)) return result
+  return ok(result.data.map(toBroadcast))
+}
+
 export async function getRecipients(
   broadcastId: string
 ): Promise<Result<string, BroadcastRecipient[]>> {
@@ -171,6 +193,10 @@ async function resolveMembers(audience: Audience) {
       )
     case 'role':
       return Repository.findRoleMembers(audience.roleId)
+    case 'group_team':
+      return Repository.findGroupTeamMembers(audience.groupId)
+    case 'group_pescadores':
+      return Repository.findGroupPescadores(audience.groupId)
   }
 }
 
@@ -198,6 +224,16 @@ export async function getAudienceOptions(): Promise<
   if (isErr(weekends)) return weekends
   if (isErr(roles)) return roles
 
+  const groups = new Map<string, AudienceOptions['groups'][number]>()
+  for (const weekend of weekends.data) {
+    if (isNil(weekend.group_id) || groups.has(weekend.group_id)) continue
+    groups.set(weekend.group_id, {
+      id: weekend.group_id,
+      status: weekend.status,
+      label: formatWeekendGroupTitle(weekend.weekend_groups?.number ?? null),
+    })
+  }
+
   return ok({
     weekends: weekends.data.map((weekend) => ({
       id: weekend.id,
@@ -208,6 +244,7 @@ export async function getAudienceOptions(): Promise<
       }),
     })),
     roles: roles.data,
+    groups: [...groups.values()],
   })
 }
 

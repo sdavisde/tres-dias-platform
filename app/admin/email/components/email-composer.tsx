@@ -42,7 +42,11 @@ import type {
   DraftUpdate,
 } from '@/services/community-email/types'
 import { FIRST_NAME_FIELD } from '@/services/community-email/content-constants'
-import { AudiencePicker, useAudiencePreview } from './audience-picker'
+import {
+  AudiencePicker,
+  RecipientSummary,
+  useAudiencePreview,
+} from './audience-picker'
 import { describeAudience } from './audience-label'
 import { RichTextEditor } from './rich-text-editor'
 
@@ -52,6 +56,16 @@ type EmailComposerProps = {
   senderEmail: string
   fromName: string
   deliveryMode: DeliveryMode
+  /**
+   * Where Back and Delete go. Admin → Email by default; the weekend hub and
+   * Secuela pass their own page.
+   */
+  returnHref?: string
+  /**
+   * The audience was chosen by the button that started this email (e.g. the
+   * hub's "Email the team"): show who it goes to instead of the picker.
+   */
+  audienceLocked?: boolean
 }
 
 /** Visible text in the editor's HTML, for the "is there a message" check. */
@@ -69,6 +83,8 @@ export function EmailComposer({
   senderEmail,
   fromName,
   deliveryMode,
+  returnHref = '/admin/email',
+  audienceLocked = false,
 }: EmailComposerProps) {
   const router = useRouter()
   const [draft, setDraft] = useState<DraftUpdate>({
@@ -175,7 +191,7 @@ export function EmailComposer({
       })
       return
     }
-    router.push('/admin/email')
+    router.push(returnHref)
   }
 
   const fillWithTestData = () => {
@@ -197,8 +213,8 @@ export function EmailComposer({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon" className="size-11">
-            <Link href="/admin/email" aria-label="Back to all emails">
+          <Button asChild variant="ghost" size="icon">
+            <Link href={returnHref} aria-label="Back">
               <ArrowLeft className="size-4" />
             </Link>
           </Button>
@@ -215,7 +231,7 @@ export function EmailComposer({
         <div className="flex flex-col gap-2 sm:flex-row">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" className="h-11">
+              <Button variant="ghost" size="default">
                 <Trash2 className="size-4" />
                 Delete draft
               </Button>
@@ -237,7 +253,7 @@ export function EmailComposer({
           </AlertDialog>
           <Button
             variant="outline"
-            className="h-11"
+            size="default"
             disabled={testing}
             onClick={sendTest}
           >
@@ -249,7 +265,7 @@ export function EmailComposer({
             onOpenChange={(open) => !sending && setConfirmOpen(open)}
           >
             <Button
-              className="h-11"
+              size="default"
               disabled={audienceLoading || recipientCount === 0}
               onClick={() => {
                 if (!isNil(problem)) {
@@ -320,16 +336,29 @@ export function EmailComposer({
 
       <Card>
         <CardContent className="space-y-6">
-          <AudiencePicker
-            audience={draft.audience}
-            options={options}
-            preview={audiencePreview}
-            loading={audienceLoading}
-            onChange={(audience) => {
-              saveImmediately()
-              update({ audience })
-            }}
-          />
+          {audienceLocked ? (
+            <div className="space-y-2">
+              <p className="text-sm">
+                <span className="text-muted-foreground">To </span>
+                <strong>{describeAudience(draft.audience, options)}</strong>
+              </p>
+              <RecipientSummary
+                preview={audiencePreview}
+                loading={audienceLoading}
+              />
+            </div>
+          ) : (
+            <AudiencePicker
+              audience={draft.audience}
+              options={options}
+              preview={audiencePreview}
+              loading={audienceLoading}
+              onChange={(audience) => {
+                saveImmediately()
+                update({ audience })
+              }}
+            />
+          )}
 
           {isDevMode() && (
             <Button

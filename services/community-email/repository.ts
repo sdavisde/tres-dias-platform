@@ -65,6 +65,47 @@ export async function findBroadcastById(
   return ok((data ?? null) as RawBroadcast | null)
 }
 
+/**
+ * A broadcast read with the service-role client, for senders who can't read
+ * the table themselves (weekend leaders). Only call it after checking the
+ * caller may send to the broadcast's audience.
+ */
+export async function findBroadcastByIdForSender(
+  id: string
+): Promise<Result<string, RawBroadcast | null>> {
+  const { data, error } = await createAdminClient()
+    .from('email_broadcasts')
+    .select(BROADCAST_SELECT)
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (!isNil(error)) return err(error.message)
+  return ok((data ?? null) as RawBroadcast | null)
+}
+
+/** Sent emails whose audience names this weekend or weekend group. */
+export async function findSentBroadcastsForGroup(
+  groupId: string,
+  weekendIds: string[]
+): Promise<Result<string, RawBroadcast[]>> {
+  const filters = [
+    `audience->>groupId.eq.${groupId}`,
+    ...weekendIds.map((id) => `audience->>weekendId.eq.${id}`),
+  ]
+  const { data, error } = await createAdminClient()
+    .from('email_broadcasts')
+    .select(BROADCAST_SELECT)
+    .is('deleted_at', null)
+    .neq('status', 'draft')
+    .or(filters.join(','))
+    .order('sent_at', { ascending: false })
+    .limit(20)
+
+  if (!isNil(error)) return err(error.message)
+  return ok((data ?? []) as RawBroadcast[])
+}
+
 export async function insertDraft(values: {
   createdByUserId: string
   subject: string
@@ -303,6 +344,50 @@ export async function findWeekendTeamMembers(
   )
 }
 
+/** Everyone on either weekend of a group who has not dropped. */
+export async function findGroupTeamMembers(
+  groupId: string
+): Promise<Result<string, AudienceMember[]>> {
+  const { data, error } = await createAdminClient()
+    .from('weekend_roster')
+    .select(
+      'users ( id, first_name, last_name, email ), weekends!inner ( group_id )'
+    )
+    .eq('weekends.group_id', groupId)
+    .or('status.is.null,status.neq.drop')
+
+  if (!isNil(error)) return err(error.message)
+  return ok(
+    (data ?? [])
+      .map((row) => row.users as UserContact | null)
+      .filter((user): user is UserContact => !isNil(user))
+      .map(userToMember)
+  )
+}
+
+/** Confirmed candidates on either weekend of a group: its new pescadores. */
+export async function findGroupPescadores(
+  groupId: string
+): Promise<Result<string, AudienceMember[]>> {
+  const { data, error } = await createAdminClient()
+    .from('candidate_sponsorship_info')
+    .select(
+      'candidate_name, candidate_email, candidates!inner ( status, weekends!inner ( group_id ) )'
+    )
+    .eq('candidates.weekends.group_id', groupId)
+    .eq('candidates.status', 'confirmed')
+
+  if (!isNil(error)) return err(error.message)
+  return ok(
+    (data ?? []).map((row) => ({
+      email: row.candidate_email,
+      name: row.candidate_name,
+      firstName: firstWord(row.candidate_name),
+      userId: null,
+    }))
+  )
+}
+
 /**
  * Candidate and sponsor contacts from the sponsorship form, for every
  * candidate on a weekend who has not been turned down.
@@ -382,13 +467,14 @@ export async function findWeekendsForPicker(): Promise<
       type: Tables<'weekends'>['type']
       status: string | null
       start_date: string
+      group_id: string | null
       weekend_groups: { number: number | null } | null
     }[]
   >
 > {
   const { data, error } = await createAdminClient()
     .from('weekends')
-    .select('id, type, status, start_date, weekend_groups ( number )')
+    .select('id, type, status, start_date, group_id, weekend_groups ( number )')
     .order('start_date', { ascending: false })
 
   if (!isNil(error)) return err(error.message)

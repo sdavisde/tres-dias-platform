@@ -166,7 +166,7 @@ export function RichTextEditor({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-9 gap-1.5 px-2 text-[13px]"
+          className="gap-1.5 text-[13px]"
           onClick={() => chain()?.insertContent(FIRST_NAME_FIELD).run()}
         >
           <UserRound className="size-4" />
@@ -207,7 +207,7 @@ function ToolbarButton({
       aria-label={label}
       aria-pressed={active ?? false}
       title={label}
-      className={cn('size-9', active === true && 'bg-accent')}
+      className={cn(active === true && 'bg-accent')}
       onClick={onClick}
     >
       {children}
@@ -243,7 +243,7 @@ function LinkButton({
           aria-label="Link"
           title="Link"
           aria-pressed={active}
-          className={cn('size-9', active && 'bg-accent')}
+          className={cn(active && 'bg-accent')}
         >
           <Link2 className="size-4" />
         </Button>

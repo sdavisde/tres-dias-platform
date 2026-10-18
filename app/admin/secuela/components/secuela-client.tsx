@@ -38,6 +38,8 @@ import {
 import { formatDateTime } from '@/lib/utils'
 import { formatWeekendGroupTitle } from '@/lib/weekend'
 import type { SecuelaOverview, SecuelaSummary } from '@/services/secuela'
+import type { EmailMenuProps } from '@/components/community-email/email-menu'
+import { InviteTile } from './invite-tile'
 import { SecuelaQrCode } from './secuela-qr-code'
 import { SignInsTile } from './sign-ins-tile'
 
@@ -47,6 +49,8 @@ interface SecuelaClientProps {
   canEdit: boolean
   signInUrl: string
   weekendOptions: WeekendOption[]
+  /** The active secuela's Email menu; null when the viewer can't send. */
+  emailMenu: EmailMenuProps | null
 }
 
 function formatWhen(datetime: string): string {
@@ -83,6 +87,7 @@ export default function SecuelaClient({
   canEdit,
   signInUrl,
   weekendOptions,
+  emailMenu,
 }: SecuelaClientProps) {
   const [prefill, setPrefill] = useState<EventFormPrefill | undefined>()
   // Captured once so the badge doesn't change between renders
@@ -156,6 +161,7 @@ export default function SecuelaClient({
           groupTitle={groupTitle}
           signInUrl={signInUrl}
           windowState={getWindowState(active, now)}
+          emailMenu={emailMenu}
         />
       )}
 
@@ -176,70 +182,81 @@ function ActiveSecuela({
   groupTitle,
   signInUrl,
   windowState,
+  emailMenu,
 }: {
   secuela: SecuelaSummary
   groupTitle: string
   signInUrl: string
   windowState: WindowState
+  emailMenu: EmailMenuProps | null
 }) {
   const badge = WINDOW_BADGES[windowState]
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex flex-wrap items-center gap-2">
-          <CardTitle>{groupTitle} Secuela</CardTitle>
-          <Badge variant={badge.variant}>{badge.label}</Badge>
-        </div>
-        <CardDescription>
-          <Link href="/admin/events" className="underline underline-offset-4">
-            Edit it on the Events page
-          </Link>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-8 md:grid-cols-[minmax(0,1fr)_auto]">
+      {/* Details and tiles on the left; the QR code pinned top-right. */}
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="space-y-6">
-          <div className="space-y-2 text-sm">
-            <p className="flex items-center gap-2 font-medium">
-              <CalendarHeart className="h-4 w-4 shrink-0 text-primary" />
-              {formatWhen(secuela.startsAt)}
-              {!isNil(secuela.endsAt) && ` – ${formatTime(secuela.endsAt)}`}
-            </p>
-            {!isNil(secuela.location) && secuela.location !== '' && (
-              <p className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 shrink-0" />
-                {secuela.location}
+          <CardHeader>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle>{groupTitle} Secuela</CardTitle>
+              <Badge variant={badge.variant}>{badge.label}</Badge>
+            </div>
+            <CardDescription>
+              <Link
+                href="/admin/events"
+                className="underline underline-offset-4"
+              >
+                Edit it on the Events page
+              </Link>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2 text-sm">
+              <p className="flex items-center gap-2 font-medium">
+                <CalendarHeart className="h-4 w-4 shrink-0 text-primary" />
+                {formatWhen(secuela.startsAt)}
+                {!isNil(secuela.endsAt) && ` – ${formatTime(secuela.endsAt)}`}
               </p>
-            )}
-            {isNil(secuela.endsAt) && (
-              <p className="text-muted-foreground">
-                No end time is set, so attendance closes 3 hours after the
-                start. Add an end time on the Events page to change that.
-              </p>
-            )}
-          </div>
+              {!isNil(secuela.location) && secuela.location !== '' && (
+                <p className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  {secuela.location}
+                </p>
+              )}
+              {isNil(secuela.endsAt) && (
+                <p className="text-muted-foreground">
+                  No end time is set, so attendance closes 3 hours after the
+                  start. Add an end time on the Events page to change that.
+                </p>
+              )}
+            </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <SignInsTile
-              label="Attended"
-              signIns={secuela.attended}
-              show="time"
-            />
-            <SignInsTile
-              label="Want to serve"
-              signIns={secuela.wantsToServe}
-              show="day"
-            />
-          </div>
+            <div className="grid max-w-md gap-3">
+              <SignInsTile
+                label="Attended"
+                signIns={secuela.attended}
+                show="time"
+              />
+              <SignInsTile
+                label="Want to serve"
+                signIns={secuela.wantsToServe}
+                show="day"
+              />
+              {!isNil(emailMenu) && <InviteTile {...emailMenu} />}
+            </div>
+          </CardContent>
         </div>
 
-        <SecuelaQrCode
-          signInUrl={signInUrl}
-          label={`${groupTitle} Secuela`}
-          when={formatWhen(secuela.startsAt)}
-          location={secuela.location}
-        />
-      </CardContent>
+        <div className="px-6 md:pl-0">
+          <SecuelaQrCode
+            signInUrl={signInUrl}
+            label={`${groupTitle} Secuela`}
+            when={formatWhen(secuela.startsAt)}
+            location={secuela.location}
+          />
+        </div>
+      </div>
     </Card>
   )
 }

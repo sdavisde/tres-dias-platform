@@ -15,6 +15,10 @@ export const AudienceSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('weekend_candidates'), weekendId: z.string() }),
   z.object({ type: z.literal('weekend_sponsors'), weekendId: z.string() }),
   z.object({ type: z.literal('role'), roleId: z.string() }),
+  /** Both teams (Men's and Women's) of a weekend group. */
+  z.object({ type: z.literal('group_team'), groupId: z.string() }),
+  /** A weekend group's confirmed candidates: its new pescadores. */
+  z.object({ type: z.literal('group_pescadores'), groupId: z.string() }),
 ])
 
 export type Audience = z.infer<typeof AudienceSchema>
@@ -28,6 +32,8 @@ export const AUDIENCE_TYPE_LABELS: Record<AudienceType, string> = {
   weekend_candidates: "A weekend's candidates",
   weekend_sponsors: "Sponsors of a weekend's candidates",
   role: 'People with a community role',
+  group_team: 'Both teams of a weekend group',
+  group_pescadores: "A weekend group's new pescadores",
 }
 
 /** Parses a stored audience, falling back to the whole community. */
@@ -93,6 +99,7 @@ export type AudienceSummary = {
 export type AudienceOptions = {
   weekends: { id: string; label: string; status: string | null }[]
   roles: { id: string; label: string }[]
+  groups: { id: string; label: string; status: string | null }[]
 }
 
 /** The editable part of a draft; what auto-save sends. */
