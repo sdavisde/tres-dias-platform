@@ -1,3 +1,14 @@
+## [1.71.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.70.1...v1.71.0) (2026-11-07)
+
+### Features
+
+- **people:** add Rector Selection tab and tighten rector-ready rules ([6f427c6](https://github.com/sdavisde/tres-dias-platform/commit/6f427c6205f6d526d6c17e709a1c05e46cb1a363))
+
+### Bug Fixes
+
+- **ci:** pin Supabase CLI to 2.118.0 in release and e2e workflows ([b9632b9](https://github.com/sdavisde/tres-dias-platform/commit/b9632b912df5bedb06e2d2f96da154987e2d542d))
+- **dev:** run bun run preview through dotenv v18 instead of dotenv-cli ([c82fb90](https://github.com/sdavisde/tres-dias-platform/commit/c82fb90cc00eacaabaa57bca0f97cf965fafb82b))
+
 ## [1.70.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.70.0...v1.70.1) (2026-10-18)
 
 ### Bug Fixes
