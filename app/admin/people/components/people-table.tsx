@@ -7,6 +7,7 @@ import { Download } from 'lucide-react'
 import { CopyJoinLinkButton } from './copy-join-link-button'
 import { PersonEditor } from './person-editor'
 import { SelectedMemberProvider } from './selected-member-context'
+import { PeopleTabs } from './people-tabs'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/ui/page-header'
 import { DataTable, useDataTableUrlState } from '@/components/ui/data-table'
@@ -98,6 +99,7 @@ export default function PeopleTable({
       <PageHeader
         title="People"
         description="Everyone with an account — contact details, experience, and roles."
+        className="mb-0 border-b-0 pb-4"
       >
         <Button
           variant="outline"
@@ -109,6 +111,7 @@ export default function PeopleTable({
         </Button>
         <CopyJoinLinkButton joinUrl={joinUrl} />
       </PageHeader>
+      <PeopleTabs canViewExperience={canViewExperience} />
       <div className="my-4 flex flex-col gap-4 xl:flex-row xl:items-start">
         <div className="min-w-0 flex-1">
           <DataTable

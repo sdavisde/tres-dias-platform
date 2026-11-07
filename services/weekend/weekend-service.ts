@@ -1244,6 +1244,33 @@ export async function getRosterAssignmentForUser(
   return WeekendRepository.findRosterAssignmentForUser(userId, weekendId)
 }
 
+/**
+ * Users rostered as Rector on any weekend not yet FINISHED. Their experience
+ * row only exists once the group finishes, so callers union this with it.
+ */
+export async function getCurrentRectorUserIds(): Promise<
+  Result<string, Set<string>>
+> {
+  const weekends = await WeekendRepository.findWeekendsByStatuses([
+    WeekendStatus.PLANNING,
+    WeekendStatus.ACTIVE,
+  ])
+  if (isErr(weekends)) return weekends
+  const rows = await WeekendRepository.findRosterRowsForFees(
+    weekends.data.map((w) => w.id)
+  )
+  return map(
+    rows,
+    (data) =>
+      new Set(
+        data
+          .filter((r) => r.status !== 'drop' && r.cha_role === CHARole.RECTOR)
+          .map((r) => r.user_id)
+          .filter((id): id is string => !isNil(id))
+      )
+  )
+}
+
 // ============================================================================
 // Composite Data Functions (for Server Components)
 // ============================================================================

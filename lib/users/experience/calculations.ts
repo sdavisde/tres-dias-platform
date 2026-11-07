@@ -19,10 +19,10 @@ const HEAD_AND_ASSISTANT_HEAD_ROLES: CHARole[] = [
   CHARole.ASSISTANT_HEAD,
 ]
 
+/** Lay team heads only: the Head Spiritual Director is clergy (spec 13, Q5). */
 export const TEAM_HEAD_ROLES: CHARole[] = [
   CHARole.HEAD_TECH,
   CHARole.HEAD_ROLLISTA,
-  CHARole.HEAD_SPIRITUAL_DIRECTOR,
   CHARole.HEAD_PRAYER,
   CHARole.HEAD_CHAPEL,
   CHARole.HEAD_CHAPEL_TECH,
@@ -48,26 +48,47 @@ export function calculateExperienceLevel(
   return 3
 }
 
+/** Only service on our own weekends counts toward rector readiness. */
+export function isDttdRecord(record: UserExperienceRecord): boolean {
+  return (
+    parseCommunityWeekendRef(record.weekend_reference)?.community ===
+    DTTD_COMMUNITY
+  )
+}
+
+/**
+ * One key per weekend. The stored `DTTD#11` ref is shared by the men's and
+ * women's weekends of a group, so it wins over the gendered weekend_id.
+ */
+function weekendKey(record: UserExperienceRecord): string {
+  const ref = parseCommunityWeekendRef(record.weekend_reference)
+  return isNil(ref)
+    ? (record.weekend_id ?? record.weekend_reference)
+    : `${ref.community}#${ref.number}`
+}
+
+/** Distinct DTTD weekends on which the person gave a rollo. */
+export function countRolloWeekends(records: UserExperience[]): number {
+  return countDistinctWeekends(
+    records.filter((r) => isDttdRecord(r) && !isNil(r.rollo))
+  )
+}
+
 export function calculateRectorReadyStatus(
   records: UserExperience[]
 ): RectorReadyStatus {
-  const hasServedAsRector = records.some((r) => {
-    if (r.cha_role !== CHARole.RECTOR) return false
-    const ref = parseCommunityWeekendRef(r.weekend_reference)
-    return ref?.community === DTTD_COMMUNITY
-  })
+  const dttd = records.filter(isDttdRecord)
 
   const criteria: RectorReadyCriteria = {
-    hasServedHeadOrAssistantHead: records.some((r) =>
+    hasServedHeadOrAssistantHead: dttd.some((r) =>
       HEAD_AND_ASSISTANT_HEAD_ROLES.includes(r.cha_role)
     ),
-    hasServedTeamHead: records.some((r) =>
-      TEAM_HEAD_ROLES.includes(r.cha_role)
-    ),
-    hasGivenTwoOrMoreTalks: records.filter((r) => r.rollo !== null).length >= 2,
-    hasWorkedDining: records.some((r) => DINING_ROLES.includes(r.cha_role)),
-    hasServedAsRector,
+    hasServedTeamHead: dttd.some((r) => TEAM_HEAD_ROLES.includes(r.cha_role)),
+    hasGivenTwoOrMoreTalks: countRolloWeekends(dttd) >= 2,
+    hasWorkedDining: dttd.some((r) => DINING_ROLES.includes(r.cha_role)),
+    hasServedAsRector: dttd.some((r) => r.cha_role === CHARole.RECTOR),
   }
+  const { hasServedAsRector } = criteria
 
   const isReady =
     criteria.hasServedHeadOrAssistantHead &&
@@ -121,12 +142,6 @@ export function groupExperienceByCommunity(
 /**
  * Counts the number of weekends served by the user
  */
-export function countDistinctWeekends(
-  records: Pick<UserExperienceRecord, 'weekend_id' | 'weekend_reference'>[]
-): number {
-  const weekendIds = records
-    .map((r) => r.weekend_id ?? r.weekend_reference)
-    .filter((id): id is string => id !== null)
-
-  return uniq(weekendIds).length
+export function countDistinctWeekends(records: UserExperienceRecord[]): number {
+  return uniq(records.map(weekendKey)).length
 }

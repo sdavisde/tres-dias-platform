@@ -5,15 +5,12 @@ import { COMMUNITY_NAME } from '@/lib/weekend/constants'
 import { CHARole } from '@/lib/weekend/types'
 import { TEAM_HEAD_ROLES } from '@/lib/users/experience/calculations'
 
-/**
- * Lay leadership only: the Head Spiritual Director is clergy, so their
- * service isn't called out the same way on the timeline.
- */
+/** Lay leadership only (TEAM_HEAD_ROLES already leaves out the Head SD). */
 const LAY_LEADERSHIP_ROLES = new Set<string>([
   CHARole.RECTOR,
   CHARole.HEAD,
   CHARole.ASSISTANT_HEAD,
-  ...TEAM_HEAD_ROLES.filter((role) => role !== CHARole.HEAD_SPIRITUAL_DIRECTOR),
+  ...TEAM_HEAD_ROLES,
 ])
 
 type ServiceRecord = {
