@@ -1,3 +1,9 @@
+## [1.72.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.71.0...v1.72.0) (2026-11-07)
+
+### Features
+
+- **gag:** add private rickroll popup for one member ([f626d20](https://github.com/sdavisde/tres-dias-platform/commit/f626d202a7f5cb7a3df687c179d9a17a5b030d90))
+
 ## [1.71.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.70.1...v1.71.0) (2026-11-07)
 
 ### Features
