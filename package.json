@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "preview": "dotenv -e .env.preview -v SITE_URL=http://localhost:3000 -- next dev --turbopack",
+    "preview": "SITE_URL=http://localhost:3000 dotenv run -q -f .env.preview -- next dev --turbopack",
     "preview:pull": "vercel env pull .env.preview --environment=preview --yes",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
     "stripe:listen:platform": "stripe listen --project-name sdavis.dev --forward-to localhost:3000/api/webhooks/platform-billing",
@@ -105,7 +105,6 @@
     "@typescript-eslint/parser": "^8.49.0",
     "conventional-changelog-conventionalcommits": "^9.3.1",
     "dotenv": "^18.0.4",
-    "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.6",
     "eslint-config-prettier": "^10.1.8",
