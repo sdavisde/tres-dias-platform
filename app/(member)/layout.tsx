@@ -12,6 +12,7 @@ import { TabBar } from '@/components/member/tab-bar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Footer } from '@/components/footer'
 import { SessionScope } from '@/components/auth/session-provider'
+import { RickrollPopup } from '@/components/gag/rickroll-popup'
 
 export const metadata: Metadata = {
   title: 'Dusty Trails Tres Dias',
@@ -50,6 +51,7 @@ export default async function MemberLayout({
 
   return (
     <SessionScope user={user}>
+      <RickrollPopup email={user.email} />
       {/* 264px per the VerbNav board; overridden here so other sidebar
           consumers keep the primitive's default. */}
       <SidebarProvider
