@@ -62,10 +62,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Pinned: newer CLIs reject this config.toml and change defaults the config push sends to prod.
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.118.0
 
       # Only the containers the app needs: auth, REST, storage, the gateway and Postgres.
       - name: Start local Supabase
