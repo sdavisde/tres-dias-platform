@@ -1,3 +1,9 @@
+## [1.72.1](https://github.com/sdavisde/tres-dias-platform/compare/v1.72.0...v1.72.1) (2026-11-08)
+
+### Reverts
+
+- Revert "feat(gag): add private rickroll popup for one member" ([005b549](https://github.com/sdavisde/tres-dias-platform/commit/005b549405eb80382bd1abdbfecd95faa56b768e))
+
 ## [1.72.0](https://github.com/sdavisde/tres-dias-platform/compare/v1.71.0...v1.72.0) (2026-11-07)
 
 ### Features
